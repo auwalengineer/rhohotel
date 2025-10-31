@@ -121,6 +121,10 @@ app_license = "mit"
 # 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
 # }
 #
+
+
+# To show custom pages in the public menu, ensure you have workspace JSON files for each page in `rhohotel/rhocom_hotel/workspace/` or use Desk Page/Workspace UI to add them.
+# Remove any non-standard workspace config. Pages will appear if workspace/page JSON exists and permissions allow.
 # has_permission = {
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
 # }

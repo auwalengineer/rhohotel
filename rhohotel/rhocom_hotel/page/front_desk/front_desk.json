@@ -1,0 +1,68 @@
+{
+    "content": [
+        {
+            "type": "header",
+            "data": {
+                "text": "<h1>Front Desk f</h1>"
+            }
+        },
+        {
+            "type": "filters",
+            "data": {
+                "filters": [
+                    {
+                        "fieldname": "floor",
+                        "label": "Floor",
+                        "fieldtype": "Link",
+                        "options": "Hotel Floor"
+                    },
+                    {
+                        "fieldname": "room_type",
+                        "label": "Room Type",
+                        "fieldtype": "Link",
+                        "options": "Hotel Room Type"
+                    },
+                    {
+                        "fieldname": "status",
+                        "label": "Status",
+                        "fieldtype": "Select",
+                        "options": "\nVacant\nOccupied\nReserved\nMaintenance"
+                    },
+                    {
+                        "fieldname": "housekeeping_status",
+                        "label": "Housekeeping",
+                        "fieldtype": "Select",
+                        "options": "\nClean\nDirty\nInspected\nIn Progress"
+                    },
+                    {
+                        "fieldname": "checkout_today",
+                        "label": "Checkout Today",
+                        "fieldtype": "Check"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "room_grid",
+            "data": {
+                "refresh_interval": 60
+            }
+        }
+    ],
+    "doctype": "Page",
+    "module": "Rhocom Hotel",
+    "name": "front-desk",
+    "page_name": "Front Desk",
+    "roles": [
+        {
+            "role": "Hotel Manager"
+        },
+        {
+            "role": "Hotel Receptionist"
+        }
+    ],
+    "script": null,
+    "standard": "Yes",
+    "style": null,
+    "title": "Front Desk"
+}

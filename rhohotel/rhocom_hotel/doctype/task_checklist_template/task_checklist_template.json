@@ -1,0 +1,98 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "format:TSK-CHKLST-{template_name}-{#####}",
+    "creation": "2025-10-25 19:33:53.772275",
+    "custom": 1,
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "template_name",
+        "room_typ",
+        "task_type",
+        "estimated_time",
+        "description",
+        "checklist_items",
+        "is_active"
+    ],
+    "fields": [
+        {
+            "fieldname": "template_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Template Name",
+            "reqd": 1
+        },
+        {
+            "fieldname": "room_typ",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Hotel Room Type",
+            "options": "Hotel Room Type"
+        },
+        {
+            "fieldname": "task_type",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Task Type",
+            "options": "Daily Cleaning\nCheckout Cleaning\nDeep Cleaning\nTurndown Service",
+            "reqd": 1
+        },
+        {
+            "description": "Expected time to complete in minutes",
+            "fieldname": "estimated_time",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "label": "Estimated Time (mins)"
+        },
+        {
+            "description": "Additional details about this template",
+            "fieldname": "description",
+            "fieldtype": "Small Text",
+            "label": "Description"
+        },
+        {
+            "description": "List of checklist items",
+            "fieldname": "checklist_items",
+            "fieldtype": "Table",
+            "label": "Checklist Items",
+            "options": "Checklist Template Item"
+        },
+        {
+            "default": "0",
+            "description": "Whether this template is currently in use",
+            "fieldname": "is_active",
+            "fieldtype": "Check",
+            "in_list_view": 1,
+            "label": "Is Active"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-10-25 20:51:07.864019",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Task Checklist Template",
+    "naming_rule": "Expression",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

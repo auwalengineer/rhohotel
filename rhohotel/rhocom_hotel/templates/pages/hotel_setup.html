@@ -1,0 +1,12 @@
+<!-- Minimal Desk Page: Hotel Setup Wizard -->
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="container" style="padding: 1.5rem;">
+    <h2>Rhocom Hotel — Setup Wizard</h2>
+    <p>A short guided workflow to create Room Types, Pricing and Packages. Use the buttons to open the new form for each
+        item; mark steps done as you go.</p>
+    <div id="rhohotel-wizard"></div>
+</div>
+<script src="/assets/rhohotel/js/hotel_setup.js"></script>
+{% endblock %}

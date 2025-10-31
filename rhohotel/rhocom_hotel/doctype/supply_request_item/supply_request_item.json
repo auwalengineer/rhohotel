@@ -1,0 +1,77 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-10-27 12:43:05.506395",
+    "custom": 1,
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "item_code",
+        "item_name",
+        "current_stock",
+        "quantity_requested",
+        "uom",
+        "reason"
+    ],
+    "fields": [
+        {
+            "fieldname": "item_code",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Item Code",
+            "options": "Item",
+            "reqd": 1
+        },
+        {
+            "fieldname": "item_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Item Name"
+        },
+        {
+            "fieldname": "current_stock",
+            "fieldtype": "Float",
+            "in_list_view": 1,
+            "label": "Current Stock"
+        },
+        {
+            "fieldname": "quantity_requested",
+            "fieldtype": "Float",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Quantity Requested",
+            "reqd": 1
+        },
+        {
+            "fieldname": "uom",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "UOM",
+            "options": "UOM",
+            "reqd": 1
+        },
+        {
+            "fieldname": "reason",
+            "fieldtype": "Small Text",
+            "label": "Reason"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "istable": 1,
+    "links": [],
+    "modified": "2025-10-27 12:46:46.205980",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Supply Request Item",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

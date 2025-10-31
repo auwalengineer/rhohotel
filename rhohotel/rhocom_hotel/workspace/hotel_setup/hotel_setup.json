@@ -1,0 +1,198 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"OI_vf7KEVH\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Hotel Setup</span>\",\"col\":12}},{\"id\":\"KENqbbAYzk\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Rooms\",\"col\":3}},{\"id\":\"G82B7t9-Uk\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Room Types\",\"col\":3}},{\"id\":\"EFj0DtNs6s\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"House Keeping Request\",\"col\":3}},{\"id\":\"WzYJ0xKHU1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Maintenance Request\",\"col\":3}},{\"id\":\"D9slV9oXyQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Rooms & Inventory\",\"col\":5}},{\"id\":\"xg1a2ByCd7\",\"type\":\"card\",\"data\":{\"card_name\":\"Maintenance & House Keeping\",\"col\":4}},{\"id\":\"kNP2UApCzf\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}}]",
+ "creation": "2025-10-25 00:08:25.619488",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "setting-gear",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Hotel Setup",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "1. Create Room Types",
+   "link_count": 0,
+   "link_to": "Hotel Room Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rooms & Inventory",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Types",
+   "link_count": 0,
+   "link_to": "Hotel Room Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rooms",
+   "link_count": 0,
+   "link_to": "Hotel Room",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Amenity",
+   "link_count": 0,
+   "link_to": "Hotel Amenity",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Maintenance & House Keeping",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Maintenance",
+   "link_count": 0,
+   "link_to": "Maintenance Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "House Keeping",
+   "link_count": 0,
+   "link_to": "Housekeeping Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Type",
+   "link_count": 0,
+   "link_to": "Housekeeping Service Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "House Keeping Task",
+   "link_count": 0,
+   "link_to": "Housekeeping Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuration",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Rate Type",
+   "link_count": 0,
+   "link_to": "Hotel Room Rate",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Tariff",
+   "link_count": 0,
+   "link_to": "Hotel Room Tariff",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Session Type",
+   "link_count": 0,
+   "link_to": "Hotel Session Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sessions",
+   "link_count": 0,
+   "link_to": "Sessions",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-10-30 14:24:46.197703",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Setup",
+ "number_cards": [
+  {
+   "label": "Maintenance Request",
+   "number_card_name": "Maintenance Request"
+  },
+  {
+   "label": "House Keeping Request",
+   "number_card_name": "House Keeping Request"
+  },
+  {
+   "label": "Room Types",
+   "number_card_name": "Room Types"
+  },
+  {
+   "label": "Total Rooms",
+   "number_card_name": "Total Rooms"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Hotel Manager"
+  }
+ ],
+ "sequence_id": 8.0,
+ "shortcuts": [],
+ "title": "Hotel Setup"
+}

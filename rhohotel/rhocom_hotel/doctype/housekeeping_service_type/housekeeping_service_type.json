@@ -1,0 +1,146 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-10-25 22:11:11.901334",
+    "custom": 1,
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "about_service_section",
+        "request_type_name",
+        "service_category",
+        "column_break_rwqg",
+        "is_active",
+        "is_billable",
+        "default_priority",
+        "description_section",
+        "description",
+        "column_break_jgov",
+        "default_task_type",
+        "estimated_time",
+        "pricing_optional_section",
+        "charge_amount",
+        "column_break_orqm",
+        "charge_description"
+    ],
+    "fields": [
+        {
+            "fieldname": "about_service_section",
+            "fieldtype": "Section Break",
+            "label": "About Service "
+        },
+        {
+            "fieldname": "request_type_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Service Name",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "service_category",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Service Category",
+            "options": "Guest Amenity\nRoom Cleaning\nMaintenance Support\nSpecial Service\nComplaint Resolution",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_rwqg",
+            "fieldtype": "Column Break"
+        },
+        {
+            "default": "0",
+            "fieldname": "is_active",
+            "fieldtype": "Check",
+            "in_list_view": 1,
+            "label": "Is Active"
+        },
+        {
+            "default": "0",
+            "fieldname": "is_billable",
+            "fieldtype": "Check",
+            "in_list_view": 1,
+            "label": "Is Billable"
+        },
+        {
+            "fieldname": "default_priority",
+            "fieldtype": "Select",
+            "label": "Default Priority"
+        },
+        {
+            "fieldname": "description_section",
+            "fieldtype": "Section Break",
+            "label": "Description"
+        },
+        {
+            "fieldname": "description",
+            "fieldtype": "Small Text",
+            "label": "Description"
+        },
+        {
+            "fieldname": "column_break_jgov",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "default_task_type",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Default Task Type",
+            "options": "Daily Cleaning\nCheckout Cleaning\nDeep Cleaning\nTurndown Service\nGuest Request\nEmergency Cleaning"
+        },
+        {
+            "fieldname": "estimated_time",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "label": "Estimated Time (mins)"
+        },
+        {
+            "fieldname": "pricing_optional_section",
+            "fieldtype": "Section Break",
+            "label": "Pricing (Optional)"
+        },
+        {
+            "fieldname": "charge_amount",
+            "fieldtype": "Currency",
+            "label": "Charge Amount"
+        },
+        {
+            "fieldname": "column_break_orqm",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "charge_description",
+            "fieldtype": "Small Text",
+            "label": "Charge Description"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-10-25 22:41:13.559270",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Housekeeping Service Type",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

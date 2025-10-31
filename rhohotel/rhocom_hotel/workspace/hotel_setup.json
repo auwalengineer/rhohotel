@@ -1,0 +1,8 @@
+{
+    "label": "Hotel Setup",
+    "icon": "fa fa-cogs",
+    "module": "Rhocom Hotel",
+    "public": 1,
+    "type": "page",
+    "name": "hotel_setup"
+}

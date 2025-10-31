@@ -1,0 +1,63 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-10-25 19:39:50.021352",
+    "custom": 1,
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "item_description",
+        "is_mandatory",
+        "sequence",
+        "estimated_time"
+    ],
+    "fields": [
+        {
+            "description": "What needs to be checked/cleaned",
+            "fieldname": "item_description",
+            "fieldtype": "Small Text",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Item Description"
+        },
+        {
+            "default": "0",
+            "description": "Must be completed to finish task",
+            "fieldname": "is_mandatory",
+            "fieldtype": "Check",
+            "in_list_view": 1,
+            "label": "Is Mandatory"
+        },
+        {
+            "description": "Order in which item should appear",
+            "fieldname": "sequence",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Sequence",
+            "reqd": 1
+        },
+        {
+            "description": "Time estimate for this specific item",
+            "fieldname": "estimated_time",
+            "fieldtype": "Int",
+            "label": "Estimated Time (mins)"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "istable": 1,
+    "links": [],
+    "modified": "2025-10-25 19:52:01.245386",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Checklist Template Item",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

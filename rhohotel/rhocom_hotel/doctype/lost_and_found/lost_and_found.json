@@ -1,0 +1,233 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "LF-{YYYY}-{#####}",
+    "creation": "2025-10-27 13:21:29.798658",
+    "custom": 1,
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "section_break_section",
+        "item_description",
+        "item_category",
+        "item_value_estimate",
+        "column_break_tpiv",
+        "status",
+        "item_image",
+        "found_information_section",
+        "room",
+        "found_location",
+        "found_date",
+        "column_break_kqvx",
+        "found_by",
+        "storage_location",
+        "claim_information_section",
+        "claimed_by",
+        "claimed_date",
+        "claimant_contact",
+        "column_break_oque",
+        "identification_provided",
+        "returned_by",
+        "disposal_information_section",
+        "disposal_date",
+        "disposal_notes",
+        "column_break_kker",
+        "disposal_method",
+        "additional_details_section",
+        "notes",
+        "guest_name",
+        "guest_contact"
+    ],
+    "fields": [
+        {
+            "fieldname": "section_break_section",
+            "fieldtype": "Section Break",
+            "label": "Section Break"
+        },
+        {
+            "fieldname": "item_description",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Item Description",
+            "reqd": 1
+        },
+        {
+            "fieldname": "item_category",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Item Category",
+            "options": "Jewelry\nElectronics\nClothing\nDocuments\nKeys\nMoney\nAccessories\nBags\nPersonal Items\nOther",
+            "reqd": 1
+        },
+        {
+            "fieldname": "item_value_estimate",
+            "fieldtype": "Currency",
+            "label": "Item Value Estimate"
+        },
+        {
+            "fieldname": "column_break_tpiv",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "options": "Stored\nClaimed\nDisposed\nDonated\nReturned to Owner",
+            "reqd": 1
+        },
+        {
+            "fieldname": "item_image",
+            "fieldtype": "Attach Image",
+            "label": "Item Image"
+        },
+        {
+            "fieldname": "found_information_section",
+            "fieldtype": "Section Break",
+            "label": "Found Information"
+        },
+        {
+            "fieldname": "room",
+            "fieldtype": "Link",
+            "label": "Room",
+            "options": "Hotel Room"
+        },
+        {
+            "fieldname": "found_location",
+            "fieldtype": "Data",
+            "label": "Found Location"
+        },
+        {
+            "fieldname": "found_date",
+            "fieldtype": "Date",
+            "label": "Found Date"
+        },
+        {
+            "fieldname": "column_break_kqvx",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "found_by",
+            "fieldtype": "Link",
+            "label": "Found By",
+            "options": "Employee"
+        },
+        {
+            "fieldname": "storage_location",
+            "fieldtype": "Data",
+            "label": "Storage Location"
+        },
+        {
+            "fieldname": "claim_information_section",
+            "fieldtype": "Section Break",
+            "label": "Claim Information"
+        },
+        {
+            "fieldname": "claimed_by",
+            "fieldtype": "Data",
+            "label": "Claimed By"
+        },
+        {
+            "fieldname": "claimed_date",
+            "fieldtype": "Date",
+            "label": "Claimed Date"
+        },
+        {
+            "fieldname": "claimant_contact",
+            "fieldtype": "Phone",
+            "label": "Claimant Contact"
+        },
+        {
+            "fieldname": "column_break_oque",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "identification_provided",
+            "fieldtype": "Data",
+            "label": "Identification Provided"
+        },
+        {
+            "fieldname": "returned_by",
+            "fieldtype": "Link",
+            "label": "Returned By",
+            "options": "Employee"
+        },
+        {
+            "fieldname": "disposal_information_section",
+            "fieldtype": "Section Break",
+            "label": "Disposal Information"
+        },
+        {
+            "fieldname": "disposal_date",
+            "fieldtype": "Date",
+            "label": "Disposal Date"
+        },
+        {
+            "fieldname": "disposal_notes",
+            "fieldtype": "Small Text",
+            "label": "Disposal Notes"
+        },
+        {
+            "fieldname": "column_break_kker",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "disposal_method",
+            "fieldtype": "Select",
+            "label": "Disposal Method",
+            "options": "Donated\nDiscarded\nDestroyed\nSold"
+        },
+        {
+            "fieldname": "additional_details_section",
+            "fieldtype": "Section Break",
+            "label": "Additional Details"
+        },
+        {
+            "fieldname": "notes",
+            "fieldtype": "Small Text",
+            "label": "Notes"
+        },
+        {
+            "fieldname": "guest_name",
+            "fieldtype": "Data",
+            "label": "Guest Name"
+        },
+        {
+            "fieldname": "guest_contact",
+            "fieldtype": "Phone",
+            "label": "Guest Contact"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-10-27 13:51:03.736858",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Lost and Found",
+    "naming_rule": "Expression (old style)",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}

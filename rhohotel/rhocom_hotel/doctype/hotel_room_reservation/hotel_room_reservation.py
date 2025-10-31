@@ -55,31 +55,19 @@ class HotelRoomReservation(Document):
 	def set_rates(self):
 		self.net_total = 0
 		for d in self.items:
-			net_rate = 0.0
-			for i in range(date_diff(self.to_date, self.from_date)):
-				day = add_days(self.from_date, i)
-				if not d.item:
-					continue
-				day_rate = frappe.db.sql("""
-					select
-						item.rate
-					from
-						`tabHotel Room Pricing Item` item,
-						`tabHotel Room Pricing` pricing
-					where
-						item.parent = pricing.name
-						and item.item = %s
-						and %s between pricing.from_date
-							and pricing.to_date""", (d.item, day))
-
-				if day_rate:
-					net_rate += day_rate[0][0]
-				else:
-					frappe.throw(
-						_("Please set Hotel Room Rate on {}").format(
-							frappe.format(day, dict(fieldtype="Date"))), exc=HotelRoomPricingNotSetError)
-			d.rate = net_rate
-			d.amount = net_rate * flt(d.qty)
+			# Use session period and duration for rate calculation
+			session = frappe.get_doc("Sessions", d.session_type) if d.session_type else None
+			tariff_filters = {
+				'room_type': d.room_type,
+				'rate_type': d.rate_type,
+				'session_type': d.session_type,
+				'is_active': 1
+			}
+			tariff = frappe.get_all('Hotel Room Tariff', filters=tariff_filters, fields=['amount'], limit=1)
+			if not tariff:
+				frappe.throw(_(f"No active tariff found for Room Type: {d.room_type}, Rate: {d.rate_type}, Session: {d.session_type}"))
+			d.rate = tariff[0].amount
+			d.amount = d.rate * flt(d.qty)
 			self.net_total += d.amount
 
 @frappe.whitelist()

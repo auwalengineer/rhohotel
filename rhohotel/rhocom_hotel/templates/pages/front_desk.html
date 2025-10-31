@@ -1,0 +1,82 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="container" style="padding:1.5rem;">
+    <h2>Front Desk</h2>
+    <div class="mb-3">
+        <div class="row mb-4" id="fd-number-cards">
+            <div class="col-md-3">
+                <div class="card text-center" style="background:#2ecc71;color:#fff;">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Vacant</h5>
+                        <h2 id="fd-vacant-count">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center" style="background:#e74c3c;color:#fff;">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Occupied</h5>
+                        <h2 id="fd-occupied-count">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center" style="background:#f1c40f;color:#222;">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Reserved</h5>
+                        <h2 id="fd-reserved-count">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center" style="background:#e67e22;color:#fff;">
+                    <div class="card-body">
+                        <h5 class="card-title">On-going Maintenance</h5>
+                        <h2 id="fd-maintenance-count">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label>Floor</label>
+            <select id="fd-floor" class="form-control">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label>Room Type</label>
+            <select id="fd-room-type" class="form-control">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Status</label>
+            <select id="fd-status" class="form-control">
+                <option value="">All</option>
+                <option>Vacant</option>
+                <option>Occupied</option>
+                <option>Reserved</option>
+                <option>Non Operational</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Maintenance</label>
+            <select id="fd-maint" class="form-control">
+                <option value="">All</option>
+                <option value="1">Only Maintenance</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Upcoming Checkout (hrs)</label>
+            <input id="fd-upcoming" class="form-control" type="number" min="0" placeholder="eg. 24" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <button id="fd-filter" class="btn btn-primary">Apply Filters</button>
+        <button id="fd-refresh" class="btn btn-outline-secondary">Refresh</button>
+    </div>
+    <div id="fd-grid" class="row"></div>
+</div>
+<script src="/assets/rhohotel/js/front_desk.js"></script>
+{% endblock %}

@@ -1,0 +1,230 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-10-27 11:34:21.579463",
+    "custom": 1,
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "request_details_section",
+        "room",
+        "asset",
+        "issue_type",
+        "priority",
+        "column_break_nyvj",
+        "status",
+        "reported_by",
+        "reported_at",
+        "requires_parts",
+        "issue_section",
+        "issue_description",
+        "assignment_section",
+        "assigned_to",
+        "target_completion",
+        "column_break_xqoz",
+        "actual_completion",
+        "asset_maintenance_log",
+        "cost_section",
+        "estimated_cost",
+        "actual_cost",
+        "column_break_ebfq",
+        "expense_claim",
+        "purchase_order",
+        "amended_from"
+    ],
+    "fields": [
+        {
+            "fieldname": "request_details_section",
+            "fieldtype": "Section Break",
+            "label": "Request Details"
+        },
+        {
+            "fieldname": "room",
+            "fieldtype": "Link",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Room",
+            "options": "Hotel Room",
+            "reqd": 1
+        },
+        {
+            "fieldname": "asset",
+            "fieldtype": "Link",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Asset",
+            "options": "Asset"
+        },
+        {
+            "fieldname": "issue_type",
+            "fieldtype": "Select",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "label": "Issue Type",
+            "options": "Plumbing\nElectrical\nHVAC\nFurniture\nAppliance\nElectronics\nStructural\nOther",
+            "reqd": 1
+        },
+        {
+            "default": "Medium",
+            "fieldname": "priority",
+            "fieldtype": "Select",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Priority",
+            "options": "Low\nMedium\nHigh\nCritical",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_nyvj",
+            "fieldtype": "Column Break"
+        },
+        {
+            "default": "Open",
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "options": "Open\nAssigned\nIn Progress\nOn Hold\nCompleted\nCancelled",
+            "reqd": 1
+        },
+        {
+            "fieldname": "reported_by",
+            "fieldtype": "Data",
+            "label": "Reported By"
+        },
+        {
+            "fieldname": "reported_at",
+            "fieldtype": "Datetime",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Reported At"
+        },
+        {
+            "default": "0",
+            "fieldname": "requires_parts",
+            "fieldtype": "Check",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Requires Parts"
+        },
+        {
+            "fieldname": "issue_section",
+            "fieldtype": "Section Break",
+            "label": "Issue Description"
+        },
+        {
+            "fieldname": "issue_description",
+            "fieldtype": "Text Editor",
+            "label": "Issue Description"
+        },
+        {
+            "fieldname": "assignment_section",
+            "fieldtype": "Section Break",
+            "label": "Assignment"
+        },
+        {
+            "fieldname": "assigned_to",
+            "fieldtype": "Link",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Assigned To",
+            "options": "Employee"
+        },
+        {
+            "fieldname": "target_completion",
+            "fieldtype": "Datetime",
+            "label": "Target Completion"
+        },
+        {
+            "fieldname": "column_break_xqoz",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "actual_completion",
+            "fieldtype": "Datetime",
+            "label": "Actual Completion"
+        },
+        {
+            "fieldname": "asset_maintenance_log",
+            "fieldtype": "Link",
+            "label": "Asset Maintenance Log",
+            "options": "Asset Maintenance Log"
+        },
+        {
+            "fieldname": "cost_section",
+            "fieldtype": "Section Break",
+            "label": "Cost Tracking"
+        },
+        {
+            "fieldname": "estimated_cost",
+            "fieldtype": "Currency",
+            "label": "Estimated Cost"
+        },
+        {
+            "fieldname": "actual_cost",
+            "fieldtype": "Currency",
+            "label": "Actual Cost"
+        },
+        {
+            "fieldname": "column_break_ebfq",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "expense_claim",
+            "fieldtype": "Link",
+            "label": "Expense Claim",
+            "options": "Expense Claim"
+        },
+        {
+            "fieldname": "purchase_order",
+            "fieldtype": "Link",
+            "label": "Purchase Order",
+            "options": "Purchase Order"
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Maintenance Request",
+            "print_hide": 1,
+            "read_only": 1,
+            "search_index": 1
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2025-10-27 12:51:41.253093",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Maintenance Request",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

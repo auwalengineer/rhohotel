@@ -1,0 +1,173 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-10-27 12:53:28.364702",
+    "custom": 1,
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "schedule_details_section",
+        "schedule_name",
+        "asset",
+        "room",
+        "maintenance_type",
+        "column_break_fajn",
+        "frequency",
+        "assigned_to",
+        "is_active",
+        "schedule_dates_section",
+        "next_due_date",
+        "column_break_etrz",
+        "last_completion_date",
+        "task_details_section",
+        "task_description",
+        "column_break_whlm",
+        "checklist_template",
+        "estimated_time",
+        "tracking_section",
+        "cost_center"
+    ],
+    "fields": [
+        {
+            "fieldname": "schedule_details_section",
+            "fieldtype": "Section Break",
+            "label": "Schedule Details"
+        },
+        {
+            "fieldname": "schedule_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Schedule Name",
+            "reqd": 1
+        },
+        {
+            "fieldname": "asset",
+            "fieldtype": "Link",
+            "label": "Asset",
+            "options": "Asset",
+            "reqd": 1
+        },
+        {
+            "fieldname": "room",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Room",
+            "options": "Hotel Room"
+        },
+        {
+            "fieldname": "maintenance_type",
+            "fieldtype": "Select",
+            "label": "Maintenance Type",
+            "options": "Preventive\nInspection\nCalibration\nCleaning<br>Servicing"
+        },
+        {
+            "fieldname": "column_break_fajn",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "frequency",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Frequency",
+            "options": "Daily\nWeekly\nBiweekly\nMonthly\nQuarterly\nSemi-annually\nAnnually",
+            "reqd": 1
+        },
+        {
+            "fieldname": "assigned_to",
+            "fieldtype": "Link",
+            "label": "Assigned To",
+            "options": "Employee"
+        },
+        {
+            "default": "0",
+            "fieldname": "is_active",
+            "fieldtype": "Check",
+            "label": "Is Active"
+        },
+        {
+            "fieldname": "schedule_dates_section",
+            "fieldtype": "Section Break",
+            "label": "Schedule Dates"
+        },
+        {
+            "fieldname": "next_due_date",
+            "fieldtype": "Date",
+            "label": "Next Due Date"
+        },
+        {
+            "fieldname": "column_break_etrz",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "last_completion_date",
+            "fieldtype": "Date",
+            "label": "Last Completion Date"
+        },
+        {
+            "fieldname": "task_details_section",
+            "fieldtype": "Section Break",
+            "label": "Task Details"
+        },
+        {
+            "fieldname": "task_description",
+            "fieldtype": "Text Editor",
+            "label": "Task Description",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_whlm",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "checklist_template",
+            "fieldtype": "Link",
+            "label": "Checklist Template",
+            "options": "Task Checklist Template"
+        },
+        {
+            "fieldname": "estimated_time",
+            "fieldtype": "Int",
+            "label": "Estimated Time (mins)"
+        },
+        {
+            "fieldname": "tracking_section",
+            "fieldtype": "Section Break",
+            "label": "Tracking"
+        },
+        {
+            "fieldname": "cost_center",
+            "fieldtype": "Link",
+            "label": "Cost Center",
+            "options": "Cost Center"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-10-27 13:11:33.714022",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Preventive Maintenance Schedule",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

@@ -1,0 +1,206 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "MNT-TASK-{YYYY}-{#####}",
+    "creation": "2025-10-27 12:13:19.867021",
+    "custom": 1,
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "section_break_sqbb",
+        "maintenance_request",
+        "room",
+        "asset",
+        "priority",
+        "amended_from",
+        "column_break_qiil",
+        "assigned_to",
+        "status",
+        "description_section",
+        "task_description",
+        "timing_section",
+        "start_time",
+        "column_break_piyn",
+        "end_time",
+        "work_performed_section",
+        "work_performed",
+        "parts_used",
+        "tracking_section",
+        "cost_center",
+        "column_break_zrlq",
+        "timesheet"
+    ],
+    "fields": [
+        {
+            "fieldname": "section_break_sqbb",
+            "fieldtype": "Section Break",
+            "label": "Task Details"
+        },
+        {
+            "fieldname": "maintenance_request",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Maintenance Request",
+            "options": "Maintenance Request",
+            "reqd": 1
+        },
+        {
+            "fieldname": "room",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Room",
+            "options": "Hotel Room",
+            "reqd": 1
+        },
+        {
+            "fieldname": "asset",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Asset",
+            "options": "Asset",
+            "reqd": 1
+        },
+        {
+            "fieldname": "priority",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Priority",
+            "options": "Low\nMedium\nHigh\nCritical",
+            "reqd": 1
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Maintenance Task",
+            "print_hide": 1,
+            "read_only": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "column_break_qiil",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "assigned_to",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Assigned To",
+            "options": "Employee",
+            "reqd": 1
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "reqd": 1
+        },
+        {
+            "fieldname": "description_section",
+            "fieldtype": "Section Break",
+            "label": "Description"
+        },
+        {
+            "fieldname": "task_description",
+            "fieldtype": "Text Editor",
+            "label": "Task Description"
+        },
+        {
+            "fieldname": "timing_section",
+            "fieldtype": "Section Break",
+            "label": "Timing"
+        },
+        {
+            "fieldname": "start_time",
+            "fieldtype": "Datetime",
+            "in_list_view": 1,
+            "label": "Start Time"
+        },
+        {
+            "fieldname": "column_break_piyn",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "end_time",
+            "fieldtype": "Datetime",
+            "in_list_view": 1,
+            "label": "End Time"
+        },
+        {
+            "fieldname": "work_performed_section",
+            "fieldtype": "Section Break",
+            "label": "Work Performed"
+        },
+        {
+            "fieldname": "work_performed",
+            "fieldtype": "Text Editor",
+            "label": "Work Performed"
+        },
+        {
+            "fieldname": "parts_used",
+            "fieldtype": "Table",
+            "label": "Parts Used",
+            "options": "Maintenance Parts Used"
+        },
+        {
+            "fieldname": "tracking_section",
+            "fieldtype": "Section Break",
+            "label": "Tracking"
+        },
+        {
+            "fieldname": "cost_center",
+            "fieldtype": "Link",
+            "label": "Cost Center",
+            "options": "Cost Center"
+        },
+        {
+            "fieldname": "column_break_zrlq",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "timesheet",
+            "fieldtype": "Link",
+            "label": "Timesheet",
+            "options": "Timesheet"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2025-10-27 12:29:13.266355",
+    "modified_by": "t.ajani@rhocom.ng",
+    "module": "Rhocom Hotel",
+    "name": "Maintenance Task",
+    "naming_rule": "Expression (old style)",
+    "owner": "t.ajani@rhocom.ng",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}
