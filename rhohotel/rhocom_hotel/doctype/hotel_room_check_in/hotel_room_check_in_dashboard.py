@@ -2,7 +2,7 @@ from frappe import _
 
 def get_data():
     return {
-        'fieldname': 'check_in',
+        'fieldname': 'name',
         'transactions': [
             {
                 'label': _('Related'),

@@ -37,7 +37,7 @@
             "read_only": 1
         },
         {
-            "fetch_from": "check_in.guest_name",
+            "fetch_from": "check_in.guest",
             "fieldname": "guest_name",
             "fieldtype": "Data",
             "label": "Guest Name",
@@ -96,6 +96,16 @@
             "fieldname": "billing_section",
             "fieldtype": "Section Break",
             "label": "Billing"
+        },
+        {
+            "fieldname": "invoices_html",
+            "fieldtype": "HTML",
+            "label": "Invoices"
+        },
+        {
+            "fieldname": "payments_html",
+            "fieldtype": "HTML",
+            "label": "Payments"
         },
         {
             "fieldname": "additional_charges",

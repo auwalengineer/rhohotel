@@ -114,3 +114,9 @@ class HotelRoomCheckOut(Document):
     def on_update(self):
         """Publish update to front desk"""
         frappe.publish_realtime('rhohotel_front_desk_update')
+
+@frappe.whitelist()
+def get_linked_documents(check_in):
+    invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in}, fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
+    payments = frappe.get_all("Payment Entry", filters={"custom_hotel_room_check_in": check_in}, fields=["name", "party", "posting_date", "paid_amount"])
+    return {"invoices": invoices, "payments": payments}

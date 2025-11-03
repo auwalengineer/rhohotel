@@ -1,38 +1,74 @@
 frappe.ui.form.on('Hotel Room Check Out', {
-    refresh: function (frm) {
-        // Show submit button only in Draft status
-        if (frm.doc.status === "Draft") {
-            frm.page.set_primary_action(__('Complete Check Out'), () => {
-                frm.savesubmit();
-            });
-        }
-
-        // Add print button after submission
-        if (frm.doc.docstatus === 1) {
-            frm.page.add_menu_item(__('Print Invoice'), () => {
-                frappe.show_alert(__('Print functionality to be implemented'));
-            });
-        }
-    },
-
-    check_in: function (frm) {
+    refresh: function(frm) {
         if (frm.doc.check_in) {
-            frappe.db.get_doc('Hotel Room Check In', frm.doc.check_in)
-                .then(doc => {
-                    frm.set_value('guest_name', doc.guest_name);
-                    frm.set_value('room_number', doc.room_number);
-                });
-        }
-    },
-
-    validate: function (frm) {
-        if (frm.doc.check_out_datetime) {
-            let checkOutDate = frappe.datetime.str_to_obj(frm.doc.check_out_datetime);
-            let now = frappe.datetime.now_datetime();
-            if (checkOutDate > now) {
-                frappe.msgprint(__('Check-out time cannot be in the future'));
-                frappe.validated = false;
-            }
+            frappe.call({
+                method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_out.hotel_room_check_out.get_linked_documents',
+                args: {
+                    check_in: frm.doc.check_in
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        frm.fields_dict.invoices_html.html(render_invoices(r.message.invoices));
+                        frm.fields_dict.payments_html.html(render_payments(r.message.payments));
+                    }
+                }
+            });
         }
     }
 });
+
+function render_invoices(invoices) {
+    let html = `<table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Sales Invoice</th>
+                <th>Customer</th>
+                <th>Posting Date</th>
+                <th>Grand Total</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    if (invoices.length > 0) {
+        invoices.forEach(invoice => {
+            html += `<tr>
+                <td><a href="/app/sales-invoice/${invoice.name}">${invoice.name}</a></td>
+                <td>${invoice.customer}</td>
+                <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
+                <td>${format_currency(invoice.grand_total)}</td>
+                <td>${format_currency(invoice.outstanding_amount)}</td>
+            </tr>`;
+        });
+    } else {
+        html += '<tr><td colspan="5" class="text-center">No Invoices Found</td></tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+}
+
+function render_payments(payments) {
+    let html = `<table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Payment Entry</th>
+                <th>Party</th>
+                <th>Posting Date</th>
+                <th>Paid Amount</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    if (payments.length > 0) {
+        payments.forEach(payment => {
+            html += `<tr>
+                <td><a href="/app/payment-entry/${payment.name}">${payment.name}</a></td>
+                <td>${payment.party}</td>
+                <td>${frappe.datetime.str_to_user(payment.posting_date)}</td>
+                <td>${format_currency(payment.paid_amount)}</td>
+            </tr>`;
+        });
+    } else {
+        html += '<tr><td colspan="4" class="text-center">No Payments Found</td></tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+}
