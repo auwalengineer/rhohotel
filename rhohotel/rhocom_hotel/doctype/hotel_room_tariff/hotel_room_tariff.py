@@ -13,7 +13,7 @@ class HotelRoomTariff(Document):
         filters = {
             'room_type': self.room_type,
             'rate_type': self.rate_type,
-            'session_type': self.session_type,
+            'hotel_session': self.hotel_session,
             'name': ['!=', self.name]
         }
         
@@ -21,18 +21,18 @@ class HotelRoomTariff(Document):
             frappe.throw("A tariff already exists for this combination of Room Type, Rate Type, and Session")
             
     @frappe.whitelist()
-    def get_amount(room_type, rate_type, session_type):
+    def get_amount(room_type, rate_type, hotel_session):
         """Get tariff amount for given combination"""
         tariff = frappe.get_all(
             'Hotel Room Tariff',
             filters={
                 'room_type': room_type,
                 'rate_type': rate_type,
-                'session_type': session_type,
+                'hotel_session': hotel_session,
                 'is_active': 1
             },
-            fields=['amount'],
+            fields=['rate_amount'],
             limit=1
         )
         
-        return tariff[0].amount if tariff else 0
+        return tariff[0].rate_amount if tariff else 0

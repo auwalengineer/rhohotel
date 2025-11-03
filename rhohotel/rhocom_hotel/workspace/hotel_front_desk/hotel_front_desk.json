@@ -1,0 +1,49 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"ieBQlgu9b8\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Hotel Front Desk</span>\",\"col\":12}},{\"id\":\"T7OUGWQoXk\",\"type\":\"card\",\"data\":{\"card_name\":\"Front Desk\",\"col\":4}}]",
+ "creation": "2025-11-02 14:40:05.055020",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "support",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Hotel Front Desk",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Front Desk",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Front Desk",
+   "link_count": 0,
+   "link_to": "front-desk",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-11-02 14:55:52.143601",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Front Desk",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 8.0,
+ "shortcuts": [],
+ "title": "Hotel Front Desk"
+}

@@ -19,10 +19,16 @@ class HotelRoomReservation(Document):
 		self.set_rates()
 		self.validate_availability()
 
+	def on_update(self):
+		frappe.publish_realtime('rhohotel_front_desk_update')
+
+	def on_trash(self):
+		frappe.publish_realtime('rhohotel_front_desk_update')
+
 	def validate_availability(self):
+		self.rooms_booked = {}
 		for i in range(date_diff(self.to_date, self.from_date)):
 			day = add_days(self.from_date, i)
-			self.rooms_booked = {}
 
 			for d in self.items:
 				if not d.item in self.rooms_booked:
@@ -37,7 +43,7 @@ class HotelRoomReservation(Document):
 					frappe.throw(_("Hotel Rooms of type {0} are unavailable on {1}").format(d.item,
 						frappe.format(day, dict(fieldtype="Date"))), exc=HotelRoomUnavailableError)
 
-				self.rooms_booked[d.item] += rooms_booked
+				self.rooms_booked[d.item] += d.qty
 
 	def get_total_rooms(self, item):
 		if not item in self.total_rooms:
@@ -71,29 +77,95 @@ class HotelRoomReservation(Document):
 			self.net_total += d.amount
 
 @frappe.whitelist()
+
 def get_room_rate(hotel_room_reservation):
+
 	"""Calculate rate for each day as it may belong to different Hotel Room Pricing Item"""
+
 	doc = frappe.get_doc(json.loads(hotel_room_reservation))
+
 	doc.set_rates()
+
 	return doc.as_dict()
 
+
+
+@frappe.whitelist()
+
+def extend_reservation(reservation_id, to_date):
+
+    original_reservation = frappe.get_doc("Hotel Room Reservation", reservation_id)
+
+
+
+    if not original_reservation.docstatus == 1:
+
+        frappe.throw(_("Only submitted reservations can be extended."))
+
+
+
+    new_reservation = frappe.copy_doc(original_reservation)
+
+    new_reservation.from_date = add_days(original_reservation.to_date, 1)
+
+    new_reservation.to_date = to_date
+
+    new_reservation.is_extension = 1
+
+    new_reservation.amended_from = original_reservation.name
+
+    new_reservation.insert()
+
+    new_reservation.submit()
+
+
+
+    return new_reservation
+
+
+
 def get_rooms_booked(room_type, day, exclude_reservation=None):
+
 	exclude_condition = ''
+
 	if exclude_reservation:
+
 		exclude_condition = 'and reservation.name != {0}'.format(frappe.db.escape(exclude_reservation))
 
+
+
 	return frappe.db.sql("""
+
 		select sum(item.qty)
+
 		from
+
 			`tabHotel Room Package` room_package,
+
 			`tabHotel Room Reservation Item` item,
+
 			`tabHotel Room Reservation` reservation
+
 		where
+
 			item.parent = reservation.name
+
 			and room_package.item = item.item
+
 			and room_package.hotel_room_type = %s
+
 			and reservation.docstatus = 1
+
 			{exclude_condition}
+
 			and %s between reservation.from_date
+
 				and reservation.to_date""".format(exclude_condition=exclude_condition),
+
 				(room_type, day))[0][0] or 0
+
+
+
+
+
+

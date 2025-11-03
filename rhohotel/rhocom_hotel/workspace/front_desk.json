@@ -1,8 +1,0 @@
-{
-    "label": "Front Desk",
-    "icon": "fa fa-hotel",
-    "module": "Rhocom Hotel",
-    "public": 1,
-    "type": "page",
-    "name": "front_desk"
-}

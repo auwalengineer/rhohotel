@@ -1,0 +1,8 @@
+{
+    "dt": "Payment Entry",
+    "fieldname": "custom_hotel_room_check_in",
+    "fieldtype": "Link",
+    "label": "Hotel Room Check In",
+    "options": "Hotel Room Check In",
+    "insert_after": "party"
+}

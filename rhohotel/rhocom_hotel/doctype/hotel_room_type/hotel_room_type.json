@@ -1,116 +1,140 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "autoname": "prompt",
- "beta": 1,
- "creation": "2025-10-08 12:33:56.320420",
- "doctype": "DocType",
- "document_type": "Setup",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "is_active",
-  "section_break_mmaf",
-  "capacity",
-  "base_adult",
-  "max_adult",
-  "base_child",
-  "max_child",
-  "extra_bed_capacity",
-  "section_break_3",
-  "amenities"
- ],
- "fields": [
-  {
-   "fieldname": "capacity",
-   "fieldtype": "Int",
-   "label": "Capacity"
-  },
-  {
-   "fieldname": "extra_bed_capacity",
-   "fieldtype": "Int",
-   "label": "Extra Bed Capacity"
-  },
-  {
-   "fieldname": "section_break_3",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amenities",
-   "fieldtype": "Table",
-   "label": "Amenities",
-   "options": "Hotel Room Amenity",
-   "reqd": 1
-  },
-  {
-   "default": "1",
-   "fieldname": "base_adult",
-   "fieldtype": "Int",
-   "label": "Base Adult"
-  },
-  {
-   "fieldname": "max_adult",
-   "fieldtype": "Int",
-   "label": "Max Adult"
-  },
-  {
-   "fieldname": "base_child",
-   "fieldtype": "Int",
-   "label": "Base Child"
-  },
-  {
-   "fieldname": "max_child",
-   "fieldtype": "Int",
-   "label": "Max Child"
-  },
-  {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "label": "Is Active"
-  },
-  {
-   "fieldname": "section_break_mmaf",
-   "fieldtype": "Section Break"
-  }
- ],
- "links": [],
- "modified": "2025-10-24 13:16:14.678731",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Hotel Room Type",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Hotel Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
- "quick_entry": 1,
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+    "actions": [],
+    "allow_import": 1,
+    "allow_rename": 1,
+    "autoname": "field:room_type",
+    "title_field": "room_type",
+    "beta": 1,
+    "creation": "2025-10-08 12:33:56.320420",
+    "doctype": "DocType",
+    "document_type": "Setup",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "is_active",
+        "room_type",
+        "erpnext_item",
+        "section_break_mmaf",
+        "capacity",
+        "base_adult",
+        "max_adult",
+        "base_child",
+        "max_child",
+        "extra_bed_capacity",
+        "section_break_3",
+        "amenities"
+    ],
+    "fields": [
+        {
+            "fieldname": "room_type",
+            "fieldtype": "Data",
+            "label": "Room Type",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "erpnext_item",
+            "fieldtype": "Link",
+            "label": "Item",
+            "options": "Item",
+            "reqd": 1
+        },
+        {
+            "fieldname": "income_account",
+            "fieldtype": "Link",
+            "label": "Income Account",
+            "options": "Account",
+            "reqd": 1
+        },
+        {
+            "fieldname": "capacity",
+            "fieldtype": "Int",
+            "label": "Capacity"
+        },
+        {
+            "fieldname": "extra_bed_capacity",
+            "fieldtype": "Int",
+            "label": "Extra Bed Capacity"
+        },
+        {
+            "fieldname": "section_break_3",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "amenities",
+            "fieldtype": "Table",
+            "label": "Amenities",
+            "options": "Hotel Room Amenity",
+            "reqd": 1
+        },
+        {
+            "default": "1",
+            "fieldname": "base_adult",
+            "fieldtype": "Int",
+            "label": "Base Adult"
+        },
+        {
+            "fieldname": "max_adult",
+            "fieldtype": "Int",
+            "label": "Max Adult"
+        },
+        {
+            "fieldname": "base_child",
+            "fieldtype": "Int",
+            "label": "Base Child"
+        },
+        {
+            "fieldname": "max_child",
+            "fieldtype": "Int",
+            "label": "Max Child"
+        },
+        {
+            "default": "1",
+            "fieldname": "is_active",
+            "fieldtype": "Check",
+            "label": "Is Active"
+        },
+        {
+            "fieldname": "section_break_mmaf",
+            "fieldtype": "Section Break"
+        }
+    ],
+    "links": [],
+    "modified": "2025-10-24 13:16:14.678731",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Room Type",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "quick_entry": 1,
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
 }

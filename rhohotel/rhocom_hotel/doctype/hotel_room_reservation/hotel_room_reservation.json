@@ -79,6 +79,14 @@
             "unique": 0
         },
         {
+            "fieldname": "room_number",
+            "fieldtype": "Link",
+            "label": "Room Number",
+            "options": "Hotel Room",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
             "allow_bulk_edit": 0,
             "allow_in_quick_entry": 0,
             "allow_on_submit": 0,
@@ -333,6 +341,12 @@
             "set_only_once": 0,
             "translatable": 0,
             "unique": 0
+        },
+        {
+            "fieldname": "is_extension",
+            "fieldtype": "Check",
+            "label": "Is Extension",
+            "read_only": 1
         },
         {
             "allow_bulk_edit": 0,

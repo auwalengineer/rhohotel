@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Rhocom Technology Ltd and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("Sessions", {
+// frappe.ui.form.on("Hotel Guest", {
 // 	refresh(frm) {
 
 // 	},

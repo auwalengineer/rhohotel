@@ -20,7 +20,7 @@ frappe.ui.form.on('Hotel Room Check Out', {
             frappe.db.get_doc('Hotel Room Check In', frm.doc.check_in)
                 .then(doc => {
                     frm.set_value('guest_name', doc.guest_name);
-                    frm.set_value('room', doc.room);
+                    frm.set_value('room_number', doc.room_number);
                 });
         }
     },

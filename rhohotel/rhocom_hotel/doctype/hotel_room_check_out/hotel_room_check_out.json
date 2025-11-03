@@ -5,7 +5,7 @@
     "engine": "InnoDB",
     "field_order": [
         "check_in",
-        "room",
+        "room_number",
         "guest_name",
         "check_out_datetime",
         "column_break_1",
@@ -29,8 +29,8 @@
             "reqd": 1
         },
         {
-            "fetch_from": "check_in.room",
-            "fieldname": "room",
+            "fetch_from": "check_in.room_number",
+            "fieldname": "room_number",
             "fieldtype": "Link",
             "label": "Room",
             "options": "Hotel Room",
@@ -78,6 +78,21 @@
             "label": "Remarks"
         },
         {
+            "fieldname": "late_checkout_sb",
+            "fieldtype": "Section Break",
+            "label": "Late Checkout"
+        },
+        {
+            "fieldname": "late_checkout",
+            "fieldtype": "Check",
+            "label": "Late Checkout"
+        },
+        {
+            "fieldname": "late_checkout_charges",
+            "fieldtype": "Currency",
+            "label": "Late Checkout Charges"
+        },
+        {
             "fieldname": "billing_section",
             "fieldtype": "Section Break",
             "label": "Billing"
@@ -86,7 +101,7 @@
             "fieldname": "additional_charges",
             "fieldtype": "Table",
             "label": "Additional Charges",
-            "options": "Hotel Room Additional Charge"
+            "options": "Hotel Room Check Out Additional Charge"
         },
         {
             "fieldname": "total_amount",

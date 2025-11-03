@@ -1,0 +1,9 @@
+{
+    "dt": "Customer",
+    "fieldname": "custom_guest_id",
+    "fieldtype": "Data",
+    "label": "Hotel Guest ID",
+    "hidden": 1,
+    "read_only": 1,
+    "unique": 1
+}

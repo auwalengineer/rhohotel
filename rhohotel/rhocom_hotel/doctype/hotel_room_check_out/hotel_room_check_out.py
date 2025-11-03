@@ -10,6 +10,7 @@ class HotelRoomCheckOut(Document):
     def validate(self):
         self.validate_check_in()
         self.calculate_stay_duration()
+        self.handle_late_checkout()
         self.calculate_total()
 
     def validate_check_in(self):
@@ -33,18 +34,30 @@ class HotelRoomCheckOut(Document):
 
         self.actual_stay_duration = f"{days} days, {int(remaining_hours)} hours"
 
+    def handle_late_checkout(self):
+        check_in = frappe.get_doc("Hotel Room Check In", self.check_in)
+        self.late_checkout = check_in.late_checkout
+        if self.late_checkout:
+            hotel_settings = frappe.get_single("Hotel Settings")
+            if hotel_settings.enable_late_check_out:
+                self.late_checkout_charges = hotel_settings.late_check_out_charges
+            else:
+                self.late_checkout_charges = 0
+        else:
+            self.late_checkout_charges = 0
+
     def calculate_total(self):
         """Calculate total amount including additional charges and session-based room charges"""
         check_in = frappe.get_doc("Hotel Room Check In", self.check_in)
         # Use session and tariff for main room charge
         room_charge = 0
-        if check_in.room_type and check_in.rate_type and check_in.session_type:
+        if check_in.room_type and check_in.rate_type and check_in.hotel_session:
             tariff = frappe.get_all(
                 "Hotel Room Tariff",
                 filters={
                     "room_type": check_in.room_type,
                     "rate_type": check_in.rate_type,
-                    "session_type": check_in.session_type,
+                    "hotel_session": check_in.hotel_session,
                     "is_active": 1
                 },
                 fields=["amount"],
@@ -53,12 +66,15 @@ class HotelRoomCheckOut(Document):
             if tariff:
                 room_charge = tariff[0].amount
         self.total_amount = room_charge + sum(charge.amount for charge in self.additional_charges)
+        if self.late_checkout:
+            self.total_amount += self.late_checkout_charges
 
     def on_submit(self):
         """Update related records on checkout"""
         self.status = "Completed"
         self.update_check_in()
         self.update_room()
+        frappe.publish_realtime('rhohotel_front_desk_update')
 
     def update_check_in(self):
         """Update check-in status"""
@@ -67,14 +83,18 @@ class HotelRoomCheckOut(Document):
             "docstatus": 2  # Cancel the check-in
         })
 
+    # update room status to Vacant and housekeeping to Dirty
     def update_room(self):
         """Update room status and trigger housekeeping"""
-        frappe.db.set_value("Hotel Room", self.room, {
+        frappe.db.set_value("Hotel Room", self.room_number, {
             "status": "Vacant",
             "housekeeping_status": "Dirty",
-            "current_key_card": ""
+            "current_key_card": "",
+            "current_check_in": "",
+            "current_guest": "",
         })
 
+    # revert changes if checkout is cancelled
     def on_cancel(self):
         """Revert changes when checkout is cancelled"""
         if self.docstatus == 2:  # Only if cancelled
@@ -84,8 +104,13 @@ class HotelRoomCheckOut(Document):
                 check_in.status = "Checked In"
                 check_in.db_update()
 
-            frappe.db.set_value("Hotel Room", self.room, {
+            frappe.db.set_value("Hotel Room", self.room_number, {
                 "status": "Occupied",
                 "housekeeping_status": "Clean",
                 "current_key_card": check_in.key_card_number
             })
+        frappe.publish_realtime('rhohotel_front_desk_update')
+
+    def on_update(self):
+        """Publish update to front desk"""
+        frappe.publish_realtime('rhohotel_front_desk_update')

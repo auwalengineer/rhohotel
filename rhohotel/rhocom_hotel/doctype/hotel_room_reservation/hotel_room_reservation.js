@@ -7,6 +7,28 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			frm.add_custom_button(__('Create Invoice'), () => {
 				frm.trigger("make_invoice");
 			});
+
+			frm.add_custom_button(__('Extend Reservation'), () => {
+				frappe.prompt([
+					{
+						label: __('New To Date'),
+						fieldname: 'to_date',
+						fieldtype: 'Date',
+						reqd: 1
+					}
+				], function(values){
+					frappe.call({
+						method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.extend_reservation',
+						args: {
+							reservation_id: frm.doc.name,
+							to_date: values.to_date
+						},
+						callback: function(r) {
+							frappe.set_route('Form', 'Hotel Room Reservation', r.message.name);
+						}
+					});
+				}, __('Extend Reservation'), __('Extend'));
+			});
 		}
 	},
 	from_date: function (frm) {

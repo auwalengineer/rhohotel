@@ -11,11 +11,11 @@
     "engine": "InnoDB",
     "field_order": [
         "room_number",
+        "room_type",
         "operational_status",
         "status",
         "housekeeping_status",
         "maintenance_flag",
-        "hotel_room_type",
         "floor",
         "capacity",
         "extra_bed_capacity",
@@ -41,7 +41,7 @@
             "reqd": 1
         },
         {
-            "fieldname": "hotel_room_type",
+            "fieldname": "room_type",
             "fieldtype": "Link",
             "in_list_view": 1,
             "label": "Room Type",
@@ -99,7 +99,8 @@
             "fieldname": "current_key_card",
             "fieldtype": "Data",
             "in_list_view": 1,
-            "label": "Current Key Card"
+            "label": "Current Key Card",
+            "read_only": 1
         },
         {
             "default": "In Service",
@@ -138,12 +139,22 @@
         {
             "fieldname": "last_keycard_user",
             "fieldtype": "Data",
-            "label": "Last Keycard User"
+            "label": "Last Keycard User",
+            "read_only": 1
         },
         {
             "fieldname": "last_keycard_time",
             "fieldtype": "Datetime",
-            "label": "Last Keycard Time"
+            "label": "Last Keycard Time",
+            "read_only": 1
+        },
+        {
+            "fieldname": "current_check_in",
+            "fieldtype": "Link",
+            "in_list_view": 0,
+            "label": "Current Check-In",
+            "options": "Hotel Room Check In",
+            "read_only": 1
         }
     ],
     "links": [],

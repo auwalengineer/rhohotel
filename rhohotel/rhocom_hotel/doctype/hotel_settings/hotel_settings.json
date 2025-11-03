@@ -103,6 +103,28 @@
             "search_index": 0,
             "set_only_once": 0,
             "unique": 0
+        },
+        {
+            "fieldname": "default_check_out_time",
+            "fieldtype": "Time",
+            "label": "Default Check-Out Time",
+            "default": "12:00:00"
+        },
+        {
+            "fieldname": "sb_late_checkout",
+            "fieldtype": "Section Break",
+            "label": "Late Checkout"
+        },
+        {
+            "fieldname": "enable_late_check_out",
+            "fieldtype": "Check",
+            "label": "Enable Late Check-out"
+        },
+        {
+            "fieldname": "late_check_out_charges",
+            "fieldtype": "Currency",
+            "label": "Late Check-out Charges",
+            "depends_on": "eval:doc.enable_late_check_out"
         }
     ],
     "has_web_view": 0,
@@ -117,8 +139,8 @@
     "max_attachments": 0,
     "modified": "2017-12-09 12:11:12.857308",
     "modified_by": "Administrator",
-"module": "Rhocom Hotel",
-"name": "Hotel Settings",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Settings",
     "name_case": "",
     "owner": "Administrator",
     "permissions": [

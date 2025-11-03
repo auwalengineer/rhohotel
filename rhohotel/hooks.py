@@ -84,6 +84,8 @@ app_license = "mit"
 
 # before_install = "rhohotel.install.before_install"
 # after_install = "rhohotel.install.after_install"
+#after_migrate = "rhohotel.rhocom_hotel.patches.add_checkin_room_fields.add_checkin_room_fields"
+
 
 # Uninstallation
 # ------------

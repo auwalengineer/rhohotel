@@ -1,7 +1,7 @@
 {
  "charts": [],
- "content": "[{\"id\":\"OI_vf7KEVH\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Hotel Setup</span>\",\"col\":12}},{\"id\":\"KENqbbAYzk\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Rooms\",\"col\":3}},{\"id\":\"G82B7t9-Uk\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Room Types\",\"col\":3}},{\"id\":\"EFj0DtNs6s\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"House Keeping Request\",\"col\":3}},{\"id\":\"WzYJ0xKHU1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Maintenance Request\",\"col\":3}},{\"id\":\"D9slV9oXyQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Rooms & Inventory\",\"col\":5}},{\"id\":\"xg1a2ByCd7\",\"type\":\"card\",\"data\":{\"card_name\":\"Maintenance & House Keeping\",\"col\":4}},{\"id\":\"kNP2UApCzf\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}}]",
- "creation": "2025-10-25 00:08:25.619488",
+ "content": "[{\"id\":\"jkXWNy0FHx\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Hotel Setup</span>\",\"col\":12}},{\"id\":\"5hzc3n5rGB\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Rooms\",\"col\":3}},{\"id\":\"3Mz4gpPHTB\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Vacant Rooms\",\"col\":3}},{\"id\":\"ZexFTU9UDC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Occupied Rooms\",\"col\":3}},{\"id\":\"Ry3hC3OWtv\",\"type\":\"card\",\"data\":{\"card_name\":\"Guest Operations\",\"col\":4}},{\"id\":\"aV2ZSxC5bm\",\"type\":\"card\",\"data\":{\"card_name\":\"Room Setup\",\"col\":4}},{\"id\":\"AQN499IVnR\",\"type\":\"card\",\"data\":{\"card_name\":\"Pricing Setup\",\"col\":4}},{\"id\":\"8OLktOScCE\",\"type\":\"card\",\"data\":{\"card_name\":\"Setups\",\"col\":4}},{\"id\":\"UBKRYjj8lL\",\"type\":\"card\",\"data\":{\"card_name\":\"House Keeping\",\"col\":4}},{\"id\":\"70An0-yVzm\",\"type\":\"card\",\"data\":{\"card_name\":\"Maintenance\",\"col\":4}},{\"id\":\"LdiR3CKhMM\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}},{\"id\":\"jr1MSVQFIa\",\"type\":\"card\",\"data\":{\"card_name\":\"Mis.\",\"col\":4}}]",
+ "creation": "2025-10-31 09:23:30.657804",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -16,21 +16,21 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "1. Create Room Types",
-   "link_count": 0,
-   "link_to": "Hotel Room Type",
+   "label": "Room Setup",
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
-   "type": "Link"
+   "type": "Card Break"
   },
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Rooms & Inventory",
-   "link_count": 3,
+   "label": "Room Rate Type",
+   "link_count": 0,
+   "link_to": "Hotel Room Rate",
    "link_type": "DocType",
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -55,9 +55,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Amenity",
+   "label": "Floor",
    "link_count": 0,
-   "link_to": "Hotel Amenity",
+   "link_to": "Hotel Floor",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -65,57 +65,8 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Maintenance & House Keeping",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Maintenance",
-   "link_count": 0,
-   "link_to": "Maintenance Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "House Keeping",
-   "link_count": 0,
-   "link_to": "Housekeeping Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Service Type",
-   "link_count": 0,
-   "link_to": "Housekeeping Service Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "House Keeping Task",
-   "link_count": 0,
-   "link_to": "Housekeeping Task",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Configuration",
-   "link_count": 4,
+   "label": "Pricing Setup",
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -143,7 +94,124 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Session Type",
+   "label": "House Keeping",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "House Keep Request",
+   "link_count": 0,
+   "link_to": "Housekeeping Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "House Keep Task",
+   "link_count": 0,
+   "link_to": "Housekeeping Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "House Keeping Type",
+   "link_count": 0,
+   "link_to": "Housekeeping Service Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Maintenance",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Maintenance Request",
+   "link_count": 0,
+   "link_to": "Maintenance Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Maintenance Task",
+   "link_count": 0,
+   "link_to": "Maintenance Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Maintenance Schedule ",
+   "link_count": 0,
+   "link_to": "Maintenance Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Preventive Maintenance Schedule",
+   "link_count": 0,
+   "link_to": "Preventive Maintenance Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setups",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Market Places",
+   "link_count": 0,
+   "link_to": "Market Place",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Business Sources",
+   "link_count": 0,
+   "link_to": "Business Source",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Session Types",
    "link_count": 0,
    "link_to": "Hotel Session Type",
    "link_type": "DocType",
@@ -155,32 +223,105 @@
    "is_query_report": 0,
    "label": "Sessions",
    "link_count": 0,
-   "link_to": "Sessions",
+   "link_to": "Hotel Sessions",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuration",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hotel Settings",
+   "link_count": 0,
+   "link_to": "Hotel Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Guest Operations",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Check In",
+   "link_count": 0,
+   "link_to": "Hotel Room Check In",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Reservations",
+   "link_count": 0,
+   "link_to": "Hotel Room Reservation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hotel Guests",
+   "link_count": 0,
+   "link_to": "Hotel Guest",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mis.",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Lost and Found",
+   "link_count": 0,
+   "link_to": "Lost and Found",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-10-30 14:24:46.197703",
+ "modified": "2025-11-02 14:40:36.282502",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Setup",
  "number_cards": [
   {
-   "label": "Maintenance Request",
-   "number_card_name": "Maintenance Request"
-  },
-  {
-   "label": "House Keeping Request",
-   "number_card_name": "House Keeping Request"
-  },
-  {
-   "label": "Room Types",
-   "number_card_name": "Room Types"
-  },
-  {
    "label": "Total Rooms",
-   "number_card_name": "Total Rooms"
+   "number_card_name": "total room"
+  },
+  {
+   "label": "Vacant Rooms",
+   "number_card_name": "Vacant Rooms"
+  },
+  {
+   "label": "Occupied Rooms",
+   "number_card_name": "Occupied Rooms"
   }
  ],
  "owner": "Administrator",
@@ -192,7 +333,7 @@
    "role": "Hotel Manager"
   }
  ],
- "sequence_id": 8.0,
+ "sequence_id": 9.0,
  "shortcuts": [],
  "title": "Hotel Setup"
 }

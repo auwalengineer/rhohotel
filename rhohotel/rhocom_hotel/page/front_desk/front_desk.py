@@ -1,98 +1,57 @@
 import frappe
-from frappe import _
-from frappe.utils import nowdate, add_days, get_datetime
+import json
+from frappe.utils import nowdate
+
+@frappe.whitelist()
+def get_room_statistics():
+    vacant = frappe.db.count("Hotel Room", {"status": "Vacant"})
+    occupied = frappe.db.count("Hotel Room", {"status": "Occupied"})
+    dirty = frappe.db.count("Hotel Room", {"housekeeping_status": "Dirty"})
+    maintenance = frappe.db.count("Hotel Room", {"maintenance_flag": 1})
+
+    today = nowdate()
+    reserved_rooms = frappe.get_all(
+        "Hotel Room Reservation",
+        filters={
+            "from_date": ("<=", today),
+            "to_date": (">=", today),
+            "status": ("not in", ["Cancelled", "Checked Out"]),
+        },
+        fields=["room_number"],
+        distinct=True,
+    )
+    reserved = len(reserved_rooms)
+
+    return {
+        "vacant": vacant,
+        "occupied": occupied,
+        "dirty": dirty,
+        "maintenance": maintenance,
+        "reserved": reserved,
+    }
 
 @frappe.whitelist()
 def get_rooms(filters=None):
-    """Get rooms with their current status, guest, and maintenance info"""
-    conditions = []
-    params = {}
-    
-    if isinstance(filters, str):
-        filters = frappe.parse_json(filters)
+    if filters and isinstance(filters, str):
+        filters = json.loads(filters)
+    else:
+        filters = {}
 
-    if filters:
-        if filters.get('floor'):
-            conditions.append('r.floor = %(floor)s')
-            params['floor'] = filters['floor']
-            
-        if filters.get('room_type'):
-            conditions.append('r.hotel_room_type = %(room_type)s')
-            params['room_type'] = filters['room_type']
-            
-        if filters.get('status'):
-            conditions.append('r.status = %(status)s')
-            params['status'] = filters['status']
-            
-        if filters.get('housekeeping_status'):
-            conditions.append('r.housekeeping_status = %(housekeeping_status)s')
-            params['housekeeping_status'] = filters['housekeeping_status']
+    room_filters = {}
+    if filters.get('floor'):
+        room_filters['floor'] = filters.get('floor')
+    if filters.get('room_type'):
+        room_filters['hotel_room_type'] = filters.get('room_type')
+    if filters.get('status'):
+        room_filters['status'] = filters.get('status')
+    if filters.get('housekeeping_status'):
+        room_filters['housekeeping_status'] = filters.get('housekeeping_status')
 
-    # Base query for rooms
-    query = """
-        SELECT 
-            r.name,
-            r.room_number,
-            r.hotel_room_type,
-            r.floor,
-            f.floor_name,
-            r.status,
-            r.operational_status,
-            r.housekeeping_status,
-            r.current_key_card,
-            ci.guest_name as current_guest,
-            ci.name as check_in,
-            ci.expected_check_out_datetime as expected_checkout,
-            mr.name as maintenance_request,
-            mr.description as maintenance_description
-        FROM 
-            `tabHotel Room` r
-        LEFT JOIN
-            `tabHotel Floor` f ON r.floor = f.name
-        LEFT JOIN
-            `tabHotel Room Check In` ci ON ci.room = r.name 
-            AND ci.status = 'Checked In'
-        LEFT JOIN
-            `tabHotel Room Maintenance Request` mr ON mr.room = r.name 
-            AND mr.status IN ('Open', 'In Progress')
-    """
-    
-    if conditions:
-        query += ' WHERE ' + ' AND '.join(conditions)
-        
-    if filters and filters.get('checkout_today'):
-        checkout_condition = """
-            AND DATE(ci.expected_check_out_datetime) = CURDATE()
-        """
-        query += checkout_condition
+    rooms = frappe.get_all(
+        "Hotel Room",
+        fields=["name", "room_number", "hotel_room_type", "floor", "status", "housekeeping_status", "maintenance_flag", "current_check_in"],
+        filters=room_filters,
+        order_by="room_number"
+    )
 
-    query += ' ORDER BY r.room_number'
-    
-    rooms = frappe.db.sql(query, params, as_dict=1)
-    
-    # Add reservation info
-    for room in rooms:
-        if not room.current_guest:  # Only check reservations for vacant rooms
-            reservation = frappe.db.sql("""
-                SELECT 
-                    r.guest_name,
-                    r.from_date
-                FROM 
-                    `tabHotel Room Reservation` r
-                INNER JOIN
-                    `tabHotel Room Package` p ON p.hotel_room_type = %s
-                WHERE 
-                    r.docstatus = 1
-                    AND r.status = 'Confirmed'
-                    AND r.from_date <= %s
-                    AND r.to_date >= %s
-                ORDER BY r.from_date
-                LIMIT 1
-            """, (room.hotel_room_type, nowdate(), nowdate()), as_dict=1)
-            
-            if reservation:
-                room.status = 'Reserved'
-                room.upcoming_guest = reservation[0].guest_name
-                room.check_in_date = reservation[0].from_date
-    
     return rooms
