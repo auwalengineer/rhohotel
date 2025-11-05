@@ -5,6 +5,9 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import time_diff_in_hours, get_datetime, add_to_date
+import requests
+import base64
+
 
 class HotelRoomCheckOut(Document):
     def validate(self):
@@ -115,8 +118,175 @@ class HotelRoomCheckOut(Document):
         """Publish update to front desk"""
         frappe.publish_realtime('rhohotel_front_desk_update')
 
+
 @frappe.whitelist()
 def get_linked_documents(check_in):
     invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in}, fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
     payments = frappe.get_all("Payment Entry", filters={"custom_hotel_room_check_in": check_in}, fields=["name", "party", "posting_date", "paid_amount"])
-    return {"invoices": invoices, "payments": payments}
+
+    total_outstanding_amount = sum(invoice.outstanding_amount for invoice in invoices)
+
+    check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
+    guest_doc = frappe.get_doc("Hotel Guest", check_in_doc.guest)
+    guest_email = guest_doc.email
+
+    return {"invoices": invoices, "payments": payments, "total_outstanding_amount": total_outstanding_amount, "guest_email": guest_email}
+
+
+@frappe.whitelist()
+def initiate_monnify_payment(check_in_docname, check_out_docname, amount, guest_email, guest_name):
+    hotel_settings = frappe.get_single("Hotel Settings")
+    api_key = hotel_settings.monnify_api_key
+    secret_key = hotel_settings.monnify_secret_key
+
+    if not (api_key and secret_key):
+        frappe.throw(_("Monnify API Key and Secret Key not set in Hotel Settings."))
+
+    # Monnify API Base URL (use sandbox for testing, production for live)
+    base_url = "https://sandbox.monnify.com" # Or "https://api.monnify.com" for production
+
+    # Authenticate and get access token
+    auth_string = f"{api_key}:{secret_key}"
+    encoded_auth_string = base64.b64encode(auth_string.encode()).decode()
+
+    headers = {
+        "Authorization": f"Basic {encoded_auth_string}"
+    }
+    
+    # Get access token
+    try:
+        token_response = requests.post(f"{base_url}/api/v1/auth/login", headers=headers)
+        token_response.raise_for_status()
+        access_token = token_response.json().get("responseBody", {}).get("accessToken")
+    except requests.exceptions.RequestException as e:
+        frappe.throw(_(f"Monnify authentication failed: {e}"))
+
+    if not access_token:
+        frappe.throw(_("Failed to get Monnify access token."))
+
+    # Initiate transaction
+    transaction_ref = frappe.generate_hash(length=20) # Generate a unique transaction reference
+    
+    payload = {
+        "amount": amount,
+        "customerName": guest_name,
+        "customerEmail": guest_email,
+        "paymentReference": transaction_ref,
+        "paymentDescription": f"Payment for Hotel Room Check In: {check_in_docname}",
+        "currencyCode": "NGN", # Assuming NGN, user can configure later
+        "contractCode": "YOUR_CONTRACT_CODE", # User needs to provide this
+        "redirectUrl": frappe.get_site_url(f"/api/method/rhohotel.rhocom_hotel.doctype.hotel_room_check_out.hotel_room_check_out.monnify_payment_callback"),
+        "metadata": {
+            "check_in_docname": check_in_docname,
+            "check_out_docname": check_out_docname
+        }
+    }
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        init_response = requests.post(f"{base_url}/api/v1/merchant/transactions/init-transaction", json=payload, headers=headers)
+        init_response.raise_for_status()
+        response_data = init_response.json().get("responseBody", {})
+        payment_page_url = response_data.get("checkoutUrl")
+        transaction_reference = response_data.get("transactionReference")
+
+        if not payment_page_url:
+            frappe.throw(_("Failed to get Monnify payment page URL."))
+
+        return {"payment_url": payment_page_url, "transaction_reference": transaction_reference}
+
+    except requests.exceptions.RequestException as e:
+        frappe.throw(_(f"Monnify transaction initiation failed: {e}"))
+
+
+@frappe.whitelist(allow_guest=True)
+def monnify_payment_callback(transactionReference, paymentStatus, amountPaid, customerEmail, check_in_docname, check_out_docname):
+    # Verify the transaction status with Monnify
+    hotel_settings = frappe.get_single("Hotel Settings")
+    api_key = hotel_settings.monnify_api_key
+    secret_key = hotel_settings.monnify_secret_key
+
+    if not (api_key and secret_key):
+        frappe.throw(_("Monnify API Key and Secret Key not set in Hotel Settings."))
+
+    base_url = "https://sandbox.monnify.com" # Or "https://api.monnify.com" for production
+
+    auth_string = f"{api_key}:{secret_key}"
+    encoded_auth_string = base64.b64encode(auth_string.encode()).decode()
+
+    headers = {
+        "Authorization": f"Basic {encoded_auth_string}"
+    }
+    
+    try:
+        token_response = requests.post(f"{base_url}/api/v1/auth/login", headers=headers)
+        token_response.raise_for_status()
+        access_token = token_response.json().get("responseBody", {}).get("accessToken")
+    except requests.exceptions.RequestException as e:
+        frappe.log_error(f"Monnify authentication failed in callback: {e}")
+        frappe.redirect("/payment-failed") # Redirect to a payment failed page
+
+    if not access_token:
+        frappe.log_error("Failed to get Monnify access token in callback.")
+        frappe.redirect("/payment-failed")
+
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    try:
+        verify_response = requests.get(f"{base_url}/api/v1/merchant/transactions/reference/{transactionReference}", headers=headers)
+        verify_response.raise_for_status()
+        response_data = verify_response.json().get("responseBody", {})
+        
+        if response_data.get("paymentStatus") == "PAID":
+            # Payment successful, create Payment Entry in ERPNext
+            payment_entry = frappe.new_doc("Payment Entry")
+            payment_entry.payment_type = "Receive"
+            payment_entry.party_type = "Customer"
+
+            # Get customer from Hotel Guest
+            check_in_doc = frappe.get_doc("Hotel Room Check In", check_in_docname)
+            guest_doc = frappe.get_doc("Hotel Guest", check_in_doc.guest)
+            payment_entry.party = guest_doc.customer
+            payment_entry.paid_amount = amountPaid
+            payment_entry.received_amount = amountPaid
+            payment_entry.mode_of_payment = "Monnify" # Or a specific Monnify payment method
+            payment_entry.reference_no = transactionReference
+            payment_entry.reference_date = frappe.utils.nowdate()
+            payment_entry.custom_hotel_room_check_in = check_in_docname
+
+            # Link to Sales Invoices
+            invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in_docname, "outstanding_amount": [">", 0]}, fields=["name", "outstanding_amount"])
+            
+            for invoice in invoices:
+                payment_entry.append("references", {
+                    "doctype": "Sales Invoice",
+                    "reference_doctype": "Sales Invoice",
+                    "reference_name": invoice.name,
+                    "bill_no": invoice.name,
+                    "due_amount": invoice.outstanding_amount,
+                    "allocated_amount": min(amountPaid, invoice.outstanding_amount) # Allocate payment
+                })
+                amountPaid -= min(amountPaid, invoice.outstanding_amount)
+                if amountPaid <= 0:
+                    break
+
+            payment_entry.insert(ignore_permissions=True)
+            payment_entry.submit()
+
+            # Update Hotel Room Check Out payment status
+            frappe.db.set_value("Hotel Room Check Out", check_out_docname, "payment_status", "Paid")
+
+            frappe.redirect("/payment-success") # Redirect to a payment success page
+        else:
+            frappe.log_error(f"Monnify payment not successful for transaction {transactionReference}. Status: {response_data.get('paymentStatus')}")
+            frappe.redirect("/payment-failed")
+
+    except requests.exceptions.RequestException as e:
+        frappe.log_error(f"Monnify transaction verification failed in callback: {e}")
+        frappe.redirect("/payment-failed")

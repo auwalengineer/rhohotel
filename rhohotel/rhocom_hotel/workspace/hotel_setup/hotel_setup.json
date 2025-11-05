@@ -182,55 +182,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Setups",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Market Places",
-   "link_count": 0,
-   "link_to": "Market Place",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Business Sources",
-   "link_count": 0,
-   "link_to": "Business Source",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Session Types",
-   "link_count": 0,
-   "link_to": "Hotel Session Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Sessions",
-   "link_count": 0,
-   "link_to": "Hotel Sessions",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Configuration",
    "link_count": 1,
    "link_type": "DocType",
@@ -304,9 +255,58 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setups",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Market Places",
+   "link_count": 0,
+   "link_to": "Market Place",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Business Sources",
+   "link_count": 0,
+   "link_to": "Business Source",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Season Types",
+   "link_count": 0,
+   "link_to": "Hotel Season Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Season",
+   "link_count": 0,
+   "link_to": "Hotel Season",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-11-02 14:40:36.282502",
+ "modified": "2025-11-03 17:50:03.939866",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Setup",

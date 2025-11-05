@@ -120,6 +120,12 @@
             "read_only": 1
         },
         {
+            "fieldname": "total_outstanding_amount",
+            "fieldtype": "Currency",
+            "label": "Total Outstanding Amount",
+            "read_only": 1
+        },
+        {
             "default": "Unpaid",
             "fieldname": "payment_status",
             "fieldtype": "Select",

@@ -10,6 +10,29 @@ frappe.ui.form.on('Hotel Room Check Out', {
                     if (r.message) {
                         frm.fields_dict.invoices_html.html(render_invoices(r.message.invoices));
                         frm.fields_dict.payments_html.html(render_payments(r.message.payments));
+                        frm.set_value('total_outstanding_amount', r.message.total_outstanding_amount);
+
+                        if (r.message.total_outstanding_amount > 0) {
+                            frm.add_custom_button(__('Collect Payment'), function() {
+                                frappe.call({
+                                    method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_out.hotel_room_check_out.initiate_monnify_payment',
+                                    args: {
+                                        check_in_docname: frm.doc.check_in,
+                                        check_out_docname: frm.doc.name,
+                                        amount: frm.doc.total_outstanding_amount,
+                                        guest_email: r.message.guest_email,
+                                        guest_name: frm.doc.guest_name
+                                    },
+                                    callback: function(response) {
+                                        if (response.message && response.message.payment_url) {
+                                            window.location.href = response.message.payment_url;
+                                        } else {
+                                            frappe.msgprint(__('Failed to initiate Monnify payment.'));
+                                        }
+                                    }
+                                });
+                            }, __('Actions'));
+                        }
                     }
                 }
             });

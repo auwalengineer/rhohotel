@@ -17,7 +17,6 @@
         "room_number",
         "room_type",
         "rate_type",
-        "hotel_session",
         "rate_amount",
         "amended_from",
         "actual_check_out_datetime",
@@ -26,15 +25,16 @@
         "reservation_source",
         "keycard_assigned",
         "housekeeping_notes",
-        "guest"
+        "guest",
+        "late_checkout_sb",
+        "late_checkout"
     ],
     "fields": [
         {
             "fieldname": "reservation",
             "fieldtype": "Link",
             "label": "Reservation",
-            "options": "Hotel Room Reservation",
-            "reqd": 0
+            "options": "Hotel Room Reservation"
         },
         {
             "fieldname": "rate_type",
@@ -42,13 +42,6 @@
             "in_list_view": 1,
             "label": "Rate Type",
             "options": "Hotel Room Rate",
-            "reqd": 1
-        },
-        {
-            "fieldname": "hotel_session",
-            "fieldtype": "Link",
-            "label": "Session",
-            "options": "Hotel Sessions",
             "reqd": 1
         },
         {
@@ -180,6 +173,7 @@
             "label": "Late Checkout"
         },
         {
+            "default": "0",
             "fieldname": "late_checkout",
             "fieldtype": "Check",
             "label": "Late Checkout"
@@ -193,7 +187,7 @@
     "index_web_pages_for_search": 1,
     "is_submittable": 1,
     "links": [],
-    "modified": "2025-10-31 14:36:31.669097",
+    "modified": "2025-11-03 18:04:47.965191",
     "modified_by": "Administrator",
     "module": "Rhocom Hotel",
     "name": "Hotel Room Check In",

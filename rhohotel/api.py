@@ -1,5 +1,10 @@
 from frappe import _
 from frappe.utils import nowdate, add_days
+from datetime import datetime
+import json
+from frappe.utils import get_request_header
+
+
 
 def get_occupancy_rate():
     """Return current occupancy percentage."""
@@ -54,3 +59,48 @@ def get_total_nights_stayed():
 def get_guest_lifetime_value():
     """Return lifetime value of a guest."""
     return {'value': 5500, 'prefix': '$'}
+
+
+@frappe.whitelist()
+def get_active_checkin_for_room(room_number):
+    checkin = frappe.db.get_value(
+        "Hotel Room Check In",
+        {"room_number": room_number, "status": "Checked In"},
+        ["name", "guest"],
+        as_dict=True
+    )
+    return checkin
+
+@frappe.whitelist()
+def get_room_rate(room_type, rate_type, check_in_date):
+    try:
+        # Determine the season
+        season = frappe.db.get_value("Hotel Season", {
+            "start_date": ("<=", check_in_date),
+            "end_date": (">=", check_in_date),
+            "is_active": 1
+        }, "name")
+
+        if not season:
+            return {"error": "No active season found for the selected date."}
+
+        # Determine the day type (Weekday/Weekend)
+        day_of_week = datetime.strptime(check_in_date, "%Y-%m-%d").weekday()
+        day_type = "Weekend" if day_of_week >= 5 else "Weekday" # 5: Saturday, 6: Sunday
+
+        # Fetch the room rate
+        rate_amount = frappe.db.get_value("Hotel Room Tariff", {
+            "room_type": room_type,
+            "rate_type": rate_type,
+            "season": season,
+            "day_type": day_type,
+            "is_active": 1
+        }, "rate_amount")
+
+        return rate_amount or 0
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error fetching room rate")
+        return {"error": str(e)}
+
+

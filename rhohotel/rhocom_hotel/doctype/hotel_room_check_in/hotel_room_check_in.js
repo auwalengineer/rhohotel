@@ -71,8 +71,8 @@ frappe.ui.form.on("Hotel Room Check In", {
         }
     },
 
-    room: function (frm) {
-        if (frm.doc.room) {
+    room_number: function (frm) {
+        if (frm.doc.room_number) {
             frappe.call({
                 method: 'frappe.client.get_value',
                 args: {
@@ -83,10 +83,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                 callback: function (response) {
                     if (response.message) {
                         frm.set_value('room_type', response.message.room_type);
-                        // Clear dependent fields when room changes
-                        frm.set_value('rate_type', '');
-                        frm.set_value('hotel_session', '');
-                        frm.set_value('rate_amount', '');
+                        frm.trigger('fetch_rate');
                     }
                 }
             });
@@ -94,38 +91,33 @@ frappe.ui.form.on("Hotel Room Check In", {
     },
 
     rate_type: function (frm) {
-        frm.trigger('fetch_rate_amount');
+        frm.trigger('fetch_rate');
     },
 
-    hotel_session: function (frm) {
-        frm.trigger('fetch_rate_amount');
+    check_in_datetime: function (frm) {
+        frm.trigger('fetch_rate');
     },
 
-    fetch_rate_amount: function (frm) {
-
-        if (frm.doc.room_type && frm.doc.rate_type && frm.doc.hotel_session) {
-
+    fetch_rate: function (frm) {
+        if (frm.doc.room_type && frm.doc.rate_type && frm.doc.check_in_datetime) {
             frappe.call({
-                method: 'frappe.client.get_value',
+                method: 'rhohotel.api.get_room_rate',
                 args: {
-                    doctype: 'Hotel Room Tariff',
-                    filters: {
-                        room_type: frm.doc.room_type,
-                        rate_type: frm.doc.rate_type,
-                        hotel_session: frm.doc.hotel_session
-
-                    },
-                    fieldname: 'rate_amount'
+                    room_type: frm.doc.room_type,
+                    rate_type: frm.doc.rate_type,
+                    check_in_date: frm.doc.check_in_datetime.split(" ")[0] // Pass only the date part
                 },
                 callback: function (response) {
-                    if (response.message && response.message.rate_amount) {
-                        frm.set_value('rate_amount', response.message.rate_amount);
+                    if (response.message && !response.message.error) {
+                        frm.set_value('rate_amount', response.message);
                     } else {
-                        frappe.show_alert({
-                            message: __('No valid tariff found for the selected combination'),
-                            indicator: 'red'
-                        });
-                        frm.set_value('rate_amount', '');
+                        if(response.message.error) {
+                            frappe.show_alert({
+                                message: __(response.message.error),
+                                indicator: 'red'
+                            });
+                        }
+                        frm.set_value('rate_amount', 0);
                     }
                 }
             });

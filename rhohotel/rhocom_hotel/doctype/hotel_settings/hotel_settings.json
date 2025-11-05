@@ -125,6 +125,21 @@
             "fieldtype": "Currency",
             "label": "Late Check-out Charges",
             "depends_on": "eval:doc.enable_late_check_out"
+        },
+        {
+            "fieldname": "sb_monnify_settings",
+            "fieldtype": "Section Break",
+            "label": "Monnify Settings"
+        },
+        {
+            "fieldname": "monnify_api_key",
+            "fieldtype": "Password",
+            "label": "Monnify API Key"
+        },
+        {
+            "fieldname": "monnify_secret_key",
+            "fieldtype": "Password",
+            "label": "Monnify Secret Key"
         }
     ],
     "has_web_view": 0,

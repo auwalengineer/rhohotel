@@ -1,20 +1,20 @@
 {
     "actions": [],
     "allow_rename": 1,
-    "autoname": "field:session_type",
+    "autoname": "field:season_type",
     "creation": "2025-10-30 11:00:00.000000",
     "doctype": "DocType",
     "engine": "InnoDB",
     "field_order": [
-        "session_type",
+        "season_type",
         "description",
         "is_active"
     ],
     "fields": [
         {
-            "fieldname": "session_type",
+            "fieldname": "season_type",
             "fieldtype": "Data",
-            "label": "Session Type",
+            "label": "Season Type",
             "unique": 1,
             "reqd": 1,
             "in_list_view": 1
@@ -36,7 +36,7 @@
     "modified": "2025-10-30 11:00:00.000000",
     "modified_by": "Administrator",
     "module": "Rhocom Hotel",
-    "name": "Hotel Session Type",
+    "name": "Hotel Season Type",
     "naming_rule": "By fieldname",
     "owner": "Administrator",
     "permissions": [

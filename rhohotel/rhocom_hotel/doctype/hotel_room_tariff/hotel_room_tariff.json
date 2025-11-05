@@ -9,7 +9,7 @@
         "tariff_name",
         "room_type",
         "rate_type",
-        "session",
+        "season",
         "column_break_4",
         "amount",
         "section_break_7",
@@ -40,10 +40,18 @@
             "in_list_view": 1
         },
         {
-            "fieldname": "hotel_session",
+            "fieldname": "hotel_season",
             "fieldtype": "Link",
-            "label": "Session",
-            "options": "Hotel Sessions",
+            "label": "Season",
+            "options": "Hotel Season",
+            "reqd": 0,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "day_type",
+            "fieldtype": "Select",
+            "label": "Day Type",
+            "options": "Weekday\nWeekend",
             "reqd": 0,
             "in_list_view": 1
         },

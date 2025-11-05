@@ -46,7 +46,7 @@ class HotelRoomCheckIn(Document):
 			filters={
 				"room_type": self.room_type,
 				"rate_type": self.rate_type,
-				"hotel_session": self.hotel_session,
+				"hotel_season": self.hotel_season,
 				"is_active": 1
 			},
 			fields=["amount"],

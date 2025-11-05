@@ -16,10 +16,10 @@ class HotelRoomReservationItem(Document):
 		if not frappe.db.exists('Hotel Room Tariff', {
 			'room_type': self.room_type,
 			'rate_type': self.rate_type,
-			'session_type': self.session_type,
+			'season_type': self.season_type,
 			'is_active': 1
 		}):
-			frappe.throw(f"No active tariff found for Room Type: {self.room_type}, Rate: {self.rate_type}, Session: {self.session_type}")
+			frappe.throw(f"No active tariff found for Room Type: {self.room_type}, Rate: {self.rate_type}, Season: {self.season_type}")
 
 	def set_amount(self):
 		"""Set amount based on tariff and quantity"""
@@ -28,7 +28,7 @@ class HotelRoomReservationItem(Document):
 			filters={
 				'room_type': self.room_type,
 				'rate_type': self.rate_type,
-				'session_type': self.session_type,
+				'season_type': self.season_type,
 				'is_active': 1
 			},
 			fields=['amount'],
