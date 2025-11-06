@@ -169,9 +169,33 @@ class HotelRoomCheckIn(Document):
 
 		#frappe.msgprint(_("Sales Invoice {0} created").format(si.name), alert=True)
 
+	def fetch_invoices(checkin_doc):
+		"""Fetch all Sales Invoices linked to this Check In"""
+		invoices = frappe.get_all(
+			"Sales Invoice",
+			filters={"hotel_room_check_in": checkin_doc.name},
+			fields=["name", "grand_total", "outstanding_amount"]
+		)
+
+		checkin_doc.set("invoices", [])
+		for inv in invoices:
+			checkin_doc.append("invoices", {
+				"invoice": inv.name,
+				"amount": inv.grand_total,
+				"outstanding_amount": inv.outstanding_amount
+			})
+
+
 	def on_update(self):
 		"""Publish update to front desk"""
 		frappe.publish_realtime('rhohotel_front_desk_update')
+
+		fetch_invoices(doc)
+
+	def onload(doc):
+		if doc.status != "Draft":
+			fetch_invoices(doc)
+
 
 @frappe.whitelist()
 def make_check_out(source_name, target_doc=None):

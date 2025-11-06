@@ -1,0 +1,55 @@
+{
+    "name": "Payment Session",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "is_submittable": 1,
+    "track_changes": 1,
+    "module": "Rhocom Hotel",
+    "fields": [
+        {
+            "fieldname": "payment_reference",
+            "fieldtype": "Data",
+            "label": "Payment Reference",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "invoices",
+            "fieldtype": "Table",
+            "label": "Invoices",
+            "options": "Payment Session Invoice"
+        },
+        {
+            "fieldname": "total_amount",
+            "fieldtype": "Currency",
+            "label": "Total Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "label": "Status",
+            "options": "Pending\nPaid\nFailed",
+            "default": "Pending",
+            "reqd": 1
+        },
+        {
+            "fieldname": "payment_entry",
+            "fieldtype": "Link",
+            "label": "Payment Entry",
+            "options": "Payment Entry"
+        }
+    ],
+    "permissions": [
+        {
+            "role": "System Manager",
+            "read": 1,
+            "write": 1,
+            "create": 1,
+            "delete": 1,
+            "submit": 1,
+            "cancel": 1,
+            "amend": 1
+        }
+    ]
+}

@@ -11,6 +11,56 @@ frappe.ui.form.on("Hotel Room Check In", {
                     frm: frm
                 });
             });
+
+            frm.add_custom_button(__('Pay with Moniepoint'), function () {
+                frappe.call({
+                    method: 'rhohotel.api.initiate_payment',
+                    args: {
+                        invoice_names: [frm.doc.sales_invoice]
+                    },
+                    callback: function (r) {
+                        if (r.message && r.message.name) {
+                            //frappe.msgprint(__('Payment session created: {0}', [r.message.name]));
+
+                            const d = new frappe.ui.Dialog({
+                                title: 'Complete Payment',
+                                fields: [
+                                    {
+                                        label: 'Payment Reference',
+                                        fieldname: 'payment_reference',
+                                        fieldtype: 'Data',
+                                        default: r.message.payment_reference,
+                                        read_only: 1
+                                    },
+                                    {
+                                        label: 'Total Amount',
+                                        fieldname: 'total_amount',
+                                        fieldtype: 'Currency',
+                                        default: r.message.total_amount,
+                                        read_only: 1
+                                    }
+                                ],
+                                primary_action_label: 'Mark as Paid',
+                                primary_action(values) {
+                                    frappe.call({
+                                        method: 'rhohotel.api.complete_payment',
+                                        args: {
+                                            payment_session: r.message.name
+                                        },
+                                        callback: function (res) {
+                                            frappe.msgprint(__('Payment completed successfully.'));
+                                            d.hide();
+                                            frm.reload_doc();
+                                        }
+                                    });
+                                }
+                            });
+
+                            d.show();
+                        }
+                    }
+                });
+            });
         }
 
         // Set dynamic filter for Business Source
@@ -111,7 +161,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                     if (response.message && !response.message.error) {
                         frm.set_value('rate_amount', response.message);
                     } else {
-                        if(response.message.error) {
+                        if (response.message.error) {
                             frappe.show_alert({
                                 message: __(response.message.error),
                                 indicator: 'red'

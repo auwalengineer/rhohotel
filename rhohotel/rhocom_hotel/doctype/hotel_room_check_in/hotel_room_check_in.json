@@ -1,236 +1,268 @@
 {
-    "actions": [],
-    "creation": "2025-10-29 12:00:00",
-    "doctype": "DocType",
-    "engine": "InnoDB",
-    "field_order": [
-        "reservation",
-        "guest_details_section",
-        "id_type",
-        "id_number",
-        "contact_number",
-        "column_break_1",
-        "check_in_datetime",
-        "expected_check_out_datetime",
-        "status",
-        "room_details_section",
-        "room_number",
-        "room_type",
-        "rate_type",
-        "rate_amount",
-        "amended_from",
-        "actual_check_out_datetime",
-        "total_charges",
-        "payment_status",
-        "reservation_source",
-        "keycard_assigned",
-        "housekeeping_notes",
-        "guest",
-        "late_checkout_sb",
-        "late_checkout"
-    ],
-    "fields": [
-        {
-            "fieldname": "reservation",
-            "fieldtype": "Link",
-            "label": "Reservation",
-            "options": "Hotel Room Reservation"
-        },
-        {
-            "fieldname": "rate_type",
-            "fieldtype": "Link",
-            "in_list_view": 1,
-            "label": "Rate Type",
-            "options": "Hotel Room Rate",
-            "reqd": 1
-        },
-        {
-            "fieldname": "rate_amount",
-            "fieldtype": "Currency",
-            "label": "Rate Amount",
-            "read_only": 1,
-            "reqd": 1
-        },
-        {
-            "fieldname": "guest_details_section",
-            "fieldtype": "Section Break",
-            "label": "Guest Details"
-        },
-        {
-            "fieldname": "guest",
-            "fieldtype": "Link",
-            "in_list_view": 1,
-            "label": "Guest",
-            "options": "Hotel Guest",
-            "reqd": 1
-        },
-        {
-            "fetch_from": "guest.id_type",
-            "fieldname": "id_type",
-            "fieldtype": "Data",
-            "label": "ID Type",
-            "read_only": 1
-        },
-        {
-            "fetch_from": "guest.id_number",
-            "fieldname": "id_number",
-            "fieldtype": "Data",
-            "label": "ID Number",
-            "read_only": 1
-        },
-        {
-            "fetch_from": "guest.contact_number",
-            "fieldname": "contact_number",
-            "fieldtype": "Data",
-            "label": "Contact Number",
-            "read_only": 1
-        },
-        {
-            "fieldname": "column_break_1",
-            "fieldtype": "Column Break"
-        },
-        {
-            "default": "now",
-            "fieldname": "check_in_datetime",
-            "fieldtype": "Datetime",
-            "label": "Check-in Time",
-            "reqd": 1
-        },
-        {
-            "fieldname": "expected_check_out_datetime",
-            "fieldtype": "Datetime",
-            "label": "Expected Check-out Time",
-            "reqd": 1
-        },
-        {
-            "fieldname": "actual_check_out_datetime",
-            "fieldtype": "Datetime",
-            "label": "Actual Check-out Time"
-        },
-        {
-            "default": "Draft",
-            "fieldname": "status",
-            "fieldtype": "Select",
-            "label": "Status",
-            "options": "Draft\nChecked In\nChecked Out\nCancelled",
-            "reqd": 1
-        },
-        {
-            "fieldname": "room_details_section",
-            "fieldtype": "Section Break",
-            "label": "Room Details"
-        },
-        {
-            "fieldname": "room_number",
-            "fieldtype": "Link",
-            "label": "Room",
-            "options": "Hotel Room",
-            "reqd": 1
-        },
-        {
-            "fetch_from": "room.hotel_room_type",
-            "fieldname": "room_type",
-            "fieldtype": "Link",
-            "label": "Room Type",
-            "options": "Hotel Room Type",
-            "read_only": 1
-        },
-        {
-            "fieldname": "amended_from",
-            "fieldtype": "Link",
-            "label": "Amended From",
-            "no_copy": 1,
-            "options": "Hotel Room Check In",
-            "print_hide": 1,
-            "read_only": 1
-        },
-        {
-            "fieldname": "total_charges",
-            "fieldtype": "Currency",
-            "label": "Total Charges"
-        },
-        {
-            "fieldname": "payment_status",
-            "fieldtype": "Select",
-            "label": "Payment Status",
-            "options": "Pending\nPaid\nPartially Paid"
-        },
-        {
-            "default": "Walk In",
-            "fieldname": "reservation_source",
-            "fieldtype": "Link",
-            "label": "Market Place",
-            "options": "Market Place"
-        },
-        {
-            "fieldname": "keycard_assigned",
-            "fieldtype": "Data",
-            "label": "Keycard Assigned"
-        },
-        {
-            "fieldname": "late_checkout_sb",
-            "fieldtype": "Section Break",
-            "label": "Late Checkout"
-        },
-        {
-            "default": "0",
-            "fieldname": "late_checkout",
-            "fieldtype": "Check",
-            "label": "Late Checkout"
-        },
-        {
-            "fieldname": "housekeeping_notes",
-            "fieldtype": "Text",
-            "label": "Housekeeping Notes"
-        }
-    ],
-    "index_web_pages_for_search": 1,
-    "is_submittable": 1,
-    "links": [],
-    "modified": "2025-11-03 18:04:47.965191",
-    "modified_by": "Administrator",
-    "module": "Rhocom Hotel",
-    "name": "Hotel Room Check In",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Hotel Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Hotel Receptionist",
-            "share": 1,
-            "write": 1
-        }
-    ],
-    "row_format": "Dynamic",
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "states": [],
-    "title_field": "guest",
-    "track_changes": 1
+ "actions": [],
+ "creation": "2025-10-29 12:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "reservation",
+  "guest_details_section",
+  "guest",
+  "id_type",
+  "id_number",
+  "contact_number",
+  "column_break_1",
+  "check_in_datetime",
+  "expected_check_out_datetime",
+  "status",
+  "room_details_section",
+  "room_number",
+  "rate_type",
+  "actual_check_out_datetime",
+  "reservation_source",
+  "column_break_ddup",
+  "room_type",
+  "rate_amount",
+  "keycard_assigned",
+  "amended_from",
+  "section_break_jcll",
+  "total_charges",
+  "column_break_hkmf",
+  "payment_status",
+  "section_break_plhc",
+  "invoices",
+  "section_break_lpyl",
+  "housekeeping_notes",
+  "late_checkout_sb",
+  "late_checkout"
+ ],
+ "fields": [
+  {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "label": "Reservation",
+   "options": "Hotel Room Reservation"
+  },
+  {
+   "fieldname": "rate_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Rate Type",
+   "options": "Hotel Room Rate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate_amount",
+   "fieldtype": "Currency",
+   "label": "Rate Amount",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "guest_details_section",
+   "fieldtype": "Section Break",
+   "label": "Guest Details"
+  },
+  {
+   "fieldname": "guest",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Guest",
+   "options": "Hotel Guest",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "guest.id_type",
+   "fieldname": "id_type",
+   "fieldtype": "Data",
+   "label": "ID Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "guest.id_number",
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "label": "ID Number",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "guest.contact_number",
+   "fieldname": "contact_number",
+   "fieldtype": "Data",
+   "label": "Contact Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "now",
+   "fieldname": "check_in_datetime",
+   "fieldtype": "Datetime",
+   "label": "Check-in Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expected_check_out_datetime",
+   "fieldtype": "Datetime",
+   "label": "Expected Check-out Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actual_check_out_datetime",
+   "fieldtype": "Datetime",
+   "label": "Actual Check-out Time"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nChecked In\nChecked Out\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "room_details_section",
+   "fieldtype": "Section Break",
+   "label": "Room Details"
+  },
+  {
+   "fieldname": "room_number",
+   "fieldtype": "Link",
+   "label": "Room",
+   "options": "Hotel Room",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "room.hotel_room_type",
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "label": "Room Type",
+   "options": "Hotel Room Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Hotel Room Check In",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_charges",
+   "fieldtype": "Currency",
+   "label": "Total Charges"
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Pending\nPaid\nPartially Paid"
+  },
+  {
+   "default": "Walk In",
+   "fieldname": "reservation_source",
+   "fieldtype": "Link",
+   "label": "Market Place",
+   "options": "Market Place"
+  },
+  {
+   "fieldname": "keycard_assigned",
+   "fieldtype": "Data",
+   "label": "Keycard Assigned"
+  },
+  {
+   "fieldname": "late_checkout_sb",
+   "fieldtype": "Section Break",
+   "label": "Late Checkout"
+  },
+  {
+   "default": "0",
+   "fieldname": "late_checkout",
+   "fieldtype": "Check",
+   "label": "Late Checkout"
+  },
+  {
+   "fieldname": "housekeeping_notes",
+   "fieldtype": "Text",
+   "label": "Housekeeping Notes"
+  },
+  {
+   "fieldname": "column_break_ddup",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_lpyl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_jcll",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_hkmf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoices",
+   "fieldtype": "Table",
+   "label": "Invoices",
+   "options": "Hotel Room Check In Invoice"
+  },
+  {
+   "fieldname": "section_break_plhc",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-05 21:06:42.483643",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Room Check In",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Receptionist",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "guest",
+ "track_changes": 1
 }

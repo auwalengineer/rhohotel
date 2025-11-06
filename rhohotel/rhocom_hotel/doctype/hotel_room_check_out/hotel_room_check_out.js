@@ -13,21 +13,20 @@ frappe.ui.form.on('Hotel Room Check Out', {
                         frm.set_value('total_outstanding_amount', r.message.total_outstanding_amount);
 
                         if (r.message.total_outstanding_amount > 0) {
-                            frm.add_custom_button(__('Collect Payment'), function() {
+                            frm.add_custom_button(__('Pay with Moniepoint'), function() {
+								var invoice_names = r.message.invoices.map(function(inv) { return inv.name; });
                                 frappe.call({
-                                    method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_out.hotel_room_check_out.initiate_monnify_payment',
+                                    method: 'rhohotel.api.initiate_payment',
                                     args: {
-                                        check_in_docname: frm.doc.check_in,
-                                        check_out_docname: frm.doc.name,
-                                        amount: frm.doc.total_outstanding_amount,
-                                        guest_email: r.message.guest_email,
-                                        guest_name: frm.doc.guest_name
+                                        invoice_names: invoice_names
                                     },
                                     callback: function(response) {
-                                        if (response.message && response.message.payment_url) {
-                                            window.location.href = response.message.payment_url;
+                                        if (response.message) {
+											frappe.msgprint("Payment session created: " + response.message.name);
+											let frm = frappe.get_doc("Payment Session", response.message.name);
+											frappe.ui.form.get_req_handler("Payment Session", response.message.name).open_payment_dialog(frm);
                                         } else {
-                                            frappe.msgprint(__('Failed to initiate Monnify payment.'));
+                                            frappe.msgprint(__('Failed to initiate Moniepoint payment.'));
                                         }
                                     }
                                 });

@@ -154,7 +154,7 @@
             "in_list_view": 0,
             "label": "Current Check-In",
             "options": "Hotel Room Check In",
-            "read_only": 1
+            "read_only": 0
         }
     ],
     "links": [],
