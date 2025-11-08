@@ -1,0 +1,64 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2024-05-21 15:20:23.191929",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "moniepoint_client_id",
+        "moniepoint_client_secret",
+        "terminal_serial_number",
+        "moniepoint_api_base_url",
+        "moniepoint_contract_code"
+    ],
+    "fields": [
+        {
+            "fieldname": "moniepoint_client_id",
+            "fieldtype": "Data",
+            "label": "Moniepoint Client ID"
+        },
+        {
+            "fieldname": "moniepoint_client_secret",
+            "fieldtype": "Password",
+            "label": "Moniepoint Client Secret"
+        },
+        {
+            "fieldname": "terminal_serial_number",
+            "fieldtype": "Data",
+            "label": "Terminal Serial Number"
+        },
+        {
+            "fieldname": "moniepoint_contract_code",
+            "fieldtype": "Data",
+            "label": "Moniepoint Contract Code"
+        },
+        {
+            "fieldname": "moniepoint_api_base_url",
+            "fieldtype": "Data",
+            "label": "Moniepoint API Base URL",
+            "default": "https://channel.moniepoint.com"
+        }
+    ],
+    "issingle": 1,
+    "links": [],
+    "modified": "2024-05-21 15:22:38.213833",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Moniepoint Settings",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "print": 1,
+            "read": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

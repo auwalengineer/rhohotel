@@ -41,7 +41,7 @@ def get_rooms(filters=None):
     if filters.get('floor'):
         room_filters['floor'] = filters.get('floor')
     if filters.get('room_type'):
-        room_filters['hotel_room_type'] = filters.get('room_type')
+        room_filters['room_type'] = filters.get('room_type')
     if filters.get('status'):
         room_filters['status'] = filters.get('status')
     if filters.get('housekeeping_status'):
@@ -49,7 +49,7 @@ def get_rooms(filters=None):
 
     rooms = frappe.get_all(
         "Hotel Room",
-        fields=["name", "room_number", "hotel_room_type", "floor", "status", "housekeeping_status", "maintenance_flag", "current_check_in"],
+        fields=["name", "room_number", "room_type", "floor", "status", "housekeeping_status", "maintenance_flag", "current_check_in"],
         filters=room_filters,
         order_by="room_number"
     )

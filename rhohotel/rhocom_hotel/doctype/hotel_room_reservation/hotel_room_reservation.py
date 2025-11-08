@@ -61,20 +61,20 @@ class HotelRoomReservation(Document):
 	def set_rates(self):
 		self.net_total = 0
 		for d in self.items:
-			# Use session period and duration for rate calculation
-			session = frappe.get_doc("Sessions", d.session_type) if d.session_type else None
+			# Use season period and duration for rate calculation
+			season = frappe.get_doc("Hotel Season", d.season_type) if d.season_type else None
 			tariff_filters = {
 				'room_type': d.room_type,
 				'rate_type': d.rate_type,
-				'session_type': d.session_type,
+				'season_type': d.season_type,
 				'is_active': 1
 			}
 			tariff = frappe.get_all('Hotel Room Tariff', filters=tariff_filters, fields=['amount'], limit=1)
 			if not tariff:
-				frappe.throw(_(f"No active tariff found for Room Type: {d.room_type}, Rate: {d.rate_type}, Session: {d.session_type}"))
-			d.rate = tariff[0].amount
+				frappe.throw(_(f"No active tariff found for Room Type: {d.room_type}, Rate: {d.rate_type}, Season: {d.season_type}"))
+			d.rate = tariff[0].rate_amount
 			d.amount = d.rate * flt(d.qty)
-			self.net_total += d.amount
+			self.net_total += d.rate_amount
 
 @frappe.whitelist()
 

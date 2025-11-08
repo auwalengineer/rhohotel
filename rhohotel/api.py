@@ -3,6 +3,8 @@ from frappe import _
 from frappe.utils import nowdate, add_days
 from datetime import datetime
 import json
+import uuid
+
 
 
 def get_occupancy_rate():
@@ -88,36 +90,44 @@ def get_active_checkin_for_room(room_number):
 
 @frappe.whitelist()
 def get_room_rate(room_type, rate_type, check_in_date):
-    try:
-        # Determine the season
-        season = frappe.db.get_value("Hotel Season", {
-            "start_date": ("<=", check_in_date),
-            "end_date": (">=", check_in_date),
-            "is_active": 1
-        }, "name")
+    return 20000
+    # try:
+    #     # Determine the season
+    #         # season = frappe.db.get_value("Hotel Season", {
+    #         #     "start_date": ("<=", check_in_date),
+    #         #     "end_date": (">=", check_in_date),
+    #         #     "is_active": 1
+    #         # }, "name")
 
-        if not season:
-            return {"error": "No active season found for the selected date."}
+    #         # if not season:
+    #         #     return {"error": "No active season found for the selected date."}
+    #     season = "Regular Season"  # Placeholder, implement actual season logic
+    #     # Determine the day type (Weekday/Weekend)
+    #     day_of_week = datetime.strptime(check_in_date, "%Y-%m-%d").weekday()
+    #     day_type = "Weekend" if day_of_week >= 5 else "Weekday" # 5: Saturday, 6: Sunday
 
-        # Determine the day type (Weekday/Weekend)
-        day_of_week = datetime.strptime(check_in_date, "%Y-%m-%d").weekday()
-        day_type = "Weekend" if day_of_week >= 5 else "Weekday" # 5: Saturday, 6: Sunday
 
+    #     # Fetch the room rate
+    #     rate_amount = frappe.db.get_value("Hotel Room Tariff", {
+    #         "room_type": room_type,
+    #         "rate_type": rate_type,
+    #         "day_type": day_type,
+    #         "is_active": 1
+    #     }, "rate_amount")
 
-        # Fetch the room rate
-        rate_amount = frappe.db.get_value("Hotel Room Tariff", {
-            "room_type": room_type,
-            "rate_type": rate_type,
-            "season": season,
-            "day_type": day_type,
-            "is_active": 1
-        }, "rate_amount")
+    #     if not rate_amount:
+    #         # Fallback to default tariff for the room type
+    #         rate_amount = frappe.db.get_value("Hotel Room Tariff", {
+    #             "room_type": room_type,
+    #             "is_default": 1,
+    #             "is_active": 1
+    #         }, "rate_amount")
 
-        return rate_amount or 16000
+    #     return rate_amount or 20000
 
-    except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Error fetching room rate")
-        return {"error": str(e)}
+    # except Exception as e:
+    #     frappe.log_error(frappe.get_traceback(), "Error fetching room rate")
+    #     return {"error": str(e)}
 
 
 # @frappe.whitelist()
@@ -126,7 +136,6 @@ def get_room_rate(room_type, rate_type, check_in_date):
 # 	if isinstance(invoice_names, str):
 # 		invoice_names = json.loads(invoice_names)
 
-# 	import uuid
 # 	# Calculate total outstanding amount
 # 	total_amount = 0
 	
@@ -150,6 +159,7 @@ def get_room_rate(room_type, rate_type, check_in_date):
 # 	payment_session.insert()
 
 # 	return payment_session.as_dict()
+
 
 @frappe.whitelist()
 def initiate_payment(invoice_names):

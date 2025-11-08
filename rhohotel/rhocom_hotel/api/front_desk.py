@@ -15,7 +15,7 @@ def get_rooms_summary(filters=None):
 		conds.append("room.floor = %s")
 		args.append(filters.get("floor"))
 	if filters.get("room_type"):
-		conds.append("room.hotel_room_type = %s")
+		conds.append("room.room_type = %s")
 		args.append(filters.get("room_type"))
 	if filters.get("status"):
 		conds.append("room.room_status = %s")
@@ -35,7 +35,7 @@ def get_rooms_summary(filters=None):
 	query = f"""
 		select
 			room.name as room,
-			room.hotel_room_type as room_type,
+			room.room_type as room_type,
 			room.floor as floor,
 			room.room_status as status,
 			room.maintenance_flag as maintenance,

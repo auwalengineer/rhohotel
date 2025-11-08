@@ -34,5 +34,17 @@ class HotelRoomTariff(Document):
             fields=['rate_amount'],
             limit=1
         )
+
+        if not tariff:
+            tariff = frappe.get_all(
+                'Hotel Room Tariff',
+                filters={
+                    'room_type': room_type,
+                    'is_active': 1,
+                    'is_default': 1
+                },
+                fields=['rate_amount'],
+                limit=1
+            )
         
         return tariff[0].rate_amount if tariff else 0

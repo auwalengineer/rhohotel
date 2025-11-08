@@ -52,15 +52,15 @@ class HotelRoomCheckOut(Document):
     def calculate_total(self):
         """Calculate total amount including additional charges and session-based room charges"""
         check_in = frappe.get_doc("Hotel Room Check In", self.check_in)
-        # Use session and tariff for main room charge
+        # Use season and tariff for main room charge
         room_charge = 0
-        if check_in.room_type and check_in.rate_type and check_in.hotel_session:
+        if check_in.room_type and check_in.rate_type and check_in.hotel_season:
             tariff = frappe.get_all(
                 "Hotel Room Tariff",
                 filters={
                     "room_type": check_in.room_type,
                     "rate_type": check_in.rate_type,
-                    "hotel_session": check_in.hotel_session,
+                    #"hotel_season": check_in.hotel_season,
                     "is_active": 1
                 },
                 fields=["amount"],
@@ -77,14 +77,26 @@ class HotelRoomCheckOut(Document):
         self.status = "Completed"
         self.update_check_in()
         self.update_room()
+        self.create_housekeeping_task()
         frappe.publish_realtime('rhohotel_front_desk_update')
 
     def update_check_in(self):
         """Update check-in status"""
         frappe.db.set_value("Hotel Room Check In", self.check_in, {
-            "status": "Checked Out",
-            "docstatus": 2  # Cancel the check-in
+            "status": "Checked Out"        
         })
+
+    # create house keeping task on checkout
+    def create_housekeeping_task(self):
+        # check_out = frappe.get_doc("Hotel Room Check Out", self.name)
+        task = frappe.new_doc("Housekeeping Task")
+        task.room = self.room_number
+        task.task_type = "Checkout Cleaning"
+        task.status = "Pending"
+        #task.description = f"Clean room {check_out.room_number} after checkout."
+        task.insert(ignore_permissions=True)
+        
+
 
     # update room status to Vacant and housekeeping to Dirty
     def update_room(self):
@@ -131,6 +143,7 @@ def get_linked_documents(check_in):
     guest_email = guest_doc.email
 
     return {"invoices": invoices, "payments": payments, "total_outstanding_amount": total_outstanding_amount, "guest_email": guest_email}
+
 
 
 @frappe.whitelist()

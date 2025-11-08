@@ -16,6 +16,7 @@ class FrontDesk {
         this.make_room_grid();
 
         this.refresh();
+        this.start_clock();
 
         // Realtime updates
         frappe.realtime.on('rhohotel_front_desk_update', () => {
@@ -35,6 +36,15 @@ class FrontDesk {
 
         // Insert stats area at the top of the page
         $(this.page.main).parent().prepend(this.$stats);
+
+        this.$clock = $("<div class=\"clock-widget\"></div>").prependTo(this.$stats);
+        this.$clock.css({
+            'font-size': '1.5rem',
+            'font-weight': 'bold',
+            'text-align': 'center',
+            'padding': '1rem',
+            'grid-column': '1 / -1'
+        });
     }
 
     make_filters() {
@@ -80,11 +90,9 @@ class FrontDesk {
         });
     }
 
-    // --- MODIFIED: Simplified to a single room grid container ---
     make_room_grid() {
-        this.$grid = $(
-            `<div class="room-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem 0;"></div>`
-        ).appendTo(this.page.main);
+        this.$tab_nav = $(`<ul class="nav nav-tabs" role="tablist"></ul>`).appendTo(this.page.main);
+        this.$tab_content = $(`<div class="tab-content"></div>`).appendTo(this.page.main);
     }
     // -----------------------------------------------------------
 
@@ -98,7 +106,7 @@ class FrontDesk {
 
         const housekeeping_icons = {
             'Clean': 'check',
-            'Dirty': 'remove',
+            'Dirty': 'trash',
             'Inspected': 'eye',
             'In Progress': 'refresh'
         };
@@ -118,7 +126,7 @@ class FrontDesk {
                             </span>
                         </h5>
                         <div class="card-text">
-                            <div>${room.hotel_room_type}</div>
+                            <div>${room.room_type}</div>
                             <div class="text-muted">${room.floor || ''}</div>
                             ${room.current_guest ? `
                                 <div class="mt-2">
@@ -184,7 +192,6 @@ class FrontDesk {
         });
     }
 
-    // --- MODIFIED: Removed tab-related logic and render rooms directly ---
     refresh_rooms() {
         const filters = this.page.get_form_values();
         this.filters = filters;
@@ -194,35 +201,63 @@ class FrontDesk {
             args: { filters: filters },
             callback: (r) => {
                 const rooms = r.message;
-                // $grid now references the single room-grid container (see make_room_grid)
-                const $grid = this.$grid;
-
-                $grid.empty();
+                this.$tab_nav.empty();
+                this.$tab_content.empty();
 
                 if (rooms.length === 0) {
-                    $grid.html('<p class="text-muted text-center" style="padding: 2rem 0;">No rooms found.</p>');
+                    this.$tab_content.html('<p class="text-muted text-center" style="padding: 2rem 0;">No rooms found.</p>');
                     return;
                 }
 
-                // Iterate through all rooms and append cards directly to the grid
-                rooms.forEach(room => {
-                    const $card = this.get_room_card(room);
-                    $grid.append($card);
+                const rooms_by_floor = this.group_by(rooms, 'floor');
 
-                    // Add click handler
-                    $card.click(() => {
-                        this.show_room_actions(room);
+                Object.keys(rooms_by_floor).forEach((floor, index) => {
+                    const floor_id = floor.replace(/\s+/g, '-').toLowerCase();
+                    const is_active = index === 0;
+
+                    this.$tab_nav.append(`
+                        <li class="nav-item">
+                            <a class="nav-link ${is_active ? 'active' : ''}" id="${floor_id}-tab" data-toggle="tab" href="#${floor_id}" role="tab" aria-controls="${floor_id}" aria-selected="${is_active}">${floor}</a>
+                        </li>
+                    `);
+
+                    const $tab_pane = $(`
+                        <div class="tab-pane fade ${is_active ? 'show active' : ''}" id="${floor_id}" role="tabpanel" aria-labelledby="${floor_id}-tab">
+                            <div class="room-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem 0;"></div>
+                        </div>
+                    `).appendTo(this.$tab_content);
+
+                    const $grid = $tab_pane.find('.room-grid');
+                    rooms_by_floor[floor].forEach(room => {
+                        const $card = this.get_room_card(room);
+                        $grid.append($card);
+
+                        $card.click(() => {
+                            this.show_room_actions(room);
+                        });
                     });
                 });
             }
         });
     }
-    // -------------------------------------------------------------------
+
+    group_by(array, key) {
+        return array.reduce((result, currentValue) => {
+            (result[currentValue[key]] = result[currentValue[key]] || []).push(currentValue);
+            return result;
+        }, {});
+    }
+
+    start_clock() {
+        setInterval(() => {
+            this.$clock.text(frappe.datetime.now_datetime());
+        }, 1000);
+    }
 
     show_room_actions(room) {
         const actions = [];
 
-        if (room.status === 'Vacant') {
+        if (room.status === 'Vacant' && room.housekeeping_status === 'Clean') {
             actions.push({
                 label: 'New Check-in',
                 action: () => frappe.new_doc('Hotel Room Check In', { room: room.name })

@@ -1,50 +1,58 @@
 {
- "actions": [],
- "allow_rename": 1,
- "creation": "2025-11-05 20:48:41.566938",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "invoice",
-  "amount",
-  "outstanding_amount"
- ],
- "fields": [
-  {
-   "fieldname": "invoice",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Invoice",
-   "options": "Sales Invoice"
-  },
-  {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "outstanding_amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Outstanding Amount",
-   "read_only": 1
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "istable": 1,
- "links": [],
- "modified": "2025-11-05 20:56:43.739788",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Hotel Room Check In Invoice",
- "owner": "Administrator",
- "permissions": [],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-11-05 20:48:41.566938",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "select",
+        "invoice",
+        "amount",
+        "outstanding_amount",
+        "invoice_type"
+    ],
+    "fields": [
+        {
+            "fieldname": "invoice",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Invoice",
+            "options": "Sales Invoice"
+        },
+        {
+            "fieldname": "amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Amount",
+            "read_only": 1
+        },
+        {
+            "fieldname": "outstanding_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Outstanding Amount",
+            "read_only": 1
+        },
+        {
+            "fieldname": "invoice_type",
+            "fieldtype": "Data",
+            "hidden": 1,
+            "label": "Invoice Type"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "istable": 1,
+    "links": [],
+    "modified": "2025-11-06 19:14:24.086862",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Room Check In Invoice",
+    "owner": "Administrator",
+    "permissions": [],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
 }

@@ -87,6 +87,12 @@
             "label": "Is Active"
         },
         {
+            "default": "1",
+            "fieldname": "is_default",
+            "fieldtype": "Check",
+            "label": "Is Default"
+        },
+        {
             "fieldname": "section_break_7",
             "fieldtype": "Section Break"
         },

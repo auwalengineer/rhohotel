@@ -1,59 +1,47 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-11-05 20:03:13.609660",
+ "creation": "2025-11-07 21:05:42.189154",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "merchant_id",
-  "terminal_id",
-  "api_key",
-  "callback_secret",
-  "column_break_uzov",
-  "base_url",
-  "callback_url"
+  "client_id",
+  "terminal_serial_number",
+  "column_break_ocik",
+  "client_secret",
+  "base_url"
  ],
  "fields": [
   {
-   "fieldname": "merchant_id",
+   "fieldname": "client_id",
    "fieldtype": "Data",
-   "label": "Merchant Id"
+   "label": "Client ID"
   },
   {
-   "fieldname": "terminal_id",
+   "fieldname": "terminal_serial_number",
    "fieldtype": "Data",
-   "label": "Terminal Id"
+   "label": "Terminal Serial Number"
   },
   {
-   "fieldname": "api_key",
-   "fieldtype": "Data",
-   "label": "Api Key"
-  },
-  {
-   "fieldname": "callback_secret",
-   "fieldtype": "Data",
-   "label": "Callback Secret"
-  },
-  {
-   "fieldname": "column_break_uzov",
+   "fieldname": "column_break_ocik",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "client_secret",
+   "fieldtype": "Password",
+   "label": "Client Secret"
   },
   {
    "fieldname": "base_url",
    "fieldtype": "Data",
    "label": "Base URL"
-  },
-  {
-   "fieldname": "callback_url",
-   "fieldtype": "Data",
-   "label": "Callback URL"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-05 20:10:43.849501",
+ "modified": "2025-11-07 21:07:47.908692",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Moniepoint Settings",
@@ -71,7 +59,6 @@
   }
  ],
  "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

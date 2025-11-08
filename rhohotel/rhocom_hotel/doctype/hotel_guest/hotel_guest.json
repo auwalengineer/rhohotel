@@ -40,7 +40,8 @@
             "fieldname": "customer",
             "fieldtype": "Link",
             "label": "Customer",
-            "options": "Customer"
+            "options": "Customer",
+            "read_only": 1
         },
         {
             "fieldname": "address",
@@ -61,6 +62,16 @@
             "fieldname": "passport_photo",
             "fieldtype": "Attach Image",
             "label": "Passport Photo"
+        },
+        {
+            "fieldname": "contact_person",
+            "fieldtype": "Data",
+            "label": "Contact Person"
+        },
+        {
+            "fieldname": "nationality",
+            "fieldtype": "Data",
+            "label": "Nationality"
         }
     ],
     "index_web_pages_for_search": 1,

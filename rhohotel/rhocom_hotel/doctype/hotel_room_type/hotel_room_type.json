@@ -40,13 +40,6 @@
             "reqd": 1
         },
         {
-            "fieldname": "income_account",
-            "fieldtype": "Link",
-            "label": "Income Account",
-            "options": "Account",
-            "reqd": 1
-        },
-        {
             "fieldname": "capacity",
             "fieldtype": "Int",
             "label": "Capacity"

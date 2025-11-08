@@ -1,8 +1,27 @@
-// Copyright (c) 2025, Rhocom Technology Ltd and contributors
+// Copyright (c) 2024, Rhocom Technologies and contributors
 // For license information, please see license.txt
 
 frappe.ui.form.on("Hotel Room Check In", {
     refresh(frm) {
+        if (frm.doc.docstatus === 1) {
+            frm.call({
+                method: "set_checkin_invoice_list",
+                doc: frm.doc,
+                callback: function (r) {
+                    if (r.message) {
+                        frm.clear_table("invoices");
+                        r.message.forEach(function (d) {
+                            let child = frm.add_child("invoices");
+                            child.invoice_type = d.invoice_type;
+                            child.invoice = d.invoice;
+                            child.amount = d.amount;
+                            child.outstanding_amount = d.outstanding_amount;
+                        });
+                        frm.refresh_field("invoices");
+                    }
+                },
+            });
+        }
         // Add custom buttons based on status
         if (frm.doc.docstatus === 1 && frm.doc.status === "Checked In") {
             frm.add_custom_button(__("Check Out"), () => {
@@ -113,64 +132,18 @@ frappe.ui.form.on("Hotel Room Check In", {
                 },
                 callback: function (r) {
                     if (r.message) {
-                        frm.set_value("expected_check_out_datetime",
-                            frappe.datetime.get_datetime_str(r.message.to_date));
+                        frm.clear_table("invoices");
+                        r.message.forEach(function (d) {
+                            let child = frm.add_child("invoices");
+                            child.invoice_type = d.invoice_type;
+                            child.invoice = d.invoice;
+                            child.amount = d.amount;
+                            child.outstanding_amount = d.outstanding_amount;
+                        });
+                        frm.refresh_field("invoices");
                     }
-                }
-            });
-        }
-    },
-
-    room_number: function (frm) {
-        if (frm.doc.room_number) {
-            frappe.call({
-                method: 'frappe.client.get_value',
-                args: {
-                    doctype: 'Hotel Room',
-                    filters: { name: frm.doc.room_number },
-                    fieldname: 'room_type'
                 },
-                callback: function (response) {
-                    if (response.message) {
-                        frm.set_value('room_type', response.message.room_type);
-                        frm.trigger('fetch_rate');
-                    }
-                }
             });
         }
     },
-
-    rate_type: function (frm) {
-        frm.trigger('fetch_rate');
-    },
-
-    check_in_datetime: function (frm) {
-        frm.trigger('fetch_rate');
-    },
-
-    fetch_rate: function (frm) {
-        if (frm.doc.room_type && frm.doc.rate_type && frm.doc.check_in_datetime) {
-            frappe.call({
-                method: 'rhohotel.api.get_room_rate',
-                args: {
-                    room_type: frm.doc.room_type,
-                    rate_type: frm.doc.rate_type,
-                    check_in_date: frm.doc.check_in_datetime.split(" ")[0] // Pass only the date part
-                },
-                callback: function (response) {
-                    if (response.message && !response.message.error) {
-                        frm.set_value('rate_amount', response.message);
-                    } else {
-                        if (response.message.error) {
-                            frappe.show_alert({
-                                message: __(response.message.error),
-                                indicator: 'red'
-                            });
-                        }
-                        frm.set_value('rate_amount', 0);
-                    }
-                }
-            });
-        }
-    }
 });

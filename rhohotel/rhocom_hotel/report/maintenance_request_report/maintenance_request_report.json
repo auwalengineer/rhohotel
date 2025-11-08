@@ -1,0 +1,52 @@
+{
+  "name": "Maintenance Request Report",
+  "doctype": "Report",
+  "module": "Rhocom Hotel",
+  "report_name": "Maintenance Request Report",
+  "report_type": "Script Report",
+  "ref_doctype": "Maintenance Request",
+  "is_standard": "No",
+  "filters": [
+    {
+      "fieldname": "room",
+      "label": "Room",
+      "fieldtype": "Link",
+      "options": "Hotel Room",
+      "default": "",
+      "reqd": 0
+    },
+    {
+      "fieldname": "asset",
+      "label": "Asset",
+      "fieldtype": "Link",
+      "options": "Asset",
+      "reqd": 0
+    },
+    {
+      "fieldname": "request_type",
+      "label": "Request Type",
+      "fieldtype": "Select",
+      "options": "\nRepair\nMaintenance",
+      "reqd": 0
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "\nPending\nCompleted\nCancelled",
+      "reqd": 0
+    },
+    {
+      "fieldname": "from_date",
+      "label": "From Date",
+      "fieldtype": "Date",
+      "reqd": 0
+    },
+    {
+      "fieldname": "to_date",
+      "label": "To Date",
+      "fieldtype": "Date",
+      "reqd": 0
+    }
+  ]
+}

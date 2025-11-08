@@ -256,3 +256,12 @@ doctype_js = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+doc_events = {
+    "Asset Repair": {
+        "after_insert": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+        "on_submit": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+        "on_update": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+        "after_amend": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+        "on_cancel": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request"
+    },
+}
