@@ -1,0 +1,435 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "autoname": "HRGP-.YYYY.-.#####",
+  "beta": 1,
+  "creation": "2025-11-12T00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "profile_id",
+    "reservation_reference",
+    "booking_number",
+    "first_name",
+    "last_name",
+    "column_break_names",
+    "email",
+    "phone",
+    "mobile_no",
+    "section_break_personal",
+    "date_of_birth",
+    "gender",
+    "nationality",
+    "column_break_id",
+    "id_type",
+    "id_number",
+    "id_expiry_date",
+    "section_break_address",
+    "address_line1",
+    "address_line2",
+    "city",
+    "state",
+    "country",
+    "postal_code",
+    "section_break_contact_details",
+    "contact_link",
+    "customer_link",
+    "section_break_reservation",
+    "hotel_reservation",
+    "room_number",
+    "check_in_date",
+    "check_out_date",
+    "guest_count",
+    "adults",
+    "children",
+    "section_break_special",
+    "special_requests",
+    "dietary_requirements",
+    "mobility_assistance",
+    "section_break_payment",
+    "payment_status",
+    "paid_amount",
+    "balance_amount",
+    "check_in_time",
+    "check_out_time",
+    "section_break_audit",
+    "is_checked_in",
+    "is_checked_out",
+    "created_at",
+    "created_by_user",
+    "notes",
+    "amended_from"
+  ],
+  "fields": [
+    {
+      "fieldname": "profile_id",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "in_global_search": 1,
+      "label": "Profile ID",
+      "read_only": 1,
+      "unique": 1,
+      "reqd": 1,
+      "description": "Auto-generated unique ID (HRGP-YYYY-#####)"
+    },
+    {
+      "fieldname": "reservation_reference",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Reservation Reference",
+      "options": "Hotel Room Reservation",
+      "reqd": 1,
+      "description": "Link to Hotel Room Reservation"
+    },
+    {
+      "fieldname": "booking_number",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Booking Number",
+      "read_only": 1,
+      "description": "Booking number from Hotel Booking (for quick reference)"
+    },
+    {
+      "fieldname": "first_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "First Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "last_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Last Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "column_break_names",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "email",
+      "fieldtype": "Email",
+      "label": "Email",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "phone",
+      "fieldtype": "Phone",
+      "label": "Phone"
+    },
+    {
+      "fieldname": "mobile_no",
+      "fieldtype": "Phone",
+      "label": "Mobile Number"
+    },
+    {
+      "fieldname": "section_break_personal",
+      "fieldtype": "Section Break",
+      "label": "Personal Information"
+    },
+    {
+      "fieldname": "date_of_birth",
+      "fieldtype": "Date",
+      "label": "Date of Birth"
+    },
+    {
+      "fieldname": "gender",
+      "fieldtype": "Select",
+      "label": "Gender",
+      "options": "Male\nFemale\nOther\nPrefer not to say"
+    },
+    {
+      "fieldname": "nationality",
+      "fieldtype": "Data",
+      "label": "Nationality"
+    },
+    {
+      "fieldname": "column_break_id",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "id_type",
+      "fieldtype": "Select",
+      "label": "ID Type",
+      "options": "Passport\nDriver License\nNational ID\nVisa\nOther"
+    },
+    {
+      "fieldname": "id_number",
+      "fieldtype": "Data",
+      "label": "ID Number",
+      "unique": 0
+    },
+    {
+      "fieldname": "id_expiry_date",
+      "fieldtype": "Date",
+      "label": "ID Expiry Date"
+    },
+    {
+      "fieldname": "section_break_address",
+      "fieldtype": "Section Break",
+      "label": "Address"
+    },
+    {
+      "fieldname": "address_line1",
+      "fieldtype": "Data",
+      "label": "Address Line 1"
+    },
+    {
+      "fieldname": "address_line2",
+      "fieldtype": "Data",
+      "label": "Address Line 2"
+    },
+    {
+      "fieldname": "city",
+      "fieldtype": "Data",
+      "label": "City",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "state",
+      "fieldtype": "Data",
+      "label": "State / Province"
+    },
+    {
+      "fieldname": "country",
+      "fieldtype": "Data",
+      "label": "Country"
+    },
+    {
+      "fieldname": "postal_code",
+      "fieldtype": "Data",
+      "label": "Postal Code"
+    },
+    {
+      "fieldname": "section_break_contact_details",
+      "fieldtype": "Section Break",
+      "label": "System Links"
+    },
+    {
+      "fieldname": "contact_link",
+      "fieldtype": "Link",
+      "label": "Contact",
+      "options": "Contact",
+      "read_only": 1,
+      "description": "Frappe Contact created before payment"
+    },
+    {
+      "fieldname": "customer_link",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer",
+      "read_only": 1,
+      "description": "Frappe Customer created after payment confirmed"
+    },
+    {
+      "fieldname": "section_break_reservation",
+      "fieldtype": "Section Break",
+      "label": "Reservation Details"
+    },
+    {
+      "fieldname": "hotel_reservation",
+      "fieldtype": "Link",
+      "label": "Hotel Room Reservation",
+      "options": "Hotel Room Reservation",
+      "read_only": 1,
+      "description": "Linked Hotel Room Reservation"
+    },
+    {
+      "fieldname": "room_number",
+      "fieldtype": "Link",
+      "label": "Room Number",
+      "options": "Hotel Room",
+      "read_only": 1,
+      "description": "Room assigned to this guest"
+    },
+    {
+      "fieldname": "check_in_date",
+      "fieldtype": "Date",
+      "label": "Check-In Date",
+      "read_only": 1
+    },
+    {
+      "fieldname": "check_out_date",
+      "fieldtype": "Date",
+      "label": "Check-Out Date",
+      "read_only": 1
+    },
+    {
+      "fieldname": "guest_count",
+      "fieldtype": "Int",
+      "label": "Total Guest Count",
+      "read_only": 1,
+      "description": "If booking has multiple guests"
+    },
+    {
+      "fieldname": "adults",
+      "fieldtype": "Int",
+      "label": "Number of Adults",
+      "default": "1"
+    },
+    {
+      "fieldname": "children",
+      "fieldtype": "Int",
+      "label": "Number of Children",
+      "default": "0"
+    },
+    {
+      "fieldname": "section_break_special",
+      "fieldtype": "Section Break",
+      "label": "Special Requests & Requirements"
+    },
+    {
+      "fieldname": "special_requests",
+      "fieldtype": "Long Text",
+      "label": "Special Requests",
+      "description": "e.g., High floor preferred, late checkout, etc."
+    },
+    {
+      "fieldname": "dietary_requirements",
+      "fieldtype": "Select",
+      "label": "Dietary Requirements",
+      "options": "None\nVegetarian\nVegan\nGluten-Free\nHalal\nKosher\nOther"
+    },
+    {
+      "fieldname": "mobility_assistance",
+      "fieldtype": "Select",
+      "label": "Mobility Assistance Required",
+      "options": "No\nYes - Wheelchair accessible\nYes - Hearing assistance\nYes - Visual assistance\nOther"
+    },
+    {
+      "fieldname": "section_break_payment",
+      "fieldtype": "Section Break",
+      "label": "Payment Information"
+    },
+    {
+      "fieldname": "payment_status",
+      "fieldtype": "Select",
+      "label": "Payment Status",
+      "options": "Pending\nPaid\nPartial\nRefunded",
+      "read_only": 1,
+      "default": "Pending"
+    },
+    {
+      "fieldname": "paid_amount",
+      "fieldtype": "Currency",
+      "label": "Amount Paid",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "balance_amount",
+      "fieldtype": "Currency",
+      "label": "Balance Amount",
+      "read_only": 1,
+      "description": "Outstanding amount if any"
+    },
+    {
+      "fieldname": "check_in_time",
+      "fieldtype": "DateTime",
+      "label": "Actual Check-In Time",
+      "read_only": 1
+    },
+    {
+      "fieldname": "check_out_time",
+      "fieldtype": "DateTime",
+      "label": "Actual Check-Out Time",
+      "read_only": 1
+    },
+    {
+      "fieldname": "section_break_audit",
+      "fieldtype": "Section Break",
+      "label": "Status & Audit"
+    },
+    {
+      "fieldname": "is_checked_in",
+      "fieldtype": "Check",
+      "label": "Checked In",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_checked_out",
+      "fieldtype": "Check",
+      "label": "Checked Out",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "created_at",
+      "fieldtype": "DateTime",
+      "label": "Created At",
+      "read_only": 1
+    },
+    {
+      "fieldname": "created_by_user",
+      "fieldtype": "Link",
+      "label": "Created By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Long Text",
+      "label": "Internal Notes",
+      "description": "Staff notes about this guest (housekeeping, maintenance issues, complaints, etc.)"
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Hotel Reservation Guest Profile",
+      "print_hide": 1,
+      "read_only": 1
+    }
+  ],
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2025-11-12T00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Hotel Reservation Guest Profile",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "read": 1,
+      "role": "Hotel Receptionist"
+    }
+  ],
+  "quick_entry": 1,
+  "row_format": "Dynamic",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

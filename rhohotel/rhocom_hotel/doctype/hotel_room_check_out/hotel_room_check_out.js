@@ -8,8 +8,8 @@ frappe.ui.form.on('Hotel Room Check Out', {
                 },
                 callback: function(r) {
                     if (r.message) {
-                        frm.fields_dict.invoices_html.html(render_invoices(r.message.invoices));
-                        frm.fields_dict.payments_html.html(render_payments(r.message.payments));
+                        frm.get_field('invoices_html').$wrapper.html(render_invoices(r.message.invoices));
+                        frm.get_field('payments_html').$wrapper.html(render_payments(r.message.payments));
                         frm.set_value('total_outstanding_amount', r.message.total_outstanding_amount);
 
                         if (r.message.total_outstanding_amount > 0) {

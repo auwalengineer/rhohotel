@@ -2,6 +2,17 @@ import frappe
 import json
 from frappe.utils import nowdate
 
+
+@frappe.whitelist()
+def get_checkins():
+    return frappe.get_all(
+        "Hotel Room Check In",
+        fields=["name", "guest", "room_number", "check_in_datetime", "expected_check_out_datetime"],
+        filters={"docstatus": 1},
+        order_by="check_in_datetime desc"
+    )
+
+
 @frappe.whitelist()
 def get_room_statistics():
     vacant = frappe.db.count("Hotel Room", {"status": "Vacant"})
@@ -47,11 +58,45 @@ def get_rooms(filters=None):
     if filters.get('housekeeping_status'):
         room_filters['housekeeping_status'] = filters.get('housekeeping_status')
 
+    # Handle "Checking Out Today" filter
+    if filters.get('checkout_today') and filters.get('today_date'):
+        today = filters.get('today_date')
+        check_ins_today = frappe.get_all(
+            "Hotel Room Check In",
+            filters={"expected_check_out_datetime": ["between", [f"{today} 00:00:00", f"{today} 23:59:59"]]},
+            pluck="name"
+        )
+        if check_ins_today:
+            room_filters['current_check_in'] = ["in", check_ins_today]
+        else:
+            # If no check-ins are for today, return no rooms
+            return []
+
     rooms = frappe.get_all(
         "Hotel Room",
-        fields=["name", "room_number", "room_type", "floor", "status", "housekeeping_status", "maintenance_flag", "current_check_in"],
+        fields=["name", "room_number", "room_type", "floor", "status", "housekeeping_status", "maintenance_flag", "current_check_in", "current_guest"],
         filters=room_filters,
         order_by="room_number"
     )
 
-    return rooms
+    # Fetch expected_check_out_datetime for all relevant check-ins in one query
+    check_in_ids = [room.get("current_check_in") for room in rooms if room.get("current_check_in")]
+    check_in_map = {}
+    if check_in_ids:
+        check_in_details = frappe.get_all("Hotel Room Check In", filters={"name": ["in", check_in_ids]}, fields=["name", "expected_check_out_datetime", "check_in_datetime"], as_list=1)
+        check_in_map = {d[0]: {"expected_check_out": d[1], "check_in": d[2]} for d in check_in_details}
+
+    # Build a clean list of room objects for the frontend
+    result = []
+    for room in rooms:
+        room_obj = room.copy()
+        check_in_info = check_in_map.get(room.current_check_in)
+        if check_in_info:
+            room_obj.expected_check_out_datetime = check_in_info.get("expected_check_out")
+            room_obj.check_in_datetime = check_in_info.get("check_in")
+        else:
+            room_obj.expected_check_out_datetime = None
+            room_obj.check_in_datetime = None
+        result.append(room_obj)
+
+    return result

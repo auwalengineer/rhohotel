@@ -1,0 +1,62 @@
+{
+ "add_total_row": 0,
+ "creation": "2025-11-10 12:00:00.000000",
+ "doctype": "Report",
+ "disabled": 0,
+ "doc_type": "Housekeeping Request",
+ "filters": [
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "label": "Room",
+   "options": "Hotel Room"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nApproved\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Select",
+   "label": "Requested By",
+   "options": "Guest\nFront Desk\nRoom Service\nManagement"
+  },
+  {
+   "fieldname": "request_date_from",
+   "fieldtype": "Date",
+   "label": "Request Date From"
+  },
+  {
+   "fieldname": "request_date_to",
+   "fieldtype": "Date",
+   "label": "Request Date To"
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Approval Status",
+   "options": "Approved\nPending Approval"
+  }
+ ],
+ "is_standard": "No",
+ "modified": "2025-11-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Housekeeping Request",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query_report": 0,
+ "ref_doctype": "Housekeeping Request",
+ "report_name": "Housekeeping Request",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Hotel Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ]
+}

@@ -20,7 +20,10 @@
   "issue_section",
   "issue_description",
   "cost_section",
-  "asset_repair"
+  "asset_repair",
+  "section_break_xoch",
+  "approved",
+  "approval_time"
  ],
  "fields": [
   {
@@ -143,12 +146,32 @@
    "label": "Request Type",
    "options": "Repair\nMaintenance",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_xoch",
+   "fieldtype": "Section Break",
+   "label": "Maintenance Approval"
+  },
+  {
+   "default": "0",
+   "fieldname": "approved",
+   "fieldtype": "Check",
+   "label": "Approved"
+  },
+  {
+   "fieldname": "approval_time",
+   "fieldtype": "Datetime",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Approval Time",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-08 08:40:12.899777",
+ "modified": "2025-11-08 22:56:17.002449",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Maintenance Request",
@@ -172,5 +195,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

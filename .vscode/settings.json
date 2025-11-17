@@ -1,0 +1,13 @@
+{
+    "python.testing.enabled": true,
+    "python.testing.unittestEnabled": true,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./rhohotel",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false
+}

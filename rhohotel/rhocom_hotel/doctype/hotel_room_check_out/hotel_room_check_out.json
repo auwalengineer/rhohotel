@@ -1,192 +1,218 @@
 {
-    "actions": [],
-    "creation": "2025-10-30 12:00:00.000000",
-    "doctype": "DocType",
-    "engine": "InnoDB",
-    "field_order": [
-        "check_in",
-        "room_number",
-        "guest_name",
-        "check_out_datetime",
-        "column_break_1",
-        "actual_stay_duration",
-        "status",
-        "remarks_section",
-        "remarks",
-        "billing_section",
-        "additional_charges",
-        "total_amount",
-        "payment_status",
-        "amended_from"
-    ],
-    "fields": [
-        {
-            "fieldname": "check_in",
-            "fieldtype": "Link",
-            "in_list_view": 1,
-            "label": "Check In Reference",
-            "options": "Hotel Room Check In",
-            "reqd": 1
-        },
-        {
-            "fetch_from": "check_in.room_number",
-            "fieldname": "room_number",
-            "fieldtype": "Link",
-            "label": "Room",
-            "options": "Hotel Room",
-            "read_only": 1
-        },
-        {
-            "fetch_from": "check_in.guest",
-            "fieldname": "guest_name",
-            "fieldtype": "Data",
-            "label": "Guest Name",
-            "read_only": 1
-        },
-        {
-            "default": "now",
-            "fieldname": "check_out_datetime",
-            "fieldtype": "Datetime",
-            "label": "Check Out Time",
-            "reqd": 1
-        },
-        {
-            "fieldname": "column_break_1",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "actual_stay_duration",
-            "fieldtype": "Data",
-            "label": "Actual Stay Duration",
-            "read_only": 1
-        },
-        {
-            "default": "Pending",
-            "fieldname": "status",
-            "fieldtype": "Select",
-            "label": "Status",
-            "options": "Pending\nCompleted\nCancelled"
-        },
-        {
-            "fieldname": "remarks_section",
-            "fieldtype": "Section Break",
-            "label": "Remarks"
-        },
-        {
-            "fieldname": "remarks",
-            "fieldtype": "Text Editor",
-            "label": "Remarks"
-        },
-        {
-            "fieldname": "late_checkout_sb",
-            "fieldtype": "Section Break",
-            "label": "Late Checkout"
-        },
-        {
-            "fieldname": "late_checkout",
-            "fieldtype": "Check",
-            "label": "Late Checkout"
-        },
-        {
-            "fieldname": "late_checkout_charges",
-            "fieldtype": "Currency",
-            "label": "Late Checkout Charges"
-        },
-        {
-            "fieldname": "billing_section",
-            "fieldtype": "Section Break",
-            "label": "Billing"
-        },
-        {
-            "fieldname": "invoices_html",
-            "fieldtype": "HTML",
-            "label": "Invoices"
-        },
-        {
-            "fieldname": "payments_html",
-            "fieldtype": "HTML",
-            "label": "Payments"
-        },
-        {
-            "fieldname": "additional_charges",
-            "fieldtype": "Table",
-            "label": "Additional Charges",
-            "options": "Hotel Room Check Out Additional Charge"
-        },
-        {
-            "fieldname": "total_amount",
-            "fieldtype": "Currency",
-            "label": "Total Amount",
-            "read_only": 1
-        },
-        {
-            "fieldname": "total_outstanding_amount",
-            "fieldtype": "Currency",
-            "label": "Total Outstanding Amount",
-            "read_only": 1
-        },
-        {
-            "default": "Unpaid",
-            "fieldname": "payment_status",
-            "fieldtype": "Select",
-            "label": "Payment Status",
-            "options": "Unpaid\nPartially Paid\nPaid"
-        },
-        {
-            "fieldname": "amended_from",
-            "fieldtype": "Link",
-            "label": "Amended From",
-            "no_copy": 1,
-            "options": "Hotel Room Check Out",
-            "print_hide": 1,
-            "read_only": 1
-        }
-    ],
-    "is_submittable": 1,
-    "modified": "2025-10-30 12:00:00.000000",
-    "module": "Rhocom Hotel",
-    "name": "Hotel Room Check Out",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1,
-            "cancel": 1,
-            "amend": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Hotel Manager",
-            "share": 1,
-            "write": 1,
-            "cancel": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Hotel Receptionist",
-            "share": 1,
-            "write": 1
-        }
-    ],
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "title_field": "guest_name",
-    "track_changes": 1
+ "actions": [],
+ "creation": "2025-10-30 12:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "check_in",
+  "room_number",
+  "guest_name",
+  "check_out_datetime",
+  "column_break_1",
+  "actual_stay_duration",
+  "status",
+  "remarks_section",
+  "remarks",
+  "billing_section",
+  "additional_charges",
+  "total_amount",
+  "payment_status",
+  "amended_from",
+  "late_checkout_sb",
+  "late_checkout",
+  "late_checkout_charges",
+  "billing_details_sb",
+  "invoices_html",
+  "payments_html",
+  "total_outstanding_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "check_in",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Check In Reference",
+   "options": "Hotel Room Check In",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "check_in.room_number",
+   "fieldname": "room_number",
+   "fieldtype": "Link",
+   "label": "Room",
+   "options": "Hotel Room",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "check_in.guest",
+   "fieldname": "guest_name",
+   "fieldtype": "Data",
+   "label": "Guest Name",
+   "read_only": 1
+  },
+  {
+   "default": "now",
+   "fieldname": "check_out_datetime",
+   "fieldtype": "Datetime",
+   "label": "Check Out Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_stay_duration",
+   "fieldtype": "Data",
+   "label": "Actual Stay Duration",
+   "read_only": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "remarks_section",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Text Editor",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "late_checkout_sb",
+   "fieldtype": "Section Break",
+   "label": "Late Checkout"
+  },
+  {
+   "default": "0",
+   "fieldname": "late_checkout",
+   "fieldtype": "Check",
+   "label": "Late Checkout"
+  },
+  {
+   "fieldname": "late_checkout_charges",
+   "fieldtype": "Currency",
+   "label": "Late Checkout Charges"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "billing_details_sb",
+   "fieldtype": "Section Break",
+   "label": "Billing Details"
+  },
+  {
+   "fieldname": "invoices_html",
+   "fieldtype": "HTML",
+   "label": "Invoices"
+  },
+  {
+   "fieldname": "payments_html",
+   "fieldtype": "HTML",
+   "label": "Payments"
+  },
+  {
+   "fieldname": "additional_charges",
+   "fieldtype": "Table",
+   "label": "Additional Charges",
+   "options": "Hotel Room Check Out Additional Charge"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Total Outstanding Amount",
+   "read_only": 1
+  },
+  {
+   "default": "Unpaid",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Unpaid\nPartially Paid\nPaid"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Hotel Room Check Out",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-11-09 18:06:25.389197",
+ "modified_by": "o.owoeye@rhocom.ng",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Room Check Out",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Receptionist",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "guest_name",
+ "track_changes": 1
 }

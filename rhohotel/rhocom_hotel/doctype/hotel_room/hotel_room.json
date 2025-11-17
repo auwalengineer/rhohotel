@@ -1,207 +1,250 @@
 {
-    "actions": [],
-    "allow_import": 1,
-    "allow_rename": 1,
-    "autoname": "prompt",
-    "beta": 1,
-    "creation": "2025-10-08 12:33:56.320420",
-    "doctype": "DocType",
-    "document_type": "Setup",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "room_number",
-        "room_type",
-        "operational_status",
-        "status",
-        "housekeeping_status",
-        "maintenance_flag",
-        "floor",
-        "capacity",
-        "extra_bed_capacity",
-        "room_property_section",
-        "phone",
-        "data_extension",
-        "power_code",
-        "room_amenities_section",
-        "amenities",
-        "current_key_card",
-        "last_keycard_user",
-        "last_keycard_time",
-        "current_check_in"
-    ],
-    "fields": [
-        {
-            "default": "Vacant",
-            "fieldname": "status",
-            "fieldtype": "Select",
-            "in_list_view": 1,
-            "label": "Status",
-            "options": "Vacant\nOccupied\nReserved\nMaintenance",
-            "reqd": 1
-        },
-        {
-            "fieldname": "room_type",
-            "fieldtype": "Link",
-            "in_list_view": 1,
-            "label": "Room Type",
-            "options": "Hotel Room Type",
-            "reqd": 1
-        },
-        {
-            "fieldname": "floor",
-            "fieldtype": "Link",
-            "in_list_view": 1,
-            "label": "Floor",
-            "options": "Hotel Floor"
-        },
-        {
-            "fieldname": "room_number",
-            "fieldtype": "Data",
-            "in_list_view": 1,
-            "label": "Room Number",
-            "reqd": 1
-        },
-        {
-            "fieldname": "capacity",
-            "fieldtype": "Int",
-            "in_list_view": 1,
-            "label": "Capacity",
-            "reqd": 1
-        },
-        {
-            "fieldname": "extra_bed_capacity",
-            "fieldtype": "Int",
-            "label": "Extra Bed Capacity"
-        },
-        {
-            "bold": 1,
-            "fieldname": "room_property_section",
-            "fieldtype": "Section Break",
-            "label": "Room Property"
-        },
-        {
-            "fieldname": "phone",
-            "fieldtype": "Phone",
-            "label": "Phone"
-        },
-        {
-            "fieldname": "data_extension",
-            "fieldtype": "Data",
-            "label": "Data Extension"
-        },
-        {
-            "fieldname": "power_code",
-            "fieldtype": "Data",
-            "label": "Power Code"
-        },
-        {
-            "fieldname": "current_key_card",
-            "fieldtype": "Data",
-            "in_list_view": 1,
-            "label": "Current Key Card",
-            "read_only": 1
-        },
-        {
-            "default": "In Service",
-            "fieldname": "operational_status",
-            "fieldtype": "Select",
-            "in_list_view": 1,
-            "label": "Operational Status",
-            "options": "In Service\nOut of Service\nBlocked"
-        },
-        {
-            "bold": 1,
-            "fieldname": "room_amenities_section",
-            "fieldtype": "Section Break",
-            "label": "Room Amenities"
-        },
-        {
-            "fieldname": "amenities",
-            "fieldtype": "Table",
-            "label": "Amenities",
-            "options": "Hotel Room Amenity"
-        },
-        {
-            "fieldname": "housekeeping_status",
-            "fieldtype": "Select",
-            "in_list_view": 1,
-            "label": "Housekeeping Status",
-            "options": "Clean\nDirty\nInspected\nIn Progress"
-        },
-        {
-            "default": "0",
-            "fieldname": "maintenance_flag",
-            "fieldtype": "Check",
-            "in_list_view": 1,
-            "label": "Maintenance Flag"
-        },
-        {
-            "fieldname": "last_keycard_user",
-            "fieldtype": "Data",
-            "label": "Last Keycard User",
-            "read_only": 1
-        },
-        {
-            "fieldname": "last_keycard_time",
-            "fieldtype": "Datetime",
-            "label": "Last Keycard Time",
-            "read_only": 1
-        },
-        {
-            "fieldname": "current_check_in",
-            "fieldtype": "Link",
-            "in_list_view": 0,
-            "label": "Current Check-In",
-            "options": "Hotel Room Check In",
-            "read_only": 0
-        },
-        {
-            "fieldname": "current_guest",
-            "fieldtype": "Link",
-            "in_list_view": 0,
-            "label": "Current Guest",
-            "options": "Hotel Guest",
-            "read_only": 0
-        }
-    ],
-    "links": [],
-    "modified": "2025-10-30 10:02:48.918886",
-    "modified_by": "Administrator",
-    "module": "Rhocom Hotel",
-    "name": "Hotel Room",
-    "naming_rule": "Set by user",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Hotel Manager",
-            "share": 1,
-            "write": 1
-        }
-    ],
-    "quick_entry": 1,
-    "row_format": "Dynamic",
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "states": [],
-    "track_changes": 1
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "prompt",
+ "beta": 1,
+ "creation": "2025-10-08 12:33:56.320420",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "room_number",
+  "room_type",
+  "operational_status",
+  "status",
+  "housekeeping_status",
+  "maintenance_flag",
+  "floor",
+  "capacity",
+  "extra_bed_capacity",
+  "room_property_section",
+  "phone",
+  "data_extension",
+  "power_code",
+  "current_key_card",
+  "last_keycard_user",
+  "last_keycard_time",
+  "room_amenities_section",
+  "amenities",
+  "room_inventory_section",
+  "room_inventory",
+  "current_check_in",
+  "current_guest",
+  "booking_status",
+  "current_booking_number",
+  "hold_expires_at",
+  "erpnext_item"
+ ],
+ "fields": [
+  {
+   "default": "Vacant",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Vacant\nOccupied\nReserved\nMaintenance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Room Type",
+   "options": "Hotel Room Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "floor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Floor",
+   "options": "Hotel Floor"
+  },
+  {
+   "fieldname": "room_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Room Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "erpnext_item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Capacity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "extra_bed_capacity",
+   "fieldtype": "Int",
+   "label": "Extra Bed Capacity"
+  },
+  {
+   "bold": 1,
+   "fieldname": "room_property_section",
+   "fieldtype": "Section Break",
+   "label": "Room Property"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Phone",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "data_extension",
+   "fieldtype": "Data",
+   "label": "Data Extension"
+  },
+  {
+   "fieldname": "power_code",
+   "fieldtype": "Data",
+   "label": "Power Code"
+  },
+  {
+   "fieldname": "current_key_card",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Current Key Card",
+   "read_only": 1
+  },
+  {
+   "default": "In Service",
+   "fieldname": "operational_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Operational Status",
+   "options": "In Service\nOut of Service\nBlocked"
+  },
+  {
+   "bold": 1,
+   "fieldname": "room_amenities_section",
+   "fieldtype": "Section Break",
+   "label": "Room Amenities"
+  },
+  {
+   "fieldname": "amenities",
+   "fieldtype": "Table",
+   "label": "Amenities",
+   "options": "Hotel Room Amenity"
+  },
+  {
+   "fieldname": "housekeeping_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Housekeeping Status",
+   "options": "Clean\nDirty\nInspected\nIn Progress"
+  },
+  {
+   "default": "0",
+   "fieldname": "maintenance_flag",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Maintenance Flag"
+  },
+  {
+   "fieldname": "last_keycard_user",
+   "fieldtype": "Data",
+   "label": "Last Keycard User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_keycard_time",
+   "fieldtype": "Datetime",
+   "label": "Last Keycard Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_check_in",
+   "fieldtype": "Link",
+   "label": "Current Check-In",
+   "options": "Hotel Room Check In"
+  },
+  {
+   "fieldname": "current_guest",
+   "fieldtype": "Link",
+   "label": "Current Guest",
+   "options": "Hotel Guest"
+  },
+  {
+   "fieldname": "room_inventory",
+   "fieldtype": "Table",
+   "label": "Room Inventory",
+   "options": "Hotel Room Inventory Item"
+  },
+  {
+   "fieldname": "room_inventory_section",
+   "fieldtype": "Section Break",
+   "label": "Room Inventory"
+  },
+  {
+   "fieldname": "booking_status",
+   "fieldtype": "Select",
+   "label": "Booking Status",
+   "options": "Available\nHeld\nOccupied\nReserved",
+   "default": "Available",
+   "in_list_view": 1,
+   "description": "Whether room is held by pending payment, occupied by guest, or available"
+  },
+  {
+   "fieldname": "current_booking_number",
+   "fieldtype": "Data",
+   "label": "Current Booking Number",
+   "read_only": 1,
+   "description": "Currently active booking for this room"
+  },
+  {
+   "fieldname": "hold_expires_at",
+   "fieldtype": "Datetime",
+   "label": "Hold Expires At",
+   "read_only": 1,
+   "description": "If room is held, it expires at this time"
+  }
+ ],
+ "links": [],
+ "modified": "2025-11-12 20:03:34.690884",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Room",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
 }

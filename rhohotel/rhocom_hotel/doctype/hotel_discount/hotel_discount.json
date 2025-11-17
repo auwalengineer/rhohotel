@@ -1,0 +1,110 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-11-12 09:46:48.034422",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "section_break_sir6"
+    ],
+    "fields": [
+        {
+            "fieldname": "discount_name",
+            "fieldtype": "Data",
+            "label": "Discount Name",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "default": "0",
+            "fieldname": "is_active",
+            "fieldtype": "Check",
+            "label": "Is Active"
+        },
+        {
+            "fieldname": "column_break_2",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "discount_type",
+            "fieldtype": "Select",
+            "label": "Discount Type",
+            "options": "Percentage\nFixed Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "discount_value",
+            "fieldtype": "Float",
+            "label": "Value (Percentage or Amount)",
+            "reqd": 1
+        },
+        {
+            "fieldname": "section_break_4",
+            "fieldtype": "Section Break",
+            "label": "Discount Details"
+        },
+        {
+            "fieldname": "applicable_room_types",
+            "fieldtype": "Link",
+            "label": "Applicable Room Types",
+            "options": "Hotel Room Type"
+        },
+        {
+            "fieldname": "applicable_market_places",
+            "fieldtype": "Link",
+            "label": "Applicable Market Places",
+            "options": "Market Place"
+        },
+        {
+            "fieldname": "section_break_5",
+            "fieldtype": "Section Break",
+            "label": "Applicability Rules"
+        },
+        {
+            "fieldname": "valid_from",
+            "fieldtype": "Date",
+            "label": "Valid From"
+        },
+        {
+            "fieldname": "valid_to",
+            "fieldtype": "Date",
+            "label": "Valid To"
+        },
+        {
+            "fieldname": "min_days_in_advance",
+            "fieldtype": "Int",
+            "label": "Minimum Days in Advance"
+        },
+        {
+            "fieldname": "min_stay_duration",
+            "fieldtype": "Int",
+            "label": "Minimum Stay Duration (Nights)"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-11-12 09:46:48.034422",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Discount",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

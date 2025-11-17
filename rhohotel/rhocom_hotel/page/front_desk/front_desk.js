@@ -79,7 +79,7 @@ class FrontDesk {
             },
             {
                 fieldtype: 'Check',
-                label: 'Checkout Today',
+                label: 'Checking Out Today',
                 fieldname: 'checkout_today',
                 change: () => this.refresh()
             }
@@ -91,8 +91,7 @@ class FrontDesk {
     }
 
     make_room_grid() {
-        this.$tab_nav = $(`<ul class="nav nav-tabs" role="tablist"></ul>`).appendTo(this.page.main);
-        this.$tab_content = $(`<div class="tab-content"></div>`).appendTo(this.page.main);
+        this.$room_grid = $(`<div class="room-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem 0;"></div>`).appendTo(this.page.main);
     }
     // -----------------------------------------------------------
 
@@ -100,7 +99,7 @@ class FrontDesk {
         const status_colors = {
             'Vacant': 'green',
             'Occupied': 'blue',
-            'Reserved': 'orange',
+            'Reserved': 'orange-color', // Use a valid CSS variable
             'Maintenance': 'red'
         };
 
@@ -116,10 +115,11 @@ class FrontDesk {
 
         return $(
             `<div class="room-card" data-name="${room.name}">
-                <div class="card" style="border-left: 3px solid var(--${status_color}-500)">
+                <div class="card" style="border-left: 3px solid var(--${status_color})">
                     <div class="card-body">
                         <h5 class="card-title">
                             ${room.room_number}
+                           
                             <span class="float-right">
                                 <i class="fa fa-${housekeeping_icon}"
                                    title="${room.housekeeping_status}"></i>
@@ -131,7 +131,7 @@ class FrontDesk {
                             ${room.current_guest ? `
                                 <div class="mt-2">
                                     <strong>Guest:</strong> ${room.current_guest}<br>
-                                    <small>Checkout: ${room.expected_checkout ? frappe.datetime.str_to_user(room.expected_checkout) : 'N/A'}</small>
+                                    <small>Checkout: ${room.expected_check_out_datetime ? frappe.datetime.str_to_user(room.expected_check_out_datetime) : 'N/A'}</small>
                                 </div>
                             ` : ''}
                             ${room.upcoming_guest ? `
@@ -152,10 +152,10 @@ class FrontDesk {
         );
     }
 
-    get_stat_card(label, value, icon, color) {
-        return $(
+    get_stat_card(label, value, icon, color, route_options = null) {
+        const $card = $(
             `<div class="stat-card">
-                <div class="card" style="background-color: var(--${color}-50)">
+                <div class="card" style="background-color: var(--${color}-100)">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -170,6 +170,14 @@ class FrontDesk {
                 </div>
             </div>`
         );
+
+        if (route_options) {
+            $card.on('click', () => {
+                frappe.set_route('List', 'Hotel Room', route_options);
+            });
+            $card.css('cursor', 'pointer');
+        }
+        return $card;
     }
 
     refresh() {
@@ -183,11 +191,11 @@ class FrontDesk {
             callback: (r) => {
                 this.$stats.empty();
                 const stats = r.message;
-                this.$stats.append(this.get_stat_card('Vacant Rooms', stats.vacant, 'bed', 'green'));
-                this.$stats.append(this.get_stat_card('Occupied Rooms', stats.occupied, 'user', 'blue'));
-                this.$stats.append(this.get_stat_card('Reserved Today', stats.reserved, 'calendar', 'orange'));
-                this.$stats.append(this.get_stat_card('Dirty Rooms', stats.dirty, 'trash', 'yellow'));
-                this.$stats.append(this.get_stat_card('In Maintenance', stats.maintenance, 'wrench', 'red'));
+                this.$stats.append(this.get_stat_card('Vacant Rooms', stats.vacant, 'bed', 'green', { status: 'Vacant' }));
+                this.$stats.append(this.get_stat_card('Occupied Rooms', stats.occupied, 'user', 'blue', { status: 'Occupied' }));
+                this.$stats.append(this.get_stat_card('Reserved Today', stats.reserved, 'calendar', 'orange', { status: 'Reserved' }));
+                this.$stats.append(this.get_stat_card('Dirty Rooms', stats.dirty, 'trash', 'yellow', { housekeeping_status: 'Dirty' }));
+                this.$stats.append(this.get_stat_card('In Maintenance', stats.maintenance, 'wrench', 'red', { status: 'Maintenance' }));
             }
         });
     }
@@ -196,56 +204,33 @@ class FrontDesk {
         const filters = this.page.get_form_values();
         this.filters = filters;
 
+        // If checkout_today is checked, add today's date to the filters
+        if (filters.checkout_today) {
+            filters.today_date = frappe.datetime.get_today();
+        }
+
         frappe.call({
             method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_rooms',
             args: { filters: filters },
             callback: (r) => {
                 const rooms = r.message;
-                this.$tab_nav.empty();
-                this.$tab_content.empty();
+                this.$room_grid.empty();
 
                 if (rooms.length === 0) {
-                    this.$tab_content.html('<p class="text-muted text-center" style="padding: 2rem 0;">No rooms found.</p>');
+                    this.$room_grid.html('<p class="text-muted text-center" style="padding: 2rem 0;">No rooms found.</p>');
                     return;
                 }
 
-                const rooms_by_floor = this.group_by(rooms, 'floor');
+                rooms.forEach(room => {
+                    const $card = this.get_room_card(room);
+                    this.$room_grid.append($card);
 
-                Object.keys(rooms_by_floor).forEach((floor, index) => {
-                    const floor_id = floor.replace(/\s+/g, '-').toLowerCase();
-                    const is_active = index === 0;
-
-                    this.$tab_nav.append(`
-                        <li class="nav-item">
-                            <a class="nav-link ${is_active ? 'active' : ''}" id="${floor_id}-tab" data-toggle="tab" href="#${floor_id}" role="tab" aria-controls="${floor_id}" aria-selected="${is_active}">${floor}</a>
-                        </li>
-                    `);
-
-                    const $tab_pane = $(`
-                        <div class="tab-pane fade ${is_active ? 'show active' : ''}" id="${floor_id}" role="tabpanel" aria-labelledby="${floor_id}-tab">
-                            <div class="room-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem 0;"></div>
-                        </div>
-                    `).appendTo(this.$tab_content);
-
-                    const $grid = $tab_pane.find('.room-grid');
-                    rooms_by_floor[floor].forEach(room => {
-                        const $card = this.get_room_card(room);
-                        $grid.append($card);
-
-                        $card.click(() => {
-                            this.show_room_actions(room);
-                        });
+                    $card.click(() => {
+                        this.show_room_actions(room);
                     });
                 });
             }
         });
-    }
-
-    group_by(array, key) {
-        return array.reduce((result, currentValue) => {
-            (result[currentValue[key]] = result[currentValue[key]] || []).push(currentValue);
-            return result;
-        }, {});
     }
 
     start_clock() {
@@ -259,8 +244,8 @@ class FrontDesk {
 
         if (room.status === 'Vacant' && room.housekeeping_status === 'Clean') {
             actions.push({
-                label: 'New Check-in',
-                action: () => frappe.new_doc('Hotel Room Check In', { room: room.name })
+                label: `New Check-in`,
+                action: () => frappe.new_doc('Hotel Room Check In', { room_number: room.room_number })
             });
         }
 
@@ -303,12 +288,49 @@ class FrontDesk {
             action: () => frappe.set_route('Form', 'Hotel Room', room.name)
         });
 
+        const dialog_fields = [];
+
+        if (room.status === 'Occupied') {
+            dialog_fields.push({ fieldtype: 'Section Break', label: 'Current Check-in Details' });
+            dialog_fields.push({
+                fieldtype: 'Data', label: 'Guest', default: room.current_guest, read_only: 1
+            });
+            dialog_fields.push({
+                fieldtype: 'Data', label: 'Check-in Time', default: room.check_in_datetime ? frappe.datetime.str_to_user(room.check_in_datetime) : 'N/A', read_only: 1,
+                wrapper_class: 'col-md-6'
+            });
+            dialog_fields.push({
+                fieldtype: 'Data', label: 'Expected Check-out', default: room.expected_check_out_datetime ? frappe.datetime.str_to_user(room.expected_check_out_datetime) : 'N/A', read_only: 1,
+                wrapper_class: 'col-md-6'
+            });
+        }
+        dialog_fields.push(
+
+            { fieldtype: 'Section Break', label: 'Room Details' },
+            {
+                fieldtype: 'Data', label: 'Room Type', default: room.room_type, read_only: 1,
+                wrapper_class: 'col-md-6'
+            },
+            {
+                fieldtype: 'Data', label: 'Floor', default: room.floor, read_only: 1,
+                wrapper_class: 'col-md-6'
+            },
+            {
+                fieldtype: 'Data', label: 'Status', default: room.status, read_only: 1,
+                wrapper_class: 'col-md-6'
+            },
+            {
+                fieldtype: 'Data', label: 'Housekeeping', default: room.housekeeping_status, read_only: 1,
+                wrapper_class: 'col-md-6'
+            }
+
+        );
+
         const dialog = new frappe.ui.Dialog({
             title: `Room ${room.room_number}`,
-            fields: [
-                // Can add more details here if needed
-            ],
-            primary_action_label: actions[0].label,
+            fields: dialog_fields,
+            // Set primary action only if actions are available
+            primary_action_label: actions.length > 0 ? actions[0].label : 'Close',
             primary_action: actions[0].action
         });
 

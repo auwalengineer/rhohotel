@@ -1,0 +1,76 @@
+{
+  "name": "Hotel Booking Report",
+  "doctype": "Report",
+  "module": "Rhocom Hotel",
+  "report_type": "Query Report",
+  "ref_doctype": "Hotel Booking",
+  "title": "Hotel Booking Report",
+  "description": "Comprehensive report for Hotel Bookings with advanced filtering options across all fields",
+  "is_standard": "Yes",
+  "disabled": 0,
+  "query": "rhocom_hotel.rhocom_hotel.report.hotel_booking_report.hotel_booking_report",
+  "report_name": "Hotel Booking Report",
+  "creation": "2025-11-15 00:00:00.000000",
+  "modified": "2025-11-15 00:00:00.000000",
+  "modified_by": "Administrator",
+  "owner": "Administrator",
+  "docstatus": 0,
+  "idx": 0,
+  "roles": [
+    {
+      "role": "System Manager",
+      "doctype": "Has Role",
+      "parenttype": "Report",
+      "parent": "Hotel Booking Report",
+      "parentfield": "roles"
+    },
+    {
+      "role": "Hotel Manager",
+      "doctype": "Has Role",
+      "parenttype": "Report",
+      "parent": "Hotel Booking Report",
+      "parentfield": "roles"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 0,
+      "submit": 0,
+      "create": 0,
+      "delete": 0,
+      "print": 1,
+      "email": 1,
+      "export": 1,
+      "report": 1,
+      "share": 1
+    },
+    {
+      "role": "Hotel Manager",
+      "read": 1,
+      "write": 0,
+      "submit": 0,
+      "create": 0,
+      "delete": 0,
+      "print": 1,
+      "email": 1,
+      "export": 1,
+      "report": 1,
+      "share": 0
+    },
+    {
+      "role": "All",
+      "read": 1,
+      "write": 0,
+      "submit": 0,
+      "create": 0,
+      "delete": 0,
+      "print": 1,
+      "email": 1,
+      "export": 1,
+      "report": 1,
+      "share": 0
+    }
+  ]
+}

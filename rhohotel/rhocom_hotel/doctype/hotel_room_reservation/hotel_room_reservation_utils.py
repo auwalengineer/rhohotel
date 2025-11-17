@@ -11,7 +11,12 @@ def make_room_check_in(source_name, target_doc=None):
 		"Hotel Room Reservation": {
 			"doctype": "Hotel Room Check In",
 			"field_map": {
-				"guest_name": "guest_name"
+				"guest_name": "guest_name",
+				"name": "reservation",
+				"discount": "discount",
+				"discount_amount": "discount_amount",
+				"net_total": "net_total",
+				"grand_total": "grand_total"
 			},
 			"validation": {
 				"docstatus": ["=", 1],

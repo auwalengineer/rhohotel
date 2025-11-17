@@ -1,14 +1,35 @@
 {
-    "name": "Payment Session",
+    "actions": [],
+    "creation": "2025-11-09 10:22:44.982816",
     "doctype": "DocType",
     "engine": "InnoDB",
-    "is_submittable": 1,
-    "track_changes": 1,
-    "module": "Rhocom Hotel",
+    "field_order": [
+        "section_break_1",
+        "payment_reference",
+        "invoices",
+        "total_amount",
+        "status",
+        "payment_entry",
+        "hotel_room_check_in",
+        "posting_date",
+        "amended_from",
+        "transaction_reference"
+    ],
     "fields": [
+        {
+            "fieldtype": "Section Break",
+            "label": "Payment Verification",
+            "fieldname": "section_break_1"
+        },
+        {
+            "fieldtype": "Button",
+            "label": "Verify Payment",
+            "fieldname": "verify_payment"
+        },
         {
             "fieldname": "payment_reference",
             "fieldtype": "Data",
+            "in_list_view": 1,
             "label": "Payment Reference",
             "reqd": 1,
             "unique": 1
@@ -22,34 +43,79 @@
         {
             "fieldname": "total_amount",
             "fieldtype": "Currency",
+            "in_list_view": 1,
             "label": "Total Amount",
             "reqd": 1
         },
         {
+            "default": "Pending",
             "fieldname": "status",
             "fieldtype": "Select",
+            "in_list_view": 1,
             "label": "Status",
             "options": "Pending\nPaid\nFailed",
-            "default": "Pending",
-            "reqd": 1
+            "reqd": 1,
+            "read_only": 1
         },
         {
             "fieldname": "payment_entry",
             "fieldtype": "Link",
             "label": "Payment Entry",
             "options": "Payment Entry"
+        },
+        {
+            "fieldname": "hotel_room_check_in",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Hotel Room Check In",
+            "options": "Hotel Room Check In",
+            "reqd": 1
+        },
+        {
+            "fieldname": "posting_date",
+            "fieldtype": "Date",
+            "label": "Posting Date",
+            "read_only": 1,
+            "reqd": 1
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Payment Session",
+            "print_hide": 1,
+            "read_only": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "transaction_reference",
+            "fieldtype": "Data",
+            "label": "Transaction Reference"
         }
     ],
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2025-11-09 12:11:40.947191",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Payment Session",
+    "owner": "Administrator",
     "permissions": [
         {
-            "role": "System Manager",
-            "read": 1,
-            "write": 1,
+            "amend": 1,
+            "cancel": 1,
             "create": 1,
             "delete": 1,
+            "read": 1,
+            "role": "System Manager",
             "submit": 1,
-            "cancel": 1,
-            "amend": 1
+            "write": 1
         }
-    ]
+    ],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
 }

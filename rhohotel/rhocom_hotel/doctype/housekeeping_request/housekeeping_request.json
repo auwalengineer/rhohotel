@@ -1,36 +1,20 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "HK-REQ-{YYYY}-{#####}",
  "creation": "2025-10-25 21:56:10.015728",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "request_details_section",
-  "request_date",
   "room",
-  "service_type",
-  "priority",
+  "request_date",
+  "housekeeping_task",
   "column_break_slbb",
   "requested_by",
   "guest_name",
-  "guest_contact",
   "status",
+  "approval_time",
   "request_details_section_section",
-  "request_details",
-  "special_instructions",
-  "assignment_section",
-  "housekeeping_task",
-  "column_break_lths",
-  "assigned_to",
-  "timestamps_section",
-  "requested_at",
-  "completed_at",
-  "column_break_kxcu",
-  "assigned_at",
-  "feedback_section",
-  "guest_satisfied",
-  "guest_feedback"
+  "request_details"
  ],
  "fields": [
   {
@@ -53,22 +37,8 @@
    "in_standard_filter": 1,
    "label": "Room",
    "options": "Hotel Room",
-   "reqd": 1
-  },
-  {
-   "fieldname": "service_type",
-   "fieldtype": "Link",
-   "label": "Service Type",
-   "options": "Housekeeping Service Type"
-  },
-  {
-   "fieldname": "priority",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "label": "Priority",
-   "options": "Low\nMedium\nHigh\nUrgent",
-   "reqd": 1
+   "reqd": 1,
+   "get_route_options_method": "get_occupied_rooms"
   },
   {
    "fieldname": "column_break_slbb",
@@ -78,23 +48,36 @@
    "fieldname": "requested_by",
    "fieldtype": "Select",
    "label": "Requested By",
-   "options": "Guest\nFront Desk\nRoom Service\nManagement"
+   "options": "Guest\nFront Desk\nRoom Service\nManagement",
+   "reqd": 1
   },
   {
    "fieldname": "guest_name",
    "fieldtype": "Data",
-   "label": "Guest Name "
+   "label": "Guest Name"
   },
   {
-   "fieldname": "guest_contact",
-   "fieldtype": "Phone",
-   "label": "Guest Contact"
-  },
-  {
+   "default": "Pending",
    "fieldname": "status",
    "fieldtype": "Select",
-   "label": "Status ",
-   "options": "Open\nAssigned\nInProgress\nCompleted\nCancelled"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nApproved\nCompleted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "housekeeping_task",
+   "fieldtype": "Link",
+   "label": "Housekeeping Task",
+   "options": "Housekeeping Task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_time",
+   "fieldtype": "DateTime",
+   "label": "Approval Time",
+   "read_only": 1
   },
   {
    "fieldname": "request_details_section_section",
@@ -104,79 +87,14 @@
   {
    "fieldname": "request_details",
    "fieldtype": "Text Editor",
-   "label": "Request Details "
-  },
-  {
-   "fieldname": "special_instructions",
-   "fieldtype": "Small Text",
-   "label": "Special Instructions"
-  },
-  {
-   "fieldname": "assignment_section",
-   "fieldtype": "Section Break",
-   "label": "Assignment"
-  },
-  {
-   "fieldname": "housekeeping_task",
-   "fieldtype": "Link",
-   "label": "Housekeeping Task",
-   "options": "Housekeeping Task"
-  },
-  {
-   "fieldname": "column_break_lths",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "assigned_to",
-   "fieldtype": "Link",
-   "label": "Assigned To",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "timestamps_section",
-   "fieldtype": "Section Break",
-   "label": "Timestamps"
-  },
-  {
-   "fieldname": "requested_at",
-   "fieldtype": "Datetime",
-   "label": "Requested At"
-  },
-  {
-   "fieldname": "completed_at",
-   "fieldtype": "Datetime",
-   "label": "Completed At"
-  },
-  {
-   "fieldname": "column_break_kxcu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "assigned_at",
-   "fieldtype": "Datetime",
-   "label": "Assigned At"
-  },
-  {
-   "fieldname": "feedback_section",
-   "fieldtype": "Section Break",
-   "label": "Feedback"
-  },
-  {
-   "default": "0",
-   "fieldname": "guest_satisfied",
-   "fieldtype": "Check",
-   "label": "Guest Satisfied"
-  },
-  {
-   "fieldname": "guest_feedback",
-   "fieldtype": "Small Text",
-   "label": "Guest Feedback"
+   "label": "Request Details"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-10-31 09:21:39.666860",
+ "modified": "2025-11-10 11:56:43.164786",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Housekeeping Request",
@@ -193,6 +111,19 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Manager",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

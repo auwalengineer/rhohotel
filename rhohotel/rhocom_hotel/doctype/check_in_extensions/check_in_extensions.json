@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-08 23:05:09.892375",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "extension_date",
+  "previous_checkout_date",
+  "new_checkout_date",
+  "number_of_nights",
+  "extension_invoice",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "extension_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Extension Date"
+  },
+  {
+   "fieldname": "previous_checkout_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Previous Checkout Date"
+  },
+  {
+   "fieldname": "new_checkout_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "New Checkout Date"
+  },
+  {
+   "fieldname": "number_of_nights",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Number of Nights"
+  },
+  {
+   "fieldname": "extension_invoice",
+   "fieldtype": "Link",
+   "label": "Extension Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-08 23:26:41.262936",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Check In Extensions",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

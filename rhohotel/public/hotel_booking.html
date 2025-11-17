@@ -1,0 +1,671 @@
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏨 Hotel Booking System</title>
+    <script src="https://sdk.monnify.com/plugin/monnify.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-search {
+            background: #667eea;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-search:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-book {
+            background: #48bb78;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-book:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn-pay {
+            background: #ed8936;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-pay:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+            display: block;
+        }
+
+        .alert.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+            display: block;
+        }
+
+        .alert.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #4299e1;
+            display: block;
+        }
+
+        .alert.warning {
+            background: #feebc8;
+            color: #7c2d12;
+            border-left: 4px solid #ed8936;
+            display: block;
+        }
+
+        .room-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .room-option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .room-option.selected {
+            border-color: #667eea;
+            background: #ebf4ff;
+        }
+
+        .room-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .room-details {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .room-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .booking-summary {
+            background: #f7fafc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .booking-summary.show {
+            display: block;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .summary-item strong {
+            color: #333;
+        }
+
+        .summary-total {
+            border-top: 2px solid #e0e0e0;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏨 Hotel Booking</h1>
+            <p>Search, Book & Pay with Monnify</p>
+        </div>
+
+        <div class="content">
+            <!-- Alert Messages -->
+            <div id="alert" class="alert"></div>
+
+            <!-- Step 1: Search Form -->
+            <div id="step1" class="step active">
+                <h2>📅 Step 1: Search Rooms</h2>
+
+                <div class="form-group">
+                    <label>Check-In Date</label>
+                    <input type="date" id="checkInDate" value="2025-11-17" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Check-Out Date</label>
+                    <input type="date" id="checkOutDate" value="2025-11-19" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Number of Rooms</label>
+                    <input type="number" id="numRooms" value="1" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Number of Adults</label>
+                    <input type="number" id="numAdults" value="1" min="1" required>
+                </div>
+
+                <button class="btn-search" onclick="searchRooms()">🔍 Search Available Rooms</button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; color: #667eea;">Loading...</p>
+            </div>
+
+            <!-- Step 2: Room Selection -->
+            <div id="step2" class="step">
+                <h2>🛏️ Step 2: Select Room</h2>
+                <div id="roomsList"></div>
+                <button class="btn-search" onclick="goBack(1)">← Back to Search</button>
+            </div>
+
+            <!-- Step 3: Booking Details -->
+            <div id="step3" class="step">
+                <h2>👤 Step 3: Your Details</h2>
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="customerName" placeholder="Jane Smith" value="Jane Smith">
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="customerEmail" placeholder="jane@example.com" value="jane@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="customerPhone" placeholder="+2348012345678" value="+2348012345678">
+                </div>
+
+                <!-- Booking Summary -->
+                <div id="bookingSummary" class="booking-summary show">
+                    <div class="summary-item">
+                        <strong>Room:</strong>
+                        <span id="summaryRoom">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Check-In:</strong>
+                        <span id="summaryCheckIn">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Check-Out:</strong>
+                        <span id="summaryCheckOut">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Nights:</strong>
+                        <span id="summaryNights">-</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total:</span>
+                        <span id="summaryTotal">₦0.00</span>
+                    </div>
+                </div>
+
+                <button class="btn-book" onclick="createBooking()">📝 Create Booking</button>
+                <button class="btn-search" onclick="goBack(2)">← Back</button>
+            </div>
+
+            <!-- Step 4: Payment -->
+            <div id="step4" class="step">
+                <h2>💳 Step 4: Make Payment</h2>
+
+                <div class="booking-summary show">
+                    <div class="summary-item">
+                        <strong>Booking Number:</strong>
+                        <span id="paymentBookingNumber">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Amount:</strong>
+                        <span id="paymentAmount">₦0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Status:</strong>
+                        <span id="paymentStatus">Pending</span>
+                    </div>
+                </div>
+
+                <button class="btn-pay" onclick="payWithMonnify()">💰 Pay Now with Monnify</button>
+                <button class="btn-search" onclick="goBack(3)">← Back</button>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="step">
+                <h2 style="color: #48bb78; text-align: center;">✅ Payment Successful!</h2>
+                <div class="booking-summary show">
+                    <div class="summary-item">
+                        <strong>Booking Number:</strong>
+                        <span id="successBookingNumber">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Amount Paid:</strong>
+                        <span id="successAmount">₦0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Reference:</strong>
+                        <span id="successReference">-</span>
+                    </div>
+                </div>
+                <p style="text-align: center; margin: 20px 0; color: #666;">
+                    Check-in is ready! Your rooms are confirmed.
+                </p>
+                <button class="btn-search" onclick="location.reload()">🔄 Start New Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://pms.rhocom.ng/api/method';
+        let selectedRoom = null;
+        let searchResults = null;
+        let bookingData = null;
+        let paymentData = null;
+
+        function showAlert(message, type = 'info') {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function goToStep(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+        }
+
+        function goBack(fromStep) {
+            if (fromStep === 1) goToStep(1);
+            else if (fromStep === 2) goToStep(1);
+            else if (fromStep === 3) goToStep(2);
+        }
+
+        async function searchRooms() {
+            const checkInDate = document.getElementById('checkInDate').value;
+            const checkOutDate = document.getElementById('checkOutDate').value;
+            const numRooms = document.getElementById('numRooms').value;
+            const numAdults = document.getElementById('numAdults').value;
+
+            if (!checkInDate || !checkOutDate) {
+                showAlert('Please select check-in and check-out dates', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch(`${API_URL}/rhohotel.search_available_rooms.search_available_rooms`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        check_in_date: checkInDate,
+                        check_out_date: checkOutDate,
+                        num_rooms: parseInt(numRooms),
+                        adults: parseInt(numAdults),
+                        children: 0
+                    })
+
+                });
+
+                const data = await response.json();
+                console.log('Search Response:', data);
+
+                // Handle both wrapped and unwrapped responses
+                const result = data.message || data;
+
+                if (result.status === "success" && Object.keys(result.available_rooms).length > 0) {
+                    searchResults = result;
+                    displayRooms(searchResults);
+                    goToStep(2);
+                    showAlert('✅ Rooms found! Select a room to continue.', 'success');
+                } else if (result.warning_guest_mismatch) {
+                    showAlert(`⚠️ ${result.warning_guest_mismatch}`, 'warning');
+                } else {
+                    showAlert(result.message || 'No rooms available for selected criteria', 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+                console.error('Fetch error:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayRooms(results) {
+            const roomsList = document.getElementById('roomsList');
+            roomsList.innerHTML = '';
+
+            if (!results.available_rooms || Object.keys(results.available_rooms).length === 0) {
+                roomsList.innerHTML = '<p style="color: #666;">No rooms available</p>';
+                return;
+            }
+
+            for (const [roomType, details] of Object.entries(results.available_rooms)) {
+                if (!details.available_rooms || details.available_rooms.length === 0) continue;
+
+                const room = details.available_rooms[0];
+                const html = `
+                    <div class="room-option" onclick="selectRoom('${roomType}', this)">
+                        <div class="room-header">${roomType}</div>
+                        <div class="room-details">
+                            📍 ${room.room_number} • Floor: ${room.floor || 'N/A'} • Capacity: ${room.capacity}
+                        </div>
+                        <div class="room-details">
+                            ${details.number_of_nights} nights @ ₦${details.price_per_night.toLocaleString()} per night
+                        </div>
+                        <div class="room-price">₦${details.total_price.toLocaleString()}</div>
+                    </div>
+                `;
+                roomsList.innerHTML += html;
+            }
+        }
+
+        function selectRoom(roomType, element) {
+            document.querySelectorAll('.room-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+
+            const room = searchResults.available_rooms[roomType];
+            selectedRoom = {
+                type: roomType,
+                number: room.available_rooms[0].room_number,
+                price: room.total_price,
+                nights: room.number_of_nights,
+                checkIn: searchResults.check_in_date,
+                checkOut: searchResults.check_out_date
+            };
+
+            // Update summary
+            document.getElementById('summaryRoom').textContent = selectedRoom.number;
+            document.getElementById('summaryCheckIn').textContent = selectedRoom.checkIn;
+            document.getElementById('summaryCheckOut').textContent = selectedRoom.checkOut;
+            document.getElementById('summaryNights').textContent = selectedRoom.nights;
+            document.getElementById('summaryTotal').textContent = `₦${selectedRoom.price.toLocaleString()}`;
+
+            // Move to step 3
+            goToStep(3);
+        }
+
+        async function createBooking() {
+            const customerName = document.getElementById('customerName').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+
+            if (!customerName || !customerEmail) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch(`${API_URL}/rhohotel.hotel_booking.create_booking`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from_date: selectedRoom.checkIn,
+                        to_date: selectedRoom.checkOut,
+                        rooms: JSON.stringify([selectedRoom.number]),
+                        guests: JSON.stringify([customerName]),
+                        customer_email: customerEmail,
+                        customer_phone: customerPhone,
+                        customer_name: customerName
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Booking Response:', data);
+
+                const result = data.message || data;
+
+                if (result && result.booking_number) {
+                    bookingData = result;
+                    document.getElementById('paymentBookingNumber').textContent = bookingData.booking_number;
+                    document.getElementById('paymentAmount').textContent = `₦${bookingData.total_price.toLocaleString()}`;
+
+                    goToStep(4);
+                    showAlert('✅ Booking created! Proceed to payment.', 'success');
+                } else {
+                    showAlert(result.message || 'Error creating booking', 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+                console.error('Booking error:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function payWithMonnify() {
+            showLoading(true);
+
+            try {
+                const response = await fetch(`${API_URL}/rhohotel.hotel_booking.create_payment_link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        booking_number: bookingData.booking_number
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Payment Response:', data);
+
+                const result = data.message || data;
+
+                if (result && result.sdk_params) {
+                    paymentData = result;
+                    const sdkParams = paymentData.sdk_params;
+
+                    showLoading(false);
+
+                    // Initialize Monnify SDK
+                    MonnifySDK.initialize({
+                        amount: sdkParams.amount,
+                        currency: sdkParams.currency,
+                        reference: sdkParams.reference,
+                        customerFullName: sdkParams.customerFullName,
+                        customerEmail: sdkParams.customerEmail,
+                        apiKey: sdkParams.apiKey,
+                        contractCode: sdkParams.contractCode,
+                        paymentDescription: sdkParams.paymentDescription,
+
+                        onComplete: function(response) {
+                            console.log('Payment response:', response);
+                            completePayment(response);
+                        },
+
+                        onClose: function(data) {
+                            console.log('Payment modal closed:', data);
+                            showAlert('Payment cancelled', 'error');
+                        }
+                    });
+                } else {
+                    showAlert(result.message || 'Error preparing payment', 'error');
+                    showLoading(false);
+                }
+            } catch (error) {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+                console.error('Payment error:', error);
+                showLoading(false);
+            }
+        }
+
+        function completePayment(response) {
+            console.log('Payment completed:', response);
+
+            // Show success message
+            document.getElementById('successBookingNumber').textContent = bookingData.booking_number;
+            document.getElementById('successAmount').textContent = `₦${bookingData.total_price.toLocaleString()}`;
+            document.getElementById('successReference').textContent = response.transactionReference || 'N/A';
+
+            goToStep(5);
+            showAlert('✅ Payment successful! Your booking is confirmed.', 'success');
+        }
+    </script>
+</body>
+</html> {% endcomment %}

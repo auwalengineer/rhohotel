@@ -1,0 +1,38 @@
+{
+  "add_total_row": 1,
+  "creation": "2025-11-08 20:15:00.000000",
+  "custom": 0,
+  "disabled": 0,
+  "doc_type": "Housekeeping Task",
+  "docstatus": 0,
+  "doctype": "Report",
+  "doctype_link_field": "name",
+  "idx": 0,
+  "is_standard": "Yes",
+  "json": "",
+  "letter_head": "",
+  "modified": "2025-11-08 20:15:00.000000",
+  "modified_by": "Administrator",
+  "module": "Hotel Housekeeping",
+  "name": "Housekeeping Task Report",
+  "owner": "Administrator",
+  "prepared_report": 0,
+  "query_report": 0,
+  "ref_doctype": "Housekeeping Task",
+  "report_name": "Housekeeping Task Report",
+  "report_type": "Script Report",
+  "roles": [
+    {
+      "role": "Housekeeping Manager"
+    },
+    {
+      "role": "Hotel Administrator"
+    },
+    {
+      "role": "System Manager"
+    }
+  ],
+  "show_in_menu": 1,
+  "standard": "No",
+  "title": "Comprehensive Housekeeping Task Report"
+}

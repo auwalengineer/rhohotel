@@ -1,3 +1,5 @@
+import frappe
+
 app_name = "rhohotel"
 app_title = "Rhocom Hotel"
 app_publisher = "Rhocom Technology Ltd"
@@ -28,7 +30,7 @@ app_license = "mit"
 # app_include_css = "/assets/rhohotel/css/rhohotel.css"
 # app_include_js = "/assets/rhohotel/js/rhohotel.js"
 app_include_js = [
-    "/assets/rhohotel/js/pos_room_extension.js"
+    "/assets/rhohotel/js/pos_room_extension.js",
 ]
 # include js, css files in header of web template
 # web_include_css = "/assets/rhohotel/css/rhohotel.css"
@@ -265,3 +267,14 @@ doc_events = {
         "on_cancel": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request"
     },
 }
+
+frappe_csrf_exempt_methods = [
+    "rhohotel.search_available_rooms.search_available_rooms",
+    "rhohotel.hotel_booking.create_booking",
+    "rhohotel.hotel_booking.create_payment_link",
+]
+
+frappe.csrf_exempt_methods = frappe_csrf_exempt_methods
+
+
+after_request = "rhohotel.api.add_cors_headers"

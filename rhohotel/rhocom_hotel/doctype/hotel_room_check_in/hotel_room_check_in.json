@@ -12,6 +12,7 @@
         "contact_number",
         "column_break_1",
         "check_in_datetime",
+        "number_of_nights",
         "expected_check_out_datetime",
         "status",
         "room_details_section",
@@ -27,13 +28,18 @@
         "section_break_jcll",
         "total_charges",
         "column_break_hkmf",
-        "payment_status",
-        "section_break_plhc",
-        "invoices",
+        "invoices_section",
+        "invoices_html",
+        "payments_html",
         "section_break_lpyl",
         "housekeeping_notes",
         "late_checkout_sb",
-        "late_checkout"
+        "late_checkout",
+        "hotel_season",
+        "stay_extension_tab",
+        "extensions",
+        "transfer_history_tab",
+        "table_wove"
     ],
     "fields": [
         {
@@ -47,8 +53,7 @@
             "fieldtype": "Link",
             "in_list_view": 1,
             "label": "Rate Type",
-            "options": "Hotel Room Rate",
-            "reqd": 1
+            "options": "Hotel Room Rate"
         },
         {
             "fieldname": "rate_amount",
@@ -103,15 +108,25 @@
             "reqd": 1
         },
         {
+            "allow_on_submit": 1,
+            "fieldname": "number_of_nights",
+            "fieldtype": "Int",
+            "label": "Number of Nights",
+            "reqd": 1
+        },
+        {
+            "allow_on_submit": 1,
             "fieldname": "expected_check_out_datetime",
             "fieldtype": "Datetime",
             "label": "Expected Check-out Time",
-            "reqd": 1
+            "reqd": 1,
+            "read_only": 1
         },
         {
             "fieldname": "actual_check_out_datetime",
             "fieldtype": "Datetime",
-            "label": "Actual Check-out Time"
+            "label": "Actual Check-out Time",
+            "read_only": 1
         },
         {
             "default": "Draft",
@@ -119,6 +134,7 @@
             "fieldtype": "Select",
             "label": "Status",
             "options": "Draft\nChecked In\nChecked Out\nCancelled",
+            "read_only": 1,
             "reqd": 1
         },
         {
@@ -151,15 +167,16 @@
             "read_only": 1
         },
         {
+            "allow_on_submit": 1,
             "fieldname": "total_charges",
             "fieldtype": "Currency",
-            "label": "Total Charges"
+            "label": "Total Charges",
+            "read_only": 1
         },
         {
-            "fieldname": "payment_status",
-            "fieldtype": "Select",
-            "label": "Payment Status",
-            "options": "Pending\nPaid\nPartially Paid"
+            "fieldname": "total_outstanding_amount",
+            "fieldtype": "Currency",
+            "read_only": 1
         },
         {
             "default": "Walk In",
@@ -198,6 +215,21 @@
             "fieldtype": "Section Break"
         },
         {
+            "fieldname": "invoices_section",
+            "fieldtype": "Section Break",
+            "label": "Invoices and Payments"
+        },
+        {
+            "fieldname": "invoices_html",
+            "fieldtype": "HTML",
+            "label": "Invoices"
+        },
+        {
+            "fieldname": "payments_html",
+            "fieldtype": "HTML",
+            "label": "Payments"
+        },
+        {
             "fieldname": "section_break_jcll",
             "fieldtype": "Section Break"
         },
@@ -206,27 +238,42 @@
             "fieldtype": "Column Break"
         },
         {
-            "fieldname": "invoices",
-            "fieldtype": "Table",
-            "label": "Invoices",
-            "options": "Hotel Room Check In Invoice"
-        },
-        {
-            "fieldname": "section_break_plhc",
-            "fieldtype": "Section Break"
-        },
-        {
             "fieldname": "hotel_season",
             "fieldtype": "Link",
             "label": "Season",
             "options": "Hotel Season",
+            "read_only": 1
+        },
+        {
+            "fieldname": "stay_extension_tab",
+            "fieldtype": "Tab Break",
+            "label": "Stay Extensions"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "extensions",
+            "fieldtype": "Table",
+            "label": "Extensions",
+            "options": "Check In Extensions",
+            "read_only": 1
+        },
+        {
+            "fieldname": "transfer_history_tab",
+            "fieldtype": "Tab Break",
+            "label": "Transfer History"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "transfer_history",
+            "fieldtype": "Table",
+            "options": "Hotel Room Transfer",
             "read_only": 1
         }
     ],
     "index_web_pages_for_search": 1,
     "is_submittable": 1,
     "links": [],
-    "modified": "2025-11-05 21:06:42.483643",
+    "modified": "2025-11-10 23:47:07.831959",
     "modified_by": "Administrator",
     "module": "Rhocom Hotel",
     "name": "Hotel Room Check In",

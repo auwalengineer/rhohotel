@@ -1,0 +1,71 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "creation": "2025-11-08 10:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "item",
+        "change_type",
+        "quantity_changed",
+        "reason",
+        "uom"
+    ],
+    "fields": [
+        {
+            "fieldname": "item",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Item",
+            "options": "Item",
+            "reqd": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "change_type",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Change Type",
+            "options": "Added\nReplaced\nRemoved",
+            "reqd": 1
+        },
+        {
+            "fieldname": "quantity_changed",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "label": "Quantity Changed",
+            "reqd": 1
+        },
+        {
+            "fieldname": "reason",
+            "fieldtype": "Small Text",
+            "label": "Reason",
+            "help": "Why was this item added/replaced/removed?"
+        },
+        {
+            "fieldname": "uom",
+            "fieldtype": "Link",
+            "label": "UOM",
+            "options": "UOM"
+        }
+    ],
+    "is_single": 0,
+    "is_submittable": 0,
+    "istable": 1,
+    "modified": "2025-11-08 10:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Housekeeping Task Inventory Change",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "read": 1,
+            "role": "System Manager",
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

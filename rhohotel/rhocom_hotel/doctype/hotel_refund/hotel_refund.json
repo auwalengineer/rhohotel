@@ -1,0 +1,136 @@
+{
+    "actions": [],
+    "autoname": "format:REFUND-{MM}-{DD}-{####}",
+    "creation": "2025-11-09 19:08:06.372226",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "section_break_iq8b",
+        "amended_from",
+        "guest",
+        "check_in",
+        "check_out",
+        "sales_invoice",
+        "refund_amount",
+        "reasons",
+        "status"
+    ],
+    "fields": [
+        {
+            "fieldname": "section_break_iq8b",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Hotel Refund",
+            "print_hide": 1,
+            "read_only": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "guest",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Guest",
+            "options": "Hotel Guest",
+            "reqd": 1
+        },
+        {
+            "fieldname": "check_in",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Room Check In",
+            "options": "Hotel Room Check In",
+            "reqd": 1
+        },
+        {
+            "fieldname": "check_out",
+            "fieldtype": "Date",
+            "label": "Check Out"
+        },
+        {
+            "fieldname": "sales_invoice",
+            "fieldtype": "Link",
+            "label": "Sales Invoice",
+            "options": "Sales Invoice"
+        },
+        {
+            "fieldname": "refund_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Refund Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "reasons",
+            "fieldtype": "Select",
+            "label": "Reasons",
+            "options": "Reservation Cancellation\nEarly Check-out\nService Complaints\nBilling Errors",
+            "reqd": 1
+        },
+        {
+            "default": "Pending",
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "label": "Status",
+            "options": "Pending\nApproved\nRejected\nRefunded",
+            "allow_on_submit": 1
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2025-11-09 19:18:48.200291",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Refund",
+    "naming_rule": "Expression",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Receptionist",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

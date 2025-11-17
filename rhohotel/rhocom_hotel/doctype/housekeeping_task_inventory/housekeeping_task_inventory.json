@@ -1,0 +1,56 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "creation": "2025-11-08 10:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "item",
+        "quantity_before",
+        "uom"
+    ],
+    "fields": [
+        {
+            "fieldname": "item",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Item",
+            "options": "Item",
+            "reqd": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "quantity_before",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "label": "Quantity Before",
+            "reqd": 1
+        },
+        {
+            "fieldname": "uom",
+            "fieldtype": "Link",
+            "label": "UOM",
+            "options": "UOM",
+            "read_only": 1
+        }
+    ],
+    "is_single": 0,
+    "is_submittable": 0,
+    "istable": 1,
+    "modified": "2025-11-08 10:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Housekeeping Task Inventory",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "read": 1,
+            "role": "System Manager",
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}
