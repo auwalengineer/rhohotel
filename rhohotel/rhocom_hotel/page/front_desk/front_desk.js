@@ -1,5 +1,19 @@
 frappe.pages['front-desk'].on_page_load = function (wrapper) {
     new FrontDesk(wrapper);
+
+    // Add CSS for blinking animation
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes blinker {
+            50% {
+                opacity: 0.3;
+            }
+        }
+        .blink-me {
+            animation: blinker 1.5s linear infinite;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 class FrontDesk {
@@ -10,6 +24,7 @@ class FrontDesk {
             single_column: true
         });
 
+        this.rooms = [];
         this.filters = {};
         this.make_stats_area();
         this.make_filters();
@@ -17,6 +32,7 @@ class FrontDesk {
 
         this.refresh();
         this.start_clock();
+        this.start_timer_updates();
 
         // Realtime updates
         frappe.realtime.on('rhohotel_front_desk_update', () => {
@@ -26,24 +42,27 @@ class FrontDesk {
 
 
     make_stats_area() {
-        this.$stats = $("<div class=\"room-stats\"></div>").appendTo(this.page.main);
+        const $header = $(`<div class="front-desk-header"></div>`).prependTo(this.page.main.parent());
+
+        const $top_bar = $(`<div class="d-flex justify-content-between align-items-center p-3"></div>`).appendTo($header);
+
+        this.$clock = $(`<div class="clock-widget"></div>`).appendTo($top_bar);
+        this.$clock.css({
+            'font-size': '1.5rem',
+            'font-weight': 'bold',
+        });
+
+        this.$user_display = $(`<div>Welcome, <strong>${frappe.session.user_fullname}</strong></div>`).appendTo($top_bar);
+        this.$user_display.css({
+            'font-size': '1.2rem',
+        });
+
+        this.$stats = $("<div class=\"room-stats\"></div>").appendTo($header);
         this.$stats.css({
             display: 'grid',
             'grid-template-columns': 'repeat(auto-fill, minmax(200px, 1fr))',
             gap: '1rem',
             padding: '1rem'
-        });
-
-        // Insert stats area at the top of the page
-        $(this.page.main).parent().prepend(this.$stats);
-
-        this.$clock = $("<div class=\"clock-widget\"></div>").prependTo(this.$stats);
-        this.$clock.css({
-            'font-size': '1.5rem',
-            'font-weight': 'bold',
-            'text-align': 'center',
-            'padding': '1rem',
-            'grid-column': '1 / -1'
         });
     }
 
@@ -114,8 +133,35 @@ class FrontDesk {
         const housekeeping_icon = housekeeping_icons[room.housekeeping_status] || 'question';
 
         return $(
-            `<div class="room-card" data-name="${room.name}">
-                <div class="card" style="border-left: 3px solid var(--${status_color})">
+            `<div class="room-card" data-name="${room.name}">${this.get_card_content(room, status_color, housekeeping_icon)}</div>`
+        );
+    }
+
+    get_card_content(room, status_color, housekeeping_icon) {
+        let card_style = `border-left: 3px solid var(--${status_color});`;
+        let checkout_warning_style = '';
+        let overdue_html = '';
+
+        if (room.status === 'Occupied' && room.expected_check_out_datetime) {
+            const now = moment();
+            const checkout_time = moment(room.expected_check_out_datetime);
+            const diff_minutes = checkout_time.diff(now, 'minutes');
+
+            if (diff_minutes < 0) {
+                // Checkout time has passed
+                checkout_warning_style = 'background-color: #ef9a9a;'; // A darker, but not pure, red
+                const overstay_duration = moment.duration(now.diff(checkout_time)).humanize();
+                overdue_html = `<div class="mt-2 text-danger blink-me overdue-message">
+                        <strong>Overdue by ${overstay_duration}</strong>
+                    </div>`;
+            } else if (diff_minutes <= 60) {
+                // Checkout is within the next hour
+                checkout_warning_style = 'background-color: #ffcdd2;'; // A lighter red
+            }
+        }
+
+        return `
+                <div class="card" style="${card_style} ${checkout_warning_style}">
                     <div class="card-body">
                         <h5 class="card-title">
                             ${room.room_number}
@@ -133,6 +179,7 @@ class FrontDesk {
                                     <strong>Guest:</strong> ${room.current_guest}<br>
                                     <small>Checkout: ${room.expected_check_out_datetime ? frappe.datetime.str_to_user(room.expected_check_out_datetime) : 'N/A'}</small>
                                 </div>
+                                <div class="overdue-container">${overdue_html}</div>
                             ` : ''}
                             ${room.upcoming_guest ? `
                                 <div class="mt-2">
@@ -147,9 +194,7 @@ class FrontDesk {
                             ` : ''}
                         </div>
                     </div>
-                </div>
-            </div>`
-        );
+                </div>`;
     }
 
     get_stat_card(label, value, icon, color, route_options = null) {
@@ -214,6 +259,7 @@ class FrontDesk {
             args: { filters: filters },
             callback: (r) => {
                 const rooms = r.message;
+                this.rooms = rooms; // Store rooms for real-time updates
                 this.$room_grid.empty();
 
                 if (rooms.length === 0) {
@@ -237,6 +283,42 @@ class FrontDesk {
         setInterval(() => {
             this.$clock.text(frappe.datetime.now_datetime());
         }, 1000);
+    }
+
+    start_timer_updates() {
+        setInterval(() => {
+            this.update_room_card_timers();
+        }, 60 * 1000); // Run every minute
+    }
+
+    update_room_card_timers() {
+        if (!this.rooms || this.rooms.length === 0) return;
+
+        const now = moment();
+
+        this.rooms.forEach(room => {
+            if (room.status === 'Occupied' && room.expected_check_out_datetime) {
+                const $card = this.$room_grid.find(`.room-card[data-name="${room.name}"] .card`);
+                if (!$card.length) return;
+
+                const checkout_time = moment(room.expected_check_out_datetime);
+                const diff_minutes = checkout_time.diff(now, 'minutes');
+
+                let new_style = '';
+                let overdue_html = '';
+
+                if (diff_minutes < 0) {
+                    new_style = 'background-color: #ef9a9a;'; // Darker red
+                    const overstay_duration = moment.duration(now.diff(checkout_time)).humanize();
+                    overdue_html = `<div class="mt-2 text-danger blink-me overdue-message"><strong>Overdue by ${overstay_duration}</strong></div>`;
+                } else if (diff_minutes <= 60) {
+                    new_style = 'background-color: #ffcdd2;'; // Lighter red
+                }
+
+                $card.css('background-color', new_style ? new_style.split(':')[1].replace(';', '') : '');
+                $card.find('.overdue-container').html(overdue_html);
+            }
+        });
     }
 
     show_room_actions(room) {

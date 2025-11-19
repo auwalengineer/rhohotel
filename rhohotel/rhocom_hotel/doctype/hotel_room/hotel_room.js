@@ -39,11 +39,23 @@ frappe.ui.form.on("Hotel Room", {
 	},
 	room_type: function (frm) {
 		if (frm.doc.room_type) {
+
+			// get room capacity from room type
 			frappe.model.with_doc("Hotel Room Type", frm.doc.room_type, () => {
 				let hotel_room_type = frappe.get_doc(
 					"Hotel Room Type",
 					frm.doc.room_type
 				);
+				frm.set_value("capacity", hotel_room_type.capacity);
+			});
+
+			frappe.model.with_doc("Hotel Room Type", frm.doc.room_type, () => {
+				let hotel_room_type = frappe.get_doc(
+					"Hotel Room Type",
+					frm.doc.room_type
+				);
+
+
 
 				// Reset and populate amenities
 				frm.doc.amenities = [];

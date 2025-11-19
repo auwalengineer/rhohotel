@@ -1,57 +1,55 @@
 {
- "actions": [],
- "autoname": "field:invoice_number",
- "creation": "2025-11-09 11:43:27.585714",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "invoice_number",
-  "payment_session"
- ],
- "fields": [
-  {
-   "fieldname": "invoice_number",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Invoice Number",
-   "options": "Sales Invoice",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "payment_session",
-   "fieldtype": "Link",
-   "label": "Payment Session",
-   "options": "Payment Session"
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-11-09 12:05:56.679991",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Payment Session Invoices",
- "naming_rule": "By fieldname",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "show_title_field_in_link": 1,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "title_field": "invoice_number"
+    "actions": [],
+    "autoname": "field:invoice_number",
+    "creation": "2025-11-09 11:43:27.585714",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "invoice_number",
+        "payment_session"
+    ],
+    "fields": [
+        {
+            "fieldname": "invoice_number",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Invoice Number",
+            "options": "Sales Invoice"
+        },
+        {
+            "fieldname": "payment_session",
+            "fieldtype": "Link",
+            "label": "Payment Session",
+            "options": "Payment Session"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-11-09 12:05:56.679991",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Payment Session Invoices",
+    "naming_rule": "By fieldname",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "show_title_field_in_link": 1,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "title_field": "invoice_number"
 }

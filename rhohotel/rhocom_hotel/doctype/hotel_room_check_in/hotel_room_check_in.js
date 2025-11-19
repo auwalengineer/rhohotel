@@ -28,69 +28,87 @@ frappe.ui.form.on("Hotel Room Check In", {
 
 
                         if (r.message.total_outstanding_amount > 0) {
-                            frm.add_custom_button(__('Pay with Moniepoint'), function () {
-                                frappe.call({
-                                    method: 'rhohotel.api.initiate_payment',
-                                    args: {
-                                        check_in: frm.doc.name
-                                    },
-                                    callback: function (r) {
-
-                                        if (r.message && r.message.name) {
-                                            const d = new frappe.ui.Dialog({
-                                                title: 'Complete Payment',
-                                                fields: [
-                                                    {
-                                                        label: 'Payment Reference',
-                                                        fieldname: 'payment_reference',
-                                                        fieldtype: 'Data',
-                                                        default: r.message.payment_reference,
-                                                        read_only: 1
-                                                    },
-                                                    {
-                                                        label: 'Total Amount',
-                                                        fieldname: 'total_amount',
-                                                        fieldtype: 'Currency',
-                                                        default: r.message.total_amount,
-                                                        read_only: 1
-                                                    }
-                                                ],
-                                                primary_action_label: 'Confirm Payment',
-                                                primary_action(values) {
-                                                    frappe.call({
-                                                        method: 'rhohotel.api.complete_payment',
-                                                        args: {
-                                                            payment_session: r.message.name
-                                                        },
-                                                        callback: function (res) {
-                                                            if (res.message.success === false) {
-                                                                frappe.msgprint(__('Payment is still pending. Please try again later.'));
-                                                                return;
-                                                            } else {
-                                                                frappe.msgprint(__('Payment Verified successfully.'));
-                                                                d.hide();
-                                                                frm.reload_doc();
-
-                                                                frappe.confirm(
-                                                                    __('Do you want to print the payment receipt?'),
-                                                                    () => {
-                                                                        frappe.open_route_options({
-                                                                            "doctype": "Payment Session",
-                                                                            "name": r.message.name,
-                                                                            "print_format": "Payment Receipt"
-                                                                        });
-                                                                    }
-                                                                );
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            });
-
-                                            d.show();
-                                        }
+                            // Fetch terminals and create payment buttons
+                            frappe.call({
+                                method: 'frappe.client.get_list',
+                                args: {
+                                    doctype: 'Moniepoint Terminal',
+                                    parent: 'Moniepoint Settings',
+                                    fields: ['name', 'terminal_name'],
+                                    filters: {
+                                        parenttype: 'Moniepoint Settings',
+                                        parentfield: 'terminals'
                                     }
-                                });
+                                },
+                                callback: function (res) {
+                                    const terminals = res.message || [];
+                                    const button_label = __('Pay with Moniepoint');
+                                    if (terminals.length > 1) {
+                                        // Dropdown for multiple terminals - clean Frappe way, no manual DOM
+                                        frm.add_custom_button(button_label, null, button_label);
+
+                                        terminals.forEach(terminal => {
+                                            frm.add_custom_button(
+                                                terminal.terminal_name || terminal.name,
+                                                function () {
+                                                    initiate_payment(frm, terminal.name);
+                                                },
+                                                button_label
+                                            );
+                                        });
+                                    } else if (terminals.length === 1) {
+                                        // Single terminal - normal button
+                                        frm.add_custom_button(button_label, function () {
+                                            initiate_payment(frm, terminals[0].name);
+                                        });
+                                    }
+                                }
+                            });
+                        }
+
+                        function initiate_payment(frm, terminal_id) {
+                            frappe.call({
+                                method: 'rhohotel.api.initiate_payment',
+                                args: {
+                                    check_in: frm.doc.name,
+                                    terminal_id: terminal_id
+                                },
+                                callback: function (r) {
+                                    if (r.message && r.message.name) {
+                                        const d = new frappe.ui.Dialog({
+                                            title: `Payment request was successfully sent to pos terminal: ${r.message.terminal_id}, \nComplete the transaction and select Confirm payment`,
+                                            fields: [
+                                                { label: 'Payment Reference', fieldname: 'payment_reference', fieldtype: 'Data', default: r.message.payment_reference, read_only: 1 },
+                                                { label: 'Total Amount', fieldname: 'total_amount', fieldtype: 'Currency', default: r.message.total_amount, read_only: 1 }
+                                            ],
+                                            primary_action_label: 'Confirm Payment',
+                                            primary_action(values) {
+                                                frappe.call({
+                                                    method: 'rhohotel.api.complete_payment',
+                                                    args: { payment_session: r.message.name },
+                                                    callback: function (res) {
+                                                        if (res.message.success === false) {
+                                                            frappe.msgprint(__('Payment is still pending. Please try again later.'));
+                                                            return;
+                                                        } else {
+                                                            frappe.msgprint(__('Payment Verified successfully.'));
+                                                            d.hide();
+                                                            frm.reload_doc();
+
+                                                            frappe.confirm(
+                                                                __('Do you want to print the payment receipt?'),
+                                                                () => {
+                                                                    frappe.open_route_options({ "doctype": "Payment Session", "name": r.message.name, "print_format": "Payment Receipt" });
+                                                                }
+                                                            );
+                                                        }
+                                                    }
+                                                });
+                                            }
+                                        });
+                                        d.show();
+                                    }
+                                }
                             });
                         }
 

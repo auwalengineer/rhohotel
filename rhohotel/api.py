@@ -237,7 +237,7 @@ def get_access_token():
         frappe.throw(_("Failed to authenticate with Moniepoint: {0}").format(str(e)))
 
 @frappe.whitelist()
-def initiate_payment(check_in):
+def initiate_payment(check_in, terminal_id):
     # if isinstance(invoice_names, str):
     #     invoice_names = json.loads(invoice_names)
 
@@ -255,6 +255,10 @@ def initiate_payment(check_in):
 
     total_amount = sum(frappe.db.get_value("Sales Invoice", name, "grand_total") for name in invoice_names)
 
+    # get moniepoint terminal from terminal_id
+    terminal = frappe.get_doc("Moniepoint Terminal", terminal_id)
+    if not terminal:
+        frappe.throw(_("Invalid Moniepoint Terminal."))
 
     # Create Payment Session
     session = frappe.new_doc("Payment Session")
@@ -263,7 +267,8 @@ def initiate_payment(check_in):
     session.hotel_room_check_in = check_in
     session.posting_date = datetime.now()
     session.transaction_reference = ""
-
+    session.terminal_id = terminal.name
+    session.account_number = terminal.account
     try:
         session.insert(ignore_permissions=True)
         frappe.db.commit()
@@ -279,20 +284,12 @@ def initiate_payment(check_in):
     frappe.db.commit()
 
     
-    # session = frappe.get_doc({
-    #     "doctype": "Payment Session",
-    #     "posting_date": datetime.now(),
-    #     "payment_reference": frappe.generate_hash(length=10),
-    #     "status": "Initiated",
-    #     "total_amount": total_amount,
-    #     "invoices": [{"invoice": name} for name in invoice_names]
-    # }).insert(ignore_permissions=True)
-
+    
     client_id, client_secret, terminal_serial, base_url = get_credentials()
     token = get_access_token()
 
     payload = {
-        "terminalSerial": terminal_serial,
+        "terminalSerial": terminal.serial_number,
         "amount": int(float(total_amount) * 100),
         "merchantReference": session.payment_reference,
         "transactionType": "PURCHASE",
@@ -392,7 +389,7 @@ def complete_payment(payment_session):
                     new_payment_entry.party_type = "Customer"
                     new_payment_entry.party =  invoice.customer,
                     new_payment_entry.paid_from = "Debtors - P"
-                    new_payment_entry.paid_to =  "Cash - P"
+                    new_payment_entry.paid_to =  session.account
                     new_payment_entry.paid_amount = invoice.outstanding_amount
                     new_payment_entry.received_amount = invoice.outstanding_amount
                     new_payment_entry.custom_hotel_room_check_in= session.hotel_room_check_in
@@ -408,7 +405,9 @@ def complete_payment(payment_session):
                     new_payment_entry.insert(ignore_permissions=True)
                     new_payment_entry.submit()
             
-                return {"success": True, "message": "Payment completed successfully", "name": session.name}
+            # submit payment session
+            session.submit()
+            return {"success": True, "message": "Payment completed successfully", "name": session.name}
         else:
             return {
                 "success": False, 

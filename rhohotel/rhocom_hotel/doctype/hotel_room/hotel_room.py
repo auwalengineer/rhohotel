@@ -10,11 +10,16 @@ class HotelRoom(Document):
 		if not self.capacity:
 			self.capacity, self.extra_bed_capacity = frappe.db.get_value('Hotel Room Type',
 					self.hotel_room_type, ['capacity', 'extra_bed_capacity'])
+		
+		self.create_item()
 
 	def on_update(self):
 		frappe.publish_realtime('rhohotel_front_desk_update')
+	
+	def after_insert(self):
+		frappe.publish_realtime('rhohotel_front_desk_update')
 
-	def on_submit(self):
+	def create_item(self):
 
 		#create ERPNEXT item if room.erpnext_item is not selected
 		if not self.erpnext_item:
@@ -31,6 +36,6 @@ class HotelRoom(Document):
 				new_item.is_stock_item = 'No'
 				new_item.insert()
 				self.erpnext_item = new_item.name
-				self.save()
+				
 
 		frappe.publish_realtime('rhohotel_front_desk_update')
