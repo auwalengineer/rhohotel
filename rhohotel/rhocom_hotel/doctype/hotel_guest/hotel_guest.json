@@ -28,6 +28,14 @@
             "reqd": 1
         },
         {
+            "fieldname": "market_place",
+            "fieldtype": "Link",
+            "options": "Market Place",
+            "reqd": 0,
+            "label": "Market Place",
+            "default": "Walk-in"
+        },
+        {
             "fieldname": "gender",
             "fieldtype": "Select",
             "label": "Gender",

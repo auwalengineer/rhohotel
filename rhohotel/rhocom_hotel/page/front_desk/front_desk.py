@@ -1,45 +1,144 @@
 import frappe
+from frappe.utils import get_datetime, now_datetime
 import json
-from frappe.utils import nowdate
-
-
-@frappe.whitelist()
-def get_checkins():
-    return frappe.get_all(
-        "Hotel Room Check In",
-        fields=["name", "guest", "room_number", "check_in_datetime", "expected_check_out_datetime"],
-        filters={"docstatus": 1},
-        order_by="check_in_datetime desc"
-    )
 
 
 @frappe.whitelist()
 def get_room_statistics():
-    vacant = frappe.db.count("Hotel Room", {"status": "Vacant"})
-    occupied = frappe.db.count("Hotel Room", {"status": "Occupied"})
-    dirty = frappe.db.count("Hotel Room", {"housekeeping_status": "Dirty"})
-    maintenance = frappe.db.count("Hotel Room", {"maintenance_flag": 1})
+    # This function is already being used by the frontend, so we'll keep it.
+    # It's good practice to have all whitelisted methods for a page in its corresponding .py file.
+    stats = frappe._dict({
+        "vacant": 0,
+        "occupied": 0,
+        "reserved": 0,
+        "dirty": 0,
+        "maintenance": 0,
+    })
 
-    today = nowdate()
-    reserved_rooms = frappe.get_all(
+    room_stats = frappe.get_all("Hotel Room", fields=["status", "housekeeping_status"], as_list=True)
+    for status, housekeeping_status in room_stats:
+        if status == "Vacant":
+            stats.vacant += 1
+        elif status == "Occupied":
+            stats.occupied += 1
+        elif status == "Reserved":
+            stats.reserved += 1
+        elif status == "Maintenance":
+            stats.maintenance += 1
+
+        if housekeeping_status == "Dirty":
+            stats.dirty += 1
+
+    return stats
+
+@frappe.whitelist()
+def get_check_in_list():
+	"""
+	Returns a list of active check-ins with guest and financial details and contact info.
+	"""
+	check_ins = frappe.db.sql("""
+			SELECT
+				ci.name AS check_in_id,
+				ci.guest,
+				ci.room_number,
+				ci.check_in_datetime,
+				ci.expected_check_out_datetime,
+				COALESCE(SUM(si.grand_total), 0) AS total_invoice_amount,
+				COALESCE(SUM(si.outstanding_amount), 0) AS balance,
+				COALESCE(SUM(per.paid_amount), 0) AS total_payment_amount,
+				g.market_place,
+				g.email,
+				g.phone_number
+			FROM `tabHotel Room Check In` ci
+			LEFT JOIN `tabHotel Guest` g 
+				ON ci.guest = g.name
+			LEFT JOIN `tabSales Invoice` si 
+				ON ci.name = si.custom_hotel_room_check_in
+			LEFT JOIN `tabPayment Entry` per 
+				ON ci.name = per.custom_hotel_room_check_in
+			WHERE ci.status = 'Checked In'
+			GROUP BY
+				ci.name,
+				ci.guest,
+				ci.room_number,
+				ci.check_in_datetime,
+				ci.expected_check_out_datetime,
+				g.market_place,
+				g.email,
+				g.phone_number
+		""", as_dict=1)
+
+	return check_ins
+
+
+@frappe.whitelist()
+def get_guest_list():
+    """
+    Returns an aggregated list of all guests with their stay and revenue history.
+    """
+    guest_list = frappe.db.sql("""
+        SELECT
+            ci.guest,
+            g.market_place,
+            COUNT(ci.name) as number_of_stays,
+            SUM(si.grand_total) as total_revenue,
+            MAX(ci.check_in_datetime) as last_stay
+        FROM `tabHotel Room Check In` ci
+        LEFT JOIN `tabHotel Guest` g ON ci.guest = g.name
+        LEFT JOIN `tabSales Invoice` si ON g.name = si.customer
+        WHERE ci.docstatus = 1
+        GROUP BY ci.guest
+        ORDER BY total_revenue DESC
+    """, as_dict=1)
+    return guest_list
+
+@frappe.whitelist()
+def get_check_out_list():
+    """
+    Returns a list of check-ins scheduled for checkout today.
+    """
+    today = frappe.utils.nowdate()
+    check_outs = frappe.db.sql("""
+    SELECT
+        ci.name AS check_in_id,
+        ci.guest_name,
+        ci.room_number,
+        ci.check_in,
+        ci.check_in_datetime,
+        ci.check_out_datetime,
+        COALESCE(SUM(si.grand_total), 0) AS total_invoice_amount,
+        COALESCE(SUM(si.outstanding_amount), 0) AS balance,
+        COALESCE(SUM(per.paid_amount), 0) AS total_payment_amount,
+        g.market_place
+    FROM `tabHotel Room Check Out` ci
+    LEFT JOIN `tabHotel Guest` g ON ci.guest_name = g.name
+    LEFT JOIN `tabSales Invoice` si ON ci.check_in = si.custom_hotel_room_check_in
+    LEFT JOIN `tabPayment Entry` per ON ci.check_in = per.custom_hotel_room_check_in
+    GROUP BY ci.name
+    ORDER BY ci.check_out_datetime DESC
+    """, as_dict=1)
+
+    return check_outs
+
+@frappe.whitelist()
+def get_reservation_list():
+    """
+    Returns a list of all hotel room reservations.
+    """
+    reservations = frappe.get_all(
         "Hotel Room Reservation",
-        filters={
-            "from_date": ("<=", today),
-            "to_date": (">=", today),
-            "status": ("not in", ["Cancelled", "Checked Out"]),
-        },
-        fields=["room_number"],
-        distinct=True,
+        fields=[
+            "name",
+            "guest_name",
+            "room_number",
+            "from_date",
+            "to_date",
+            "status",
+            "payment_status"
+        ],
+        order_by="from_date DESC"
     )
-    reserved = len(reserved_rooms)
-
-    return {
-        "vacant": vacant,
-        "occupied": occupied,
-        "dirty": dirty,
-        "maintenance": maintenance,
-        "reserved": reserved,
-    }
+    return reservations
 
 @frappe.whitelist()
 def get_rooms(filters=None):
@@ -100,3 +199,225 @@ def get_rooms(filters=None):
         result.append(room_obj)
 
     return result
+
+@frappe.whitelist()
+def get_filtered_rooms(search_text=None, filter_name=None):
+	"""
+	Search and filter rooms by guest name, room number, or saved filter presets.
+	"""
+	if not search_text:
+		search_text = ""
+	
+	search_text = search_text.strip()
+	
+	# Search in rooms and current guests
+	rooms = frappe.db.sql("""
+		SELECT DISTINCT
+			hr.name, hr.room_number, hr.room_type, hr.floor,
+			hr.status, hr.housekeeping_status, hr.current_check_in,
+			hr.current_guest
+		FROM `tabHotel Room` hr
+		LEFT JOIN `tabHotel Room Check In` ci ON hr.current_check_in = ci.name
+		LEFT JOIN `tabHotel Guest` g ON ci.guest = g.name
+		WHERE hr.room_number LIKE %s 
+			OR g.name LIKE %s 
+			OR g.email LIKE %s
+		ORDER BY hr.room_number
+	""", [f"%{search_text}%", f"%{search_text}%", f"%{search_text}%"], as_dict=1)
+	
+	return rooms
+
+@frappe.whitelist()
+def get_housekeeping_queue():
+	"""
+	Returns a queue of rooms needing housekeeping with priority levels.
+	Priority: In Progress > Dirty > Inspected > Clean
+	"""
+	priority_order = {"In Progress": 1, "Dirty": 2, "Inspected": 3, "Clean": 4}
+	
+	tasks = frappe.get_all(
+		"Hotel Room",
+		filters={"status": ["in", ["Vacant", "Reserved"]]},
+		fields=["name", "room_number", "floor", "room_type", "housekeeping_status"],
+		order_by="housekeeping_status ASC"
+	)
+	
+	# Add priority and sort
+	for task in tasks:
+		task.priority = priority_order.get(task.housekeeping_status, 5)
+	
+	# Sort by priority then room number
+	tasks = sorted(tasks, key=lambda x: (x.priority, x.room_number))
+	
+	return tasks
+
+@frappe.whitelist()
+def get_room_notes(room_name):
+	"""
+	Get all notes and change log for a specific room.
+	"""
+	# Get custom notes from Hotel Room doctype (if custom field exists)
+	room = frappe.get_doc("Hotel Room", room_name)
+	notes_field = getattr(room, "custom_notes", None) or ""
+	
+	# Get change log from doctype history
+	change_log = frappe.db.sql("""
+		SELECT modified, modified_by, data
+		FROM `tabDocumentation` 
+		WHERE ref_doctype = 'Hotel Room' AND ref_name = %s
+		ORDER BY modified DESC
+		LIMIT 20
+	""", [room_name], as_dict=1)
+	
+	return {
+		"notes": notes_field,
+		"change_log": change_log
+	}
+
+@frappe.whitelist()
+def save_room_note(room_name, note_text):
+	"""
+	Save a quick note for a room.
+	"""
+	room = frappe.get_doc("Hotel Room", room_name)
+	if not hasattr(room, "custom_notes"):
+		frappe.throw("Custom notes field not found on Hotel Room")
+	
+	timestamp = frappe.utils.now_datetime()
+	user = frappe.session.user
+	note_entry = f"\n[{timestamp}] {user}: {note_text}"
+	
+	room.custom_notes = (getattr(room, "custom_notes", "") or "") + note_entry
+	room.save()
+	
+	return {"status": "success", "message": "Note saved"}
+
+@frappe.whitelist()
+def get_night_audit_data():
+	"""
+	Returns night audit data: occupancy rate, revenue, no-shows, pending payments.
+	"""
+	today = frappe.utils.nowdate()
+	
+	# Get total rooms
+	total_rooms = frappe.db.count("Hotel Room")
+	
+	# Get occupied rooms
+	occupied_rooms = frappe.db.count("Hotel Room", {"status": "Occupied"})
+	occupancy_rate = (occupied_rooms / total_rooms * 100) if total_rooms > 0 else 0
+	
+	# Get today's revenue
+	today_revenue = frappe.db.sql("""
+		SELECT COALESCE(SUM(si.grand_total), 0) as total
+		FROM `tabSales Invoice` si
+		LEFT JOIN `tabHotel Room Check In` ci ON si.custom_hotel_room_check_in = ci.name
+		WHERE DATE(si.posting_date) = %s AND si.docstatus = 1
+	""", [today], as_dict=1)[0]["total"] or 0
+	
+	# Get pending payments (outstanding invoices)
+	pending_payments = frappe.db.sql("""
+		SELECT COALESCE(SUM(si.outstanding_amount), 0) as total
+		FROM `tabSales Invoice` si
+		LEFT JOIN `tabHotel Room Check In` ci ON si.custom_hotel_room_check_in = ci.name
+		WHERE ci.status = 'Checked In' AND si.outstanding_amount > 0
+	""", as_dict=1)[0]["total"] or 0
+	
+	# Get no-shows (reservations that were not checked in)
+	no_shows = frappe.db.count("Hotel Room Reservation", {
+		"from_date": ["<=", today],
+		"to_date": [">=", today],
+		"status": ["in", ["Cancelled", "No Show"]]
+	})
+	
+	return {
+		"total_rooms": total_rooms,
+		"occupied_rooms": occupied_rooms,
+		"occupancy_rate": round(occupancy_rate, 2),
+		"today_revenue": today_revenue,
+		"pending_payments": pending_payments,
+		"no_shows": no_shows
+	}
+
+@frappe.whitelist()
+def get_rooms_with_payment_status(filters=None):
+	"""
+	Get rooms with payment/balance information for quick settlement tracking.
+	"""
+	if filters and isinstance(filters, str):
+		filters = json.loads(filters)
+	else:
+		filters = {}
+	
+	rooms = frappe.db.sql("""
+		SELECT
+			hr.name, hr.room_number, hr.room_type, hr.floor,
+			hr.status, hr.housekeeping_status, hr.current_check_in,
+			hr.current_guest, ci.guest,
+			COALESCE(SUM(si.grand_total), 0) as total_invoice,
+			COALESCE(SUM(si.outstanding_amount), 0) as balance,
+			COALESCE(SUM(per.paid_amount), 0) as total_paid
+		FROM `tabHotel Room` hr
+		LEFT JOIN `tabHotel Room Check In` ci ON hr.current_check_in = ci.name
+		LEFT JOIN `tabSales Invoice` si ON ci.name = si.custom_hotel_room_check_in
+		LEFT JOIN `tabPayment Entry` per ON ci.name = per.custom_hotel_room_check_in
+		WHERE hr.status = 'Occupied'
+		GROUP BY hr.name
+		ORDER BY hr.room_number
+	""", as_dict=1)
+	
+	return rooms
+
+@frappe.whitelist()
+def get_room_stay_data(from_date, to_date):
+	"""
+	Get all room occupancy data for the specified date range.
+	Returns rooms with their check-ins and reservations.
+	"""
+	rooms = frappe.get_all(
+		"Hotel Room",
+		fields=["name", "room_number", "room_type", "floor"],
+		order_by="room_number"
+	)
+	
+	# Get check-ins for the date range
+	check_ins = frappe.db.sql("""
+		SELECT
+			ci.name,
+			ci.room_number,
+			ci.guest,
+			ci.check_in_datetime,
+			ci.expected_check_out_datetime,
+			g.name as guest_id
+		FROM `tabHotel Room Check In` ci
+		LEFT JOIN `tabHotel Guest` g ON ci.guest = g.name
+		WHERE 
+			DATE(ci.check_in_datetime) <= %s AND 
+			DATE(ci.expected_check_out_datetime) >= %s AND
+			ci.status = 'Checked In'
+		ORDER BY ci.room_number, ci.check_in_datetime
+	""", [to_date, from_date], as_dict=1)
+	
+	# Get reservations for the date range
+	reservations = frappe.db.sql("""
+		SELECT
+			name,
+			room_number,
+			guest_name,
+			from_date,
+			to_date,
+			status
+		FROM `tabHotel Room Reservation`
+		WHERE
+			from_date <= %s AND 
+			to_date >= %s AND
+			status != 'Cancelled'
+		ORDER BY room_number, from_date
+	""", [to_date, from_date], as_dict=1)
+	
+	return {
+		"rooms": rooms,
+		"check_ins": check_ins,
+		"reservations": reservations,
+		"from_date": from_date,
+		"to_date": to_date
+	}
