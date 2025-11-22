@@ -339,6 +339,73 @@ def get_night_audit_data():
 	}
 
 @frappe.whitelist()
+def get_night_audit_charts_data():
+	"""
+	Returns data for night audit charts:
+	- Revenue by Room Type
+	- Daily Sales for the last 7 days
+	- Revenue by Market Place
+	"""
+	today = frappe.utils.nowdate()
+	seven_days_ago = frappe.utils.add_to_date(today, days=-6)
+
+	# 1. Revenue by Room Type
+	revenue_by_room_type = frappe.db.sql("""
+		SELECT
+			hr.room_type,
+			COALESCE(SUM(si.grand_total), 0) as total_revenue
+		FROM `tabSales Invoice` si
+		JOIN `tabHotel Room Check In` ci ON si.custom_hotel_room_check_in = ci.name
+		JOIN `tabHotel Room` hr ON ci.room_number = hr.name
+		WHERE si.docstatus = 1
+		GROUP BY hr.room_type
+		ORDER BY total_revenue DESC
+	""", as_dict=1)
+
+	# 2. Daily Sales for the last 7 days
+	daily_sales_data = frappe.db.sql("""
+		SELECT
+			DATE(posting_date) as sale_date,
+			SUM(grand_total) as total_sales
+		FROM `tabSales Invoice`
+		WHERE docstatus = 1 AND posting_date BETWEEN %s AND %s
+		GROUP BY DATE(posting_date)
+		ORDER BY sale_date
+	""", (seven_days_ago, today), as_dict=1)
+
+	# Create a dictionary for easy lookup
+	sales_map = {d['sale_date'].strftime('%Y-%m-%d'): d['total_sales'] for d in daily_sales_data}
+	
+	# Fill in missing days with 0 sales
+	daily_sales = []
+	for i in range(7):
+		date = frappe.utils.add_to_date(seven_days_ago, days=i)
+		date_str = date
+		daily_sales.append({
+			"date": date,
+			"sales": sales_map.get(date_str, 0)
+		})
+
+	# 3. Revenue by Market Place
+	revenue_by_market_place = frappe.db.sql("""
+		SELECT
+			g.market_place,
+			COALESCE(SUM(si.grand_total), 0) as total_revenue
+		FROM `tabSales Invoice` si
+		JOIN `tabHotel Room Check In` ci ON si.custom_hotel_room_check_in = ci.name
+		JOIN `tabHotel Guest` g ON ci.guest = g.name
+		WHERE si.docstatus = 1 AND g.market_place IS NOT NULL AND g.market_place != ''
+		GROUP BY g.market_place
+		ORDER BY total_revenue DESC
+	""", as_dict=1)
+
+	return {
+		"revenue_by_room_type": revenue_by_room_type,
+		"daily_sales": daily_sales,
+		"revenue_by_market_place": revenue_by_market_place
+	}
+
+@frappe.whitelist()
 def get_rooms_with_payment_status(filters=None):
 	"""
 	Get rooms with payment/balance information for quick settlement tracking.
@@ -368,19 +435,38 @@ def get_rooms_with_payment_status(filters=None):
 	return rooms
 
 @frappe.whitelist()
-def get_room_stay_data(from_date, to_date):
+def get_room_stay_data(from_date, to_date, room_type_filter=None, status_filter=None):
 	"""
 	Get all room occupancy data for the specified date range.
 	Returns rooms with their check-ins and reservations.
+	Supports optional filters for room type and stay status.
 	"""
+	# Build base query with room type filter if provided
+	room_filters = []
+	if room_type_filter:
+		room_filters.append(["room_type", "=", room_type_filter])
+	
 	rooms = frappe.get_all(
 		"Hotel Room",
 		fields=["name", "room_number", "room_type", "floor"],
+		filters=room_filters if room_filters else None,
 		order_by="room_number"
 	)
 	
 	# Get check-ins for the date range
-	check_ins = frappe.db.sql("""
+	check_in_conditions = """
+		WHERE 
+			DATE(ci.check_in_datetime) <= %s AND 
+			DATE(ci.expected_check_out_datetime) >= %s AND
+			ci.status = 'Checked In'
+	"""
+	check_in_params = [to_date, from_date]
+	
+	# Add status filter if specified
+	if status_filter == 'reserved':
+		check_in_conditions += " AND 1=0"  # Exclude check-ins if only reservations requested
+	
+	check_ins = frappe.db.sql(f"""
 		SELECT
 			ci.name,
 			ci.room_number,
@@ -390,15 +476,24 @@ def get_room_stay_data(from_date, to_date):
 			g.name as guest_id
 		FROM `tabHotel Room Check In` ci
 		LEFT JOIN `tabHotel Guest` g ON ci.guest = g.name
-		WHERE 
-			DATE(ci.check_in_datetime) <= %s AND 
-			DATE(ci.expected_check_out_datetime) >= %s AND
-			ci.status = 'Checked In'
+		{check_in_conditions}
 		ORDER BY ci.room_number, ci.check_in_datetime
-	""", [to_date, from_date], as_dict=1)
+	""", check_in_params, as_dict=1)
 	
 	# Get reservations for the date range
-	reservations = frappe.db.sql("""
+	reservation_conditions = """
+		WHERE
+			from_date <= %s AND 
+			to_date >= %s AND
+			status != 'Cancelled'
+	"""
+	reservation_params = [to_date, from_date]
+	
+	# Add status filter if specified
+	if status_filter == 'checked-in':
+		reservation_conditions += " AND 1=0"  # Exclude reservations if only check-ins requested
+	
+	reservations = frappe.db.sql(f"""
 		SELECT
 			name,
 			room_number,
@@ -407,12 +502,9 @@ def get_room_stay_data(from_date, to_date):
 			to_date,
 			status
 		FROM `tabHotel Room Reservation`
-		WHERE
-			from_date <= %s AND 
-			to_date >= %s AND
-			status != 'Cancelled'
+		{reservation_conditions}
 		ORDER BY room_number, from_date
-	""", [to_date, from_date], as_dict=1)
+	""", reservation_params, as_dict=1)
 	
 	return {
 		"rooms": rooms,

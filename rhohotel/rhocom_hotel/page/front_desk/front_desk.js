@@ -13,6 +13,11 @@ frappe.pages['front-desk'].on_page_load = function (wrapper) {
         document.head.appendChild(dtScript);
     }
 
+    frappe.require([
+        "assets/frappe/js/lib/chart.umd.min.js",
+        "assets/frappe/js/frappe-charts.min.js"
+    ]);
+
     // Add CSS for blinking animation and uniform card heights
     const style = document.createElement('style');
     style.innerHTML = `
@@ -1155,44 +1160,137 @@ class FrontDesk {
         $view.show();
         $view.html(`<div class="frappe-card"><div class="frappe-card-body"><p class="text-muted">Loading Night Audit Data...</p></div></div>`);
 
-        frappe.call({
-            method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_night_audit_data',
-            callback: (r) => {
-                const data = r.message;
+        // Fetch both summary and chart data in parallel
+        Promise.all([
+            frappe.call('rhohotel.rhocom_hotel.page.front_desk.front_desk.get_night_audit_data'),
+            frappe.call('rhohotel.rhocom_hotel.page.front_desk.front_desk.get_night_audit_charts_data')
+        ]).then(([summary_res, charts_res]) => {
+            const summary_data = summary_res.message;
+            const chart_data = charts_res.message;
 
-                const audit_cards = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                        <div class="frappe-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <div class="card-body">
-                                <h5 class="card-title">Occupancy Rate</h5>
-                                <h2 style="margin: 1rem 0;">${data.occupancy_rate}%</h2>
-                                <small>${data.occupied_rooms}/${data.total_rooms} rooms occupied</small>
-                            </div>
+            // Build the HTML for the entire view
+            const audit_cards = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="frappe-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="card-body">
+                            <h5 class="card-title">Occupancy Rate</h5>
+                            <h2 style="margin: 1rem 0;">${summary_data.occupancy_rate}%</h2>
+                            <small>${summary_data.occupied_rooms}/${summary_data.total_rooms} rooms occupied</small>
                         </div>
-                        <div class="frappe-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                            <div class="card-body">
-                                <h5 class="card-title">Today's Revenue</h5>
-                                <h2 style="margin: 1rem 0;">${frappe.format(data.today_revenue, { fieldtype: 'Currency' })}</h2>
-                                <small>Total income today</small>
-                            </div>
+                    </div>
+                    <div class="frappe-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <div class="card-body">
+                            <h5 class="card-title">Today's Revenue</h5>
+                            <h2 style="margin: 1rem 0;">${frappe.format(summary_data.today_revenue, { fieldtype: 'Currency' })}</h2>
+                            <small>Total income today</small>
                         </div>
-                        <div class="frappe-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
-                            <div class="card-body">
-                                <h5 class="card-title">Pending Payments</h5>
-                                <h2 style="margin: 1rem 0;">${frappe.format(data.pending_payments, { fieldtype: 'Currency' })}</h2>
-                                <small>Outstanding balance</small>
-                            </div>
+                    </div>
+                    <div class="frappe-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                        <div class="card-body">
+                            <h5 class="card-title">Pending Payments</h5>
+                            <h2 style="margin: 1rem 0;">${frappe.format(summary_data.pending_payments, { fieldtype: 'Currency' })}</h2>
+                            <small>Outstanding balance</small>
                         </div>
-                        <div class="frappe-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
-                            <div class="card-body">
-                                <h5 class="card-title">No-Shows</h5>
-                                <h2 style="margin: 1rem 0; color: #d32f2f;">${data.no_shows}</h2>
-                                <small>Cancelled/No-show reservations</small>
-                            </div>
+                    </div>
+                    <div class="frappe-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
+                        <div class="card-body">
+                            <h5 class="card-title">No-Shows</h5>
+                            <h2 style="margin: 1rem 0; color: #d32f2f; font-weight: bold;">${summary_data.no_shows}</h2>
+                            <small>Cancelled/No-show reservations</small>
                         </div>
-                    </div>`;
+                    </div>
+                </div>`;
 
-                $view.html(`<div class="frappe-card"><div class="frappe-card-head"><h4>Night Audit Dashboard</h4></div><div class="frappe-card-body">${audit_cards}</div></div>`);
+            const charts_html = `
+                <div id="night-audit-charts" style="margin-top: 2rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="frappe-card">
+                            <div class="frappe-card-head"><h5>Revenue by Room Type</h5></div>
+                            <div class="frappe-card-body">
+                                <div id="revenue-by-room-type-chart" style="height: 300px;"></div>
+                            </div>
+                        </div>
+                        <div class="frappe-card">
+                            <div class="frappe-card-head"><h5>Revenue by Market Place</h5></div>
+                            <div class="frappe-card-body">
+                                <div id="revenue-by-market-place-chart" style="height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="frappe-card" style="margin-top: 1.5rem;">
+                        <div class="frappe-card-head"><h5>Daily Sales (Last 7 Days)</h5></div>
+                        <div class="frappe-card-body">
+                            <div id="daily-sales-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Set the HTML once
+            $view.html(`<div class="frappe-card">
+                <div class="frappe-card-head"><h4>Night Audit Dashboard</h4></div>
+                <div class="frappe-card-body">${audit_cards}${charts_html}</div>
+            </div>`);
+
+            // Now that the DOM is ready, draw the charts
+            this.draw_night_audit_charts(chart_data);
+        });
+    }
+
+    draw_night_audit_charts(chart_data) {
+        // 1. Revenue by Room Type (Pie)
+        if (chart_data.revenue_by_room_type?.length > 0) {
+            new frappe.Chart("#revenue-by-room-type-chart", {
+                data: {
+                    labels: chart_data.revenue_by_room_type.map(d => d.room_type || "Unknown"),
+                    datasets: [{
+                        values: chart_data.revenue_by_room_type.map(d => flt(d.total_revenue))
+                    }]
+                },
+                type: 'pie',
+                height: 300,
+                colors: ['#7c4dff', '#4fc3f7', '#ff8a65', '#66bb6a', '#ff8a80', '#ffd54f'],
+                tooltipOptions: {
+                    formatTooltipY: d => frappe.format(d, { fieldtype: 'Currency' })
+                }
+            });
+        }
+
+        // 2. Revenue by Market Place (Bar)
+        if (chart_data.revenue_by_market_place?.length > 0) {
+            new frappe.Chart("#revenue-by-market-place-chart", {
+                data: {
+                    labels: chart_data.revenue_by_market_place.map(d => d.market_place || "Direct"),
+                    datasets: [{
+                        values: chart_data.revenue_by_market_place.map(d => flt(d.total_revenue))
+                    }]
+                },
+                type: 'bar',
+                height: 300,
+                colors: ['#ff6b6b', '#f06292', '#ba68c8', '#7986cb'],
+                tooltipOptions: {
+                    formatTooltipY: d => frappe.format(d, { fieldtype: 'Currency' })
+                }
+            });
+        }
+
+        // 3. Daily Sales (Line or Bar)
+        new frappe.Chart("#daily-sales-chart", {
+            data: {
+                labels: chart_data.daily_sales.map(d => moment(d.date).format('ddd, MMM D')),
+                datasets: [{
+                    name: "Revenue",
+                    values: chart_data.daily_sales.map(d => flt(d.sales))
+                }]
+            },
+            type: 'bar',
+            height: 300,
+            colors: ['#4caf50'],
+            axisOptions: {
+                yAxisMode: 'tick',
+                xAxisMode: 'tick'
+            },
+            tooltipOptions: {
+                formatTooltipY: d => frappe.format(d, { fieldtype: 'Currency' })
             }
         });
     }
@@ -1210,47 +1308,138 @@ class FrontDesk {
         const thirtyDaysAgo = frappe.datetime.add_days(today, -30);
 
         const filterHtml = `
-            <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                <div>
-                    <label for="stay_from_date" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">From Date</label>
-                    <input type="date" id="stay_from_date" value="${thirtyDaysAgo}" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label for="stay_from_date" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">From Date</label>
+                        <input type="date" id="stay_from_date" value="${thirtyDaysAgo}" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="stay_to_date" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To Date</label>
+                        <input type="date" id="stay_to_date" value="${today}" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="stay_room_filter" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Room Number</label>
+                        <input type="text" id="stay_room_filter" placeholder="Search room..." style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="stay_guest_filter" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Guest Name</label>
+                        <input type="text" id="stay_guest_filter" placeholder="Search guest..." style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                    </div>
                 </div>
-                <div>
-                    <label for="stay_to_date" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To Date</label>
-                    <input type="date" id="stay_to_date" value="${today}" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label for="stay_room_type_filter" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Room Type</label>
+                        <select id="stay_room_type_filter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                            <option value="">All Types</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="stay_status_filter" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Status</label>
+                        <select id="stay_status_filter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                            <option value="">All Statuses</option>
+                            <option value="checked-in">Checked In</option>
+                            <option value="reserved">Reserved</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: flex-end; gap: 0.5rem;">
+                        <button id="stay_report_generate" class="btn btn-primary" style="flex: 1;">Generate Report</button>
+                        <button id="stay_report_reset" class="btn btn-secondary">Reset</button>
+                    </div>
                 </div>
-                <button id="stay_report_generate" class="btn btn-primary">Generate Report</button>
             </div>`;
 
         $view.html(`<div class="frappe-card"><div class="frappe-card-head"><h4>Room Stay Report</h4></div><div class="frappe-card-body">${filterHtml}<div id="report_container"></div></div></div>`);
 
+        // Populate room types
+        frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'Hotel Room Type',
+                fields: ['name'],
+                limit_page_length: 0
+            },
+            callback: (r) => {
+                if (r.message) {
+                    const roomTypeSelect = $view.find('#stay_room_type_filter');
+                    r.message.forEach(rt => {
+                        roomTypeSelect.append(`<option value="${rt.name}">${rt.name}</option>`);
+                    });
+                }
+            }
+        });
+
         // Bind generate button
         $view.find('#stay_report_generate').on('click', () => {
-            const fromDate = $view.find('#stay_from_date').val();
-            const toDate = $view.find('#stay_to_date').val();
-            this.generate_stay_report(fromDate, toDate, $view.find('#report_container'));
+            const filters = {
+                from_date: $view.find('#stay_from_date').val(),
+                to_date: $view.find('#stay_to_date').val(),
+                room_number: $view.find('#stay_room_filter').val(),
+                guest_name: $view.find('#stay_guest_filter').val(),
+                room_type: $view.find('#stay_room_type_filter').val(),
+                status: $view.find('#stay_status_filter').val()
+            };
+            this.generate_stay_report(filters, $view.find('#report_container'));
+        });
+
+        // Bind reset button
+        $view.find('#stay_report_reset').on('click', () => {
+            $view.find('#stay_room_filter').val('');
+            $view.find('#stay_guest_filter').val('');
+            $view.find('#stay_room_type_filter').val('');
+            $view.find('#stay_status_filter').val('');
         });
 
         // Generate initial report
-        this.generate_stay_report(thirtyDaysAgo, today, $view.find('#report_container'));
+        this.generate_stay_report({
+            from_date: thirtyDaysAgo,
+            to_date: today,
+            room_number: '',
+            guest_name: '',
+            room_type: '',
+            status: ''
+        }, $view.find('#report_container'));
     }
 
-    generate_stay_report(fromDate, toDate, $container) {
+    generate_stay_report(filters, $container) {
         $container.html(`<div class="text-muted">Generating report...</div>`);
 
         frappe.call({
             method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_room_stay_data',
-            args: { from_date: fromDate, to_date: toDate },
+            args: {
+                from_date: filters.from_date,
+                to_date: filters.to_date,
+                room_type_filter: filters.room_type,
+                status_filter: filters.status
+            },
             callback: (r) => {
                 const data = r.message;
-                const rooms = data.rooms;
-                const checkIns = data.check_ins;
-                const reservations = data.reservations;
+                let rooms = data.rooms;
+                let checkIns = data.check_ins;
+                let reservations = data.reservations;
 
                 // Parse dates
-                const startDate = moment(fromDate);
-                const endDate = moment(toDate);
+                const startDate = moment(filters.from_date);
+                const endDate = moment(filters.to_date);
                 const dayCount = endDate.diff(startDate, 'days') + 1;
+
+                // Apply room filter
+                if (filters.room_number) {
+                    rooms = rooms.filter(room => room.room_number.includes(filters.room_number));
+                }
+
+                // Apply room type filter if selected
+                if (filters.room_type) {
+                    rooms = rooms.filter(room => room.room_type === filters.room_type);
+                }
+
+                // Apply guest name filter
+                if (filters.guest_name) {
+                    const guestFilter = filters.guest_name.toLowerCase();
+                    checkIns = checkIns.filter(ci => ci.guest && ci.guest.toLowerCase().includes(guestFilter));
+                    reservations = reservations.filter(res => res.guest_name && res.guest_name.toLowerCase().includes(guestFilter));
+                }
 
                 // Generate date headers
                 let dateHeaderContent = '';
@@ -1266,11 +1455,26 @@ class FrontDesk {
 
                 // Generate room rows
                 let rowsHtml = '';
+                let roomsWithData = 0;
 
                 rooms.forEach(room => {
                     // Find check-ins for this room
-                    const roomCheckIns = checkIns.filter(ci => ci.room_number === room.room_number);
-                    const roomReservations = reservations.filter(res => res.room_number === room.room_number);
+                    let roomCheckIns = checkIns.filter(ci => ci.room_number === room.room_number);
+                    let roomReservations = reservations.filter(res => res.room_number === room.room_number);
+
+                    // Apply status filter
+                    if (filters.status === 'checked-in') {
+                        roomReservations = [];
+                    } else if (filters.status === 'reserved') {
+                        roomCheckIns = [];
+                    }
+
+                    // Skip rooms with no relevant data if guest filter is applied
+                    if (filters.guest_name && roomCheckIns.length === 0 && roomReservations.length === 0) {
+                        return;
+                    }
+
+                    roomsWithData++;
 
                     // Create a map of dates to stay information
                     const dateStayMap = {};
@@ -1373,8 +1577,12 @@ class FrontDesk {
                     </div>`;
                 });
 
-                const finalHtml = `<div class="stay-timeline-container">${headerHtml}${rowsHtml}</div>`;
-                $container.html(finalHtml);
+                if (roomsWithData === 0) {
+                    $container.html(`<div class="alert alert-warning">No rooms found matching the selected filters.</div>`);
+                } else {
+                    const finalHtml = `<div class="stay-timeline-container">${headerHtml}${rowsHtml}</div>`;
+                    $container.html(finalHtml);
+                }
             }
         });
     }

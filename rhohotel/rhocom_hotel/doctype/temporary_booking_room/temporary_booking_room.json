@@ -1,0 +1,85 @@
+{
+  "actions": [],
+  "creation": "2025-11-14 00:00:00",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "engine": "InnoDB",
+  "field_order": [
+    "room_number",
+    "room_type",
+    "rate_type",
+    "season_type",
+    "num_nights",
+    "rate_per_night",
+    "total_price"
+  ],
+  "fields": [
+    {
+      "fieldname": "room_number",
+      "fieldtype": "Link",
+      "label": "Room Number",
+      "options": "Hotel Room",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "room_type",
+      "fieldtype": "Link",
+      "label": "Room Type",
+      "options": "Hotel Room Type",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "rate_type",
+      "fieldtype": "Data",
+      "label": "Rate Type",
+      "description": "Standard, Peak, Off-season, etc."
+    },
+    {
+      "fieldname": "season_type",
+      "fieldtype": "Data",
+      "label": "Season Type",
+      "description": "Season classification"
+    },
+    {
+      "fieldname": "num_nights",
+      "fieldtype": "Int",
+      "label": "Number of Nights",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "rate_per_night",
+      "fieldtype": "Currency",
+      "label": "Rate Per Night",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "total_price",
+      "fieldtype": "Currency",
+      "label": "Total Price",
+      "read_only": 1,
+      "in_list_view": 1,
+      "description": "rate_per_night × num_nights"
+    }
+  ],
+  "istable": 1,
+  "links": [],
+  "modified": "2025-11-14 15:30:00.000000",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Temporary Booking Room",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "write": 1
+    }
+  ],
+  "track_changes": 1
+}

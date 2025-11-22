@@ -1,0 +1,248 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "autoname": "HTL-TEMP-.YYYY.-.#####",
+  "creation": "2025-11-14 00:00:00",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "engine": "InnoDB",
+  "field_order": [
+    "booking_number",
+    "status",
+    "guest_name",
+    "guest_email",
+    "guest_phone",
+    "check_in_date",
+    "check_out_date",
+    "num_nights",
+    "column_break_1",
+    "total_rooms",
+    "total_price",
+    "currency",
+    "payment_status",
+    "section_break_payment",
+    "transaction_id",
+    "paystack_access_code",
+    "hold_expires_at",
+    "payment_received_at",
+    "section_break_rooms",
+    "rooms",
+    "section_break_notes",
+    "notes",
+    "created_at",
+    "created_by"
+  ],
+  "fields": [
+    {
+      "fieldname": "booking_number",
+      "fieldtype": "Data",
+      "in_global_search": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Booking Number",
+      "read_only": 1,
+      "reqd": 1,
+      "unique": 1,
+      "description": "Unique temporary booking reference"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Status",
+      "options": "Hold\nPayment Link Generated\nPayment Completed\nExpired\nCancelled",
+      "default": "Hold",
+      "read_only": 1,
+      "reqd": 1,
+      "description": "Temporary booking lifecycle status"
+    },
+    {
+      "fieldname": "guest_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Guest Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "guest_email",
+      "fieldtype": "Data",
+      "label": "Guest Email",
+      "reqd": 1
+    },
+    {
+      "fieldname": "guest_phone",
+      "fieldtype": "Phone",
+      "label": "Guest Phone"
+    },
+    {
+      "fieldname": "check_in_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Check-In Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "check_out_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Check-Out Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "num_nights",
+      "fieldtype": "Int",
+      "label": "Number of Nights",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "column_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "total_rooms",
+      "fieldtype": "Int",
+      "in_list_view": 1,
+      "label": "Total Rooms",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "total_price",
+      "fieldtype": "Currency",
+      "in_list_view": 1,
+      "label": "Total Price",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Select",
+      "label": "Currency",
+      "options": "NGN\nUSD\nGBP",
+      "default": "NGN",
+      "read_only": 1
+    },
+    {
+      "fieldname": "payment_status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "Payment Status",
+      "options": "Pending\nPaid\nFailed",
+      "default": "Pending",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "section_break_payment",
+      "fieldtype": "Section Break",
+      "label": "Payment Information"
+    },
+    {
+      "fieldname": "transaction_id",
+      "fieldtype": "Data",
+      "label": "Transaction ID",
+      "read_only": 1,
+      "description": "Paystack transaction reference"
+    },
+    {
+      "fieldname": "paystack_access_code",
+      "fieldtype": "Data",
+      "label": "Paystack Access Code",
+      "read_only": 1
+    },
+    {
+      "fieldname": "hold_expires_at",
+      "fieldtype": "Datetime",
+      "label": "Hold Expires At",
+      "read_only": 1,
+      "reqd": 1,
+      "description": "Payment must be completed by this time or booking is automatically cancelled"
+    },
+    {
+      "fieldname": "payment_received_at",
+      "fieldtype": "Datetime",
+      "label": "Payment Received At",
+      "read_only": 1,
+      "description": "Timestamp when payment was successfully processed"
+    },
+    {
+      "fieldname": "section_break_rooms",
+      "fieldtype": "Section Break",
+      "label": "Room Details"
+    },
+    {
+      "fieldname": "rooms",
+      "fieldtype": "Table",
+      "label": "Rooms",
+      "options": "Temporary Booking Room",
+      "reqd": 1,
+      "description": "List of rooms in this temporary booking with pricing"
+    },
+    {
+      "fieldname": "section_break_notes",
+      "fieldtype": "Section Break",
+      "label": "Metadata"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Text",
+      "label": "Notes",
+      "description": "Additional booking information"
+    },
+    {
+      "fieldname": "created_at",
+      "fieldtype": "Datetime",
+      "label": "Created At",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "created_by",
+      "fieldtype": "Link",
+      "label": "Created By",
+      "options": "User",
+      "read_only": 1
+    }
+  ],
+  "links": [],
+  "modified": "2025-11-14 15:30:00.000000",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Temporary Booking",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Manager",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "quick_entry": 1,
+  "row_format": "Dynamic",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "track_changes": 1
+}
