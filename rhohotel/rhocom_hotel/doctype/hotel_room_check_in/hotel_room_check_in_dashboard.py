@@ -2,11 +2,15 @@ from frappe import _
 
 def get_data():
     return {
-        'fieldname': 'name',
+        'fieldname': 'custom_hotel_room_check_in',
+        'non_standard_fieldnames': {
+            'Sales Invoice': 'custom_hotel_room_check_in',
+            'Payment Entry': 'custom_hotel_room_check_in'
+        },
         'transactions': [
             {
                 'label': _('Related'),
-                'items': ['Sales Invoice', 'Payment Entry', 'Hotel Room Check Out']
+                'items': ['Sales Invoice', 'Payment Entry']
             }
         ],
         'charts': [

@@ -351,6 +351,23 @@ frappe.ui.form.on("Hotel Room Check In", {
         })
     },
 
+    on_submit: function (frm) {
+        frappe.confirm(
+            __('Do you want to issue a key card for this guest?'),
+            () => {
+                const guestName = frm.doc.guest_name;
+                const checkInName = frm.doc.name;
+                const roomNumber = frm.doc.room_number;
+                const checkInDateTime = frm.doc.check_in_datetime;
+                const checkOutDateTime = frm.doc.expected_check_out_datetime;
+
+                const url = `hotel-key-card-issuer://issue?guestName=${encodeURIComponent(guestName)}&checkInName=${encodeURIComponent(checkInName)}&roomNumber=${encodeURIComponent(roomNumber)}&checkInDateTime=${encodeURIComponent(checkInDateTime)}&checkOutDateTime=${encodeURIComponent(checkOutDateTime)}`;
+                window.open(url, '_self');
+            },
+            () => { }
+        );
+    },
+
     onload: function (frm) {
         if (!frm.is_new() && frm.doc.guest) {
             frm.add_custom_button(__('Ledger'), function () {

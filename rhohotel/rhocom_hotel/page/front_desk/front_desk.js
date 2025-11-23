@@ -1,16 +1,35 @@
 frappe.pages['front-desk'].on_page_load = function (wrapper) {
     new FrontDesk(wrapper);
 
-    // Load DataTables CSS and JS if not already loaded
+    // Load DataTables and Buttons extension CSS and JS if not already loaded
     if (!$.fn.dataTable) {
+        // Core CSS
         const dtLink = document.createElement('link');
         dtLink.rel = 'stylesheet';
         dtLink.href = 'https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css';
         document.head.appendChild(dtLink);
 
+        // Buttons CSS
+        const dtButtonsLink = document.createElement('link');
+        dtButtonsLink.rel = 'stylesheet';
+        dtButtonsLink.href = 'https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css';
+        document.head.appendChild(dtButtonsLink);
+
+        // Core JS
         const dtScript = document.createElement('script');
         dtScript.src = 'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js';
         document.head.appendChild(dtScript);
+
+        // Buttons JS and dependencies
+        const scriptsToLoad = [
+            'https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+            'https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',
+            'https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js'
+        ];
+        scriptsToLoad.forEach(src => frappe.require(src));
     }
 
     frappe.require([
@@ -589,8 +608,12 @@ class FrontDesk {
                                     pageLength: 10,
                                     language: {
                                         search: "Filter:",
-                                        lengthMenu: "Show _MENU_ entries"
-                                    }
+                                        lengthMenu: "Show _MENU_ entries",
+                                    },
+                                    dom: 'Bfrtip',
+                                    buttons: [
+                                        'excel', 'pdf', 'print'
+                                    ]
                                 });
                             }
                         }
@@ -658,7 +681,11 @@ class FrontDesk {
                                     ordering: true,
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-                                    pageLength: 10
+                                    pageLength: 10,
+                                    dom: 'Bfrtip',
+                                    buttons: [
+                                        'excel', 'pdf', 'print'
+                                    ]
                                 });
                             }
                         }
@@ -731,7 +758,11 @@ class FrontDesk {
                                     ordering: true,
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-                                    pageLength: 10
+                                    pageLength: 10,
+                                    dom: 'Bfrtip',
+                                    buttons: [
+                                        'excel', 'pdf', 'print'
+                                    ]
                                 });
                             }
                         }
@@ -800,7 +831,11 @@ class FrontDesk {
                                     ordering: true,
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-                                    pageLength: 10
+                                    pageLength: 10,
+                                    dom: 'Bfrtip',
+                                    buttons: [
+                                        'excel', 'pdf', 'print'
+                                    ]
                                 });
                             }
                         }
@@ -1071,7 +1106,11 @@ class FrontDesk {
                                     ordering: true,
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-                                    pageLength: 10
+                                    pageLength: 10,
+                                    dom: 'Bfrtip',
+                                    buttons: [
+                                        'excel', 'pdf', 'print'
+                                    ]
                                 });
                             }
                         }
@@ -1142,7 +1181,11 @@ class FrontDesk {
                                     ordering: true,
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-                                    pageLength: 10
+                                    pageLength: 10,
+                                    dom: 'Bfrtip',
+                                    buttons: [
+                                        'excel', 'pdf', 'print'
+                                    ]
                                 });
                             }
                         }
