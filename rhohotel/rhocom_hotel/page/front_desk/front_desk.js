@@ -198,15 +198,25 @@ class FrontDesk {
         this.filters = {};
         this.current_view = 'room_view';
 
-        this.make_stats_area();
-        this.make_view_switcher();
-        this.make_filters();
-        this.make_view_containers();
+        this.letterhead_html = null;
 
-        this.switch_view(this.current_view); // Initial render
-
-        this.start_clock();
-        this.start_timer_updates();
+        // Fetch letterhead first, then render the page
+        frappe.call({
+            method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_default_letterhead',
+            callback: (r) => {
+                if (r.message) {
+                    this.letterhead_html = r.message;
+                }
+                // Now initialize the rest of the page
+                this.make_stats_area();
+                this.make_view_switcher();
+                this.make_filters();
+                this.make_view_containers();
+                this.switch_view(this.current_view); // Initial render
+                this.start_clock();
+                this.start_timer_updates();
+            }
+        });
 
         // Realtime updates
         frappe.realtime.on('rhohotel_front_desk_update', () => {
@@ -612,7 +622,23 @@ class FrontDesk {
                                     },
                                     dom: 'Bfrtip',
                                     buttons: [
-                                        'excel', 'pdf', 'print'
+                                        'excel',
+                                        {
+                                            extend: 'pdf',
+                                            customize: (doc) => {
+                                                if (this.letterhead_html) {
+                                                    doc.header = {
+                                                        columns: [{ html: this.letterhead_html, margin: [40, 20, 40, 0] }]
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            customize: (win) => {
+                                                if (this.letterhead_html) $(win.document.body).prepend(this.letterhead_html);
+                                            }
+                                        }
                                     ]
                                 });
                             }
@@ -684,7 +710,23 @@ class FrontDesk {
                                     pageLength: 10,
                                     dom: 'Bfrtip',
                                     buttons: [
-                                        'excel', 'pdf', 'print'
+                                        'excel',
+                                        {
+                                            extend: 'pdf',
+                                            customize: (doc) => {
+                                                if (this.letterhead_html) {
+                                                    doc.header = {
+                                                        columns: [{ html: this.letterhead_html, margin: [40, 20, 40, 0] }]
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            customize: (win) => {
+                                                if (this.letterhead_html) $(win.document.body).prepend(this.letterhead_html);
+                                            }
+                                        }
                                     ]
                                 });
                             }
@@ -761,7 +803,23 @@ class FrontDesk {
                                     pageLength: 10,
                                     dom: 'Bfrtip',
                                     buttons: [
-                                        'excel', 'pdf', 'print'
+                                        'excel',
+                                        {
+                                            extend: 'pdf',
+                                            customize: (doc) => {
+                                                if (this.letterhead_html) {
+                                                    doc.header = {
+                                                        columns: [{ html: this.letterhead_html, margin: [40, 20, 40, 0] }]
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            customize: (win) => {
+                                                if (this.letterhead_html) $(win.document.body).prepend(this.letterhead_html);
+                                            }
+                                        }
                                     ]
                                 });
                             }
@@ -834,7 +892,23 @@ class FrontDesk {
                                     pageLength: 10,
                                     dom: 'Bfrtip',
                                     buttons: [
-                                        'excel', 'pdf', 'print'
+                                        'excel',
+                                        {
+                                            extend: 'pdf',
+                                            customize: (doc) => {
+                                                if (this.letterhead_html) {
+                                                    doc.header = {
+                                                        columns: [{ html: this.letterhead_html, margin: [40, 20, 40, 0] }]
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            customize: (win) => {
+                                                if (this.letterhead_html) $(win.document.body).prepend(this.letterhead_html);
+                                            }
+                                        }
                                     ]
                                 });
                             }
@@ -1109,7 +1183,23 @@ class FrontDesk {
                                     pageLength: 10,
                                     dom: 'Bfrtip',
                                     buttons: [
-                                        'excel', 'pdf', 'print'
+                                        'excel',
+                                        {
+                                            extend: 'pdf',
+                                            customize: (doc) => {
+                                                if (this.letterhead_html) {
+                                                    doc.header = {
+                                                        columns: [{ html: this.letterhead_html, margin: [40, 20, 40, 0] }]
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            customize: (win) => {
+                                                if (this.letterhead_html) $(win.document.body).prepend(this.letterhead_html);
+                                            }
+                                        }
                                     ]
                                 });
                             }
@@ -1184,7 +1274,23 @@ class FrontDesk {
                                     pageLength: 10,
                                     dom: 'Bfrtip',
                                     buttons: [
-                                        'excel', 'pdf', 'print'
+                                        'excel',
+                                        {
+                                            extend: 'pdf',
+                                            customize: (doc) => {
+                                                if (this.letterhead_html) {
+                                                    doc.header = {
+                                                        columns: [{ html: this.letterhead_html, margin: [40, 20, 40, 0] }]
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            customize: (win) => {
+                                                if (this.letterhead_html) $(win.document.body).prepend(this.letterhead_html);
+                                            }
+                                        }
                                     ]
                                 });
                             }

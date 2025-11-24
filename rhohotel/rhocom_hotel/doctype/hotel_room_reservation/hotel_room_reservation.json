@@ -1,221 +1,230 @@
 {
- "actions": [],
- "allow_import": 1,
- "autoname": "HTL-RES-.YYYY.-.#####",
- "beta": 1,
- "creation": "2025-10-08 12:33:56.320420",
- "doctype": "DocType",
- "document_type": "Document",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "guest_name",
-  "customer",
-  "room_number",
-  "from_date",
-  "to_date",
-  "late_checkin",
-  "column_break_6",
-  "status",
-  "booking_number",
-  "payment_status",
-  "hold_expires_at",
-  "check_in_time",
-  "check_out_time",
-  "section_break_payment",
-  "sales_invoice",
-  "transaction_id",
-  "section_break_8",
-  "items",
-  "net_total",
-  "is_extension",
-  "amended_from"
- ],
- "fields": [
-  {
-   "fieldname": "guest_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Guest Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer"
-  },
-  {
-   "fieldname": "room_number",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Room Number",
-   "options": "Hotel Room",
-   "reqd": 1
-  },
-  {
-   "fieldname": "from_date",
-   "fieldtype": "Date",
-   "label": "From Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "to_date",
-   "fieldtype": "Date",
-   "label": "To Date",
-   "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "late_checkin",
-   "fieldtype": "Check",
-   "label": "Late Checkin"
-  },
-  {
-   "fieldname": "column_break_6",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Pending Payment\nBooked\nChecked-In\nCompleted\nCancelled",
-   "reqd": 1
-  },
-  {
-   "fieldname": "booking_number",
-   "fieldtype": "Link",
-   "options": "Hotel Booking",
-   "label": "Booking Number",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "read_only": 1,
-   "description": "Links this reservation to the main booking"
-  },
-  {
-   "fieldname": "payment_status",
-   "fieldtype": "Select",
-   "label": "Payment Status",
-   "options": "Pending\nPaid\nFailed\nTimeout\nRefunded",
-   "default": "Pending",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "description": "Payment status for this reservation"
-  },
-  {
-   "fieldname": "hold_expires_at",
-   "fieldtype": "DateTime",
-   "label": "Hold Expires At",
-   "read_only": 1,
-   "description": "Rooms held until this time while awaiting payment"
-  },
-  {
-   "fieldname": "check_in_time",
-   "fieldtype": "DateTime",
-   "label": "Check-In Time",
-   "read_only": 1,
-   "description": "Actual check-in timestamp"
-  },
-  {
-   "fieldname": "check_out_time",
-   "fieldtype": "DateTime",
-   "label": "Check-Out Time",
-   "read_only": 1,
-   "description": "Actual check-out timestamp"
-  },
-  {
-   "fieldname": "section_break_payment",
-   "fieldtype": "Section Break",
-   "label": "Payment Information"
-  },
-  {
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "options": "Sales Invoice",
-   "label": "Sales Invoice",
-   "read_only": 1,
-   "description": "Invoice for this reservation"
-  },
-  {
-   "fieldname": "transaction_id",
-   "fieldtype": "Data",
-   "label": "Transaction ID",
-   "read_only": 1,
-   "description": "Moniepoint transaction reference"
-  },
-  {
-   "fieldname": "section_break_8",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Items",
-   "options": "Hotel Room Reservation Item",
-   "reqd": 1
-  },
-  {
-   "fieldname": "net_total",
-   "fieldtype": "Currency",
-   "label": "Net Total"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_extension",
-   "fieldtype": "Check",
-   "label": "Is Extension",
-   "read_only": 1
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Hotel Room Reservation",
-   "print_hide": 1,
-   "read_only": 1
-  }
- ],
- "is_submittable": 1,
- "links": [],
- "modified": "2025-11-12 20:03:34.690884",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Hotel Room Reservation",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Hotel Reservation User",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  }
- ],
- "quick_entry": 1,
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "HTL-RES-.YYYY.-.#####",
+  "beta": 1,
+  "creation": "2025-10-08 12:33:56.320420",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "temporary_booking_reference",
+    "booking_number",
+    "guest_name",
+    "customer",
+    "room_number",
+    "from_date",
+    "to_date",
+    "late_checkin",
+    "column_break_6",
+    "status",
+    "payment_status",
+    "hold_expires_at",
+    "check_in_time",
+    "check_out_time",
+    "section_break_payment",
+    "sales_invoice",
+    "transaction_id",
+    "section_break_8",
+    "items",
+    "net_total",
+    "is_extension",
+    "amended_from"
+  ],
+  "fields": [
+    {
+      "fieldname": "temporary_booking_reference",
+      "fieldtype": "Link",
+      "label": "Temporary Booking",
+      "options": "Temporary Booking",
+      "reqd": 1,
+      "description": "Link to the Temporary Booking document",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "booking_number",
+      "fieldtype": "Data",
+      "label": "Booking Number",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "read_only": 1,
+      "description": "Unique booking reference from Temporary Booking"
+    },
+    {
+      "fieldname": "guest_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Guest Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer"
+    },
+    {
+      "fieldname": "room_number",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Room Number",
+      "options": "Hotel Room",
+      "reqd": 1
+    },
+    {
+      "fieldname": "from_date",
+      "fieldtype": "Date",
+      "label": "From Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "to_date",
+      "fieldtype": "Date",
+      "label": "To Date",
+      "reqd": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "late_checkin",
+      "fieldtype": "Check",
+      "label": "Late Checkin"
+    },
+    {
+      "fieldname": "column_break_6",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Pending Payment\nBooked\nChecked-In\nCompleted\nCancelled",
+      "reqd": 1
+    },
+    {
+      "fieldname": "payment_status",
+      "fieldtype": "Select",
+      "label": "Payment Status",
+      "options": "Pending\nPaid\nFailed\nRefunded",
+      "default": "Pending",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Payment status for this reservation"
+    },
+    {
+      "fieldname": "hold_expires_at",
+      "fieldtype": "DateTime",
+      "label": "Hold Expires At",
+      "read_only": 1,
+      "description": "Rooms held until this time while awaiting payment"
+    },
+    {
+      "fieldname": "check_in_time",
+      "fieldtype": "DateTime",
+      "label": "Check-In Time",
+      "read_only": 1,
+      "description": "Actual check-in timestamp"
+    },
+    {
+      "fieldname": "check_out_time",
+      "fieldtype": "DateTime",
+      "label": "Check-Out Time",
+      "read_only": 1,
+      "description": "Actual check-out timestamp"
+    },
+    {
+      "fieldname": "section_break_payment",
+      "fieldtype": "Section Break",
+      "label": "Payment Information"
+    },
+    {
+      "fieldname": "sales_invoice",
+      "fieldtype": "Link",
+      "options": "Sales Invoice",
+      "label": "Sales Invoice",
+      "read_only": 1,
+      "description": "Invoice for this reservation"
+    },
+    {
+      "fieldname": "transaction_id",
+      "fieldtype": "Data",
+      "label": "Transaction ID",
+      "read_only": 1,
+      "description": "Paystack transaction reference"
+    },
+    {
+      "fieldname": "section_break_8",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "label": "Items",
+      "options": "Hotel Room Reservation Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "net_total",
+      "fieldtype": "Currency",
+      "label": "Net Total"
+    },
+    {
+      "default": "0",
+      "fieldname": "is_extension",
+      "fieldtype": "Check",
+      "label": "Is Extension",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Hotel Room Reservation",
+      "print_hide": 1,
+      "read_only": 1
+    }
+  ],
+  "is_submittable": 1,
+  "links": [],
+  "modified": "2025-11-23 13:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Hotel Room Reservation",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Reservation User",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "quick_entry": 1,
+  "row_format": "Dynamic",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "track_changes": 1
 }

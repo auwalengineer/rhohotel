@@ -4,10 +4,13 @@
 import frappe
 from frappe import _, msgprint, utils
 from frappe.model.document import Document
+from datetime import datetime, time
 from frappe.utils import get_datetime, now_datetime
 from frappe.utils import nowdate, getdate, date_diff, fmt_money
 from rhohotel.api import get_room_rate
 from frappe.utils import flt
+from datetime import datetime, time
+
 
 
 
@@ -117,7 +120,26 @@ class HotelRoomCheckIn(Document):
 
 		# Check if room matches reservation type
 		room = frappe.get_doc("Hotel Room", self.room_number)
-		#reservation = frappe.get_doc("Hotel Room Reservation", self.reservation)
+		# Convert string to datetime if needed
+		if isinstance(self.check_in_datetime, str):
+			self.check_in_datetime = datetime.strptime(self.check_in_datetime, "%Y-%m-%d %H:%M:%S")
+
+		start_date = self.check_in_datetime.date()
+
+		day_start = datetime.combine(start_date, time.min)
+		day_end = datetime.combine(start_date, time.max)
+		
+		# Check if there is a reservation on the room on the check-in date
+		reservation = frappe.get_all("Hotel Room Reservation",
+			filters={
+					"room_number": self.room_number,
+        			"from_date": ["between", [day_start, day_end]]
+				}
+			)
+
+		if reservation: 
+			frappe.throw(_("Room {0} is reserved for today").format(self.room_number))
+
 		
 		#if not any(item.room_type == room.hotel_room_type for item in reservation.items):
 		#	frappe.throw(_("Room {0} type does not match any room type in reservation").format(self.room))
@@ -243,7 +265,11 @@ def get_linked_documents(check_in):
 	"""get check in doc"""
 	check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
 
-	pos_invoice = frappe.get_all("POS Invoice", filters={"custom_hotel_room_check_in": check_in_doc.name}, fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
+	# get unconsolidated pos invoice
+	pos_invoice = frappe.get_all("POS Invoice", 
+							  filters={"custom_hotel_room_check_in": check_in_doc.name, "status": "Unpaid"}, 
+							  fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
+	# get sales invoice
 	invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in_doc.name}, fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
 	
 	invoices.extend(pos_invoice)

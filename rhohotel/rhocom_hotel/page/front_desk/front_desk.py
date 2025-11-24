@@ -513,3 +513,15 @@ def get_room_stay_data(from_date, to_date, room_type_filter=None, status_filter=
 		"from_date": from_date,
 		"to_date": to_date
 	}
+
+@frappe.whitelist()
+def get_default_letterhead():
+	"""
+	Returns the HTML content of the default letterhead specified in Print Settings.
+	"""
+	#letterhead_name = frappe.db.get_single_value('Print Settings', 'default_letter_head')
+	#if not letterhead_name:
+	#	return None
+	
+	letterhead = frappe.get_doc('Letter Head', 'Frontdesk 1')
+	return letterhead.content

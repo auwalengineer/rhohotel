@@ -32,9 +32,6 @@
   "room_inventory",
   "current_check_in",
   "current_guest",
-  "booking_status",
-  "current_booking_number",
-  "hold_expires_at",
   "erpnext_item"
  ],
  "fields": [
@@ -183,33 +180,10 @@
    "fieldname": "room_inventory_section",
    "fieldtype": "Section Break",
    "label": "Room Inventory"
-  },
-  {
-   "fieldname": "booking_status",
-   "fieldtype": "Select",
-   "label": "Booking Status",
-   "options": "Available\nHeld\nOccupied\nReserved",
-   "default": "Available",
-   "in_list_view": 1,
-   "description": "Whether room is held by pending payment, occupied by guest, or available"
-  },
-  {
-   "fieldname": "current_booking_number",
-   "fieldtype": "Data",
-   "label": "Current Booking Number",
-   "read_only": 1,
-   "description": "Currently active booking for this room"
-  },
-  {
-   "fieldname": "hold_expires_at",
-   "fieldtype": "Datetime",
-   "label": "Hold Expires At",
-   "read_only": 1,
-   "description": "If room is held, it expires at this time"
   }
  ],
  "links": [],
- "modified": "2025-11-12 20:03:34.690884",
+ "modified": "2025-11-23 13:23:03.321950",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Room",
