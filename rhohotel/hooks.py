@@ -293,16 +293,16 @@ after_request = "rhohotel.api.add_cors_headers"
 #     ]
 # }
 
-background_workers = {
-    'celery': ['rhohotel.background_jobs.clear_expired_temporary_bookings']
-}
+# background_workers = {
+#     'celery': ['rhohotel.background_jobs.clear_expired_temporary_bookings']
+# }
 
-# Scheduled Jobs (every 5 minutes)
-scheduler_events = {
-    "*/5 * * * *": [
-        "rhohotel.background_jobs.clear_expired_temporary_bookings"
-    ],
-    "*/10 * * * *": [
-        "rhohotel.background_jobs.cleanup_expired_booking_rooms"
-    ]
-}
+# # Scheduled Jobs (every 5 minutes)
+# scheduler_events = {
+#     "*/5 * * * *": [
+#         "rhohotel.background_jobs.clear_expired_temporary_bookings"
+#     ],
+#     "*/10 * * * *": [
+#         "rhohotel.background_jobs.cleanup_expired_booking_rooms"
+#     ]
+# }
