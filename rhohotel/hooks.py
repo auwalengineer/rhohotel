@@ -281,14 +281,28 @@ after_request = "rhohotel.api.add_cors_headers"
 
 
 # Scheduled Tasks
+# scheduler_events = {
+#     "cron": {
+#         # Run every 5 minutes to check for expired holds
+#         "*/5 * * * *": [
+#             "rhohotel.hotel_booking.release_expired_holds"
+#         ]
+#     },
+#     "all": [
+#         "rhohotel.hotel_booking.release_expired_holds"
+#     ]
+# }
+
+background_workers = {
+    'celery': ['rhohotel.background_jobs.clear_expired_temporary_bookings']
+}
+
+# Scheduled Jobs (every 5 minutes)
 scheduler_events = {
-    "cron": {
-        # Run every 5 minutes to check for expired holds
-        "*/5 * * * *": [
-            "rhohotel.hotel_booking.release_expired_holds"
-        ]
-    },
-    "all": [
-        "rhohotel.hotel_booking.release_expired_holds"
+    "*/5 * * * *": [
+        "rhohotel.background_jobs.clear_expired_temporary_bookings"
+    ],
+    "*/10 * * * *": [
+        "rhohotel.background_jobs.cleanup_expired_booking_rooms"
     ]
 }
