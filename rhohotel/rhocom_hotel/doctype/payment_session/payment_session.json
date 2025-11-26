@@ -34,12 +34,7 @@
             "reqd": 1,
             "unique": 1
         },
-        {
-            "fieldname": "invoices",
-            "fieldtype": "Table",
-            "label": "Invoices",
-            "options": "Payment Session Invoice"
-        },
+        
         {
             "fieldname": "total_amount",
             "fieldtype": "Currency",

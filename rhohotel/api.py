@@ -389,7 +389,7 @@ def complete_payment(payment_session):
                     new_payment_entry.party_type = "Customer"
                     new_payment_entry.party =  invoice.customer,
                     new_payment_entry.paid_from = "Debtors - P"
-                    new_payment_entry.paid_to =  session.account
+                    new_payment_entry.paid_to =  session.account_number
                     new_payment_entry.paid_amount = invoice.outstanding_amount
                     new_payment_entry.received_amount = invoice.outstanding_amount
                     new_payment_entry.custom_hotel_room_check_in= session.hotel_room_check_in
