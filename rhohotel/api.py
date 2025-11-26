@@ -343,11 +343,17 @@ def resend_payment_request(payment_session_name):
 
         token = get_access_token()
         _, _, _, base_url = get_credentials()
+        
+        payment_reference= frappe.generate_hash(length=10)
+        
+        
+        
+        session.db_set("payment_reference", payment_reference)
 
         payload = {
             "terminalSerial": terminal.serial_number,
             "amount": int(float(session.total_amount) * 100),
-            "merchantReference": session.payment_reference,
+            "merchantReference": payment_reference,
             "transactionType": "PURCHASE",
             "paymentMethod": "ANY"
         }
@@ -422,6 +428,10 @@ def complete_payment(payment_session):
                 filters={"payment_session": session.name},
                 pluck="invoice_number"
             )
+            
+            company = frappe.defaults.get_user_default("Company")
+            
+            default_receivable = frappe.db.get_value("Company",company,"default_receivable_account")
 
             for inv in invoices:
                 invoice = frappe.get_doc("Sales Invoice", inv)
@@ -431,7 +441,7 @@ def complete_payment(payment_session):
                     new_payment_entry.payment_type = "Receive"                
                     new_payment_entry.party_type = "Customer"
                     new_payment_entry.party =  invoice.customer,
-                    new_payment_entry.paid_from = "Debtors - P"
+                    new_payment_entry.paid_from = default_receivable
                     new_payment_entry.paid_to =  session.account_number
                     new_payment_entry.paid_amount = invoice.outstanding_amount
                     new_payment_entry.received_amount = invoice.outstanding_amount
