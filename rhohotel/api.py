@@ -327,6 +327,49 @@ def initiate_payment(check_in, terminal_id):
         frappe.log_error(f"Moniepoint Payment Error: {str(e)}", "Moniepoint Integration")
         frappe.throw(_("Failed to initiate payment: {0}").format(str(e)))
 
+@frappe.whitelist()
+def resend_payment_request(payment_session_name):
+    try:
+        session = frappe.get_doc("Payment Session", payment_session_name)
+        if not session:
+            frappe.throw(_("Payment Session not found."))
+
+        if session.status != "Pending":
+            return {"success": False, "message": "Can only resend a pending payment request."}
+
+        terminal = frappe.get_doc("Moniepoint Terminal", session.terminal_id)
+        if not terminal:
+            frappe.throw(_("Invalid Moniepoint Terminal linked to the session."))
+
+        token = get_access_token()
+        _, _, _, base_url = get_credentials()
+
+        payload = {
+            "terminalSerial": terminal.serial_number,
+            "amount": int(float(session.total_amount) * 100),
+            "merchantReference": session.payment_reference,
+            "transactionType": "PURCHASE",
+            "paymentMethod": "ANY"
+        }
+
+        response = requests.post(
+            f"{base_url}/v1/transactions",
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+        )
+
+        if response.status_code == 200:
+            return {"success": True}
+        else:
+            frappe.log_error(f"Moniepoint Resend Error - Status: {response.status_code}, Response: {response.text}", "Moniepoint Integration")
+            return {"success": False, "message": "Failed to resend payment request."}
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error resending payment request")
+        return {"success": False, "message": str(e)}
 
 @frappe.whitelist(allow_guest=True)
 def complete_payment(payment_session):

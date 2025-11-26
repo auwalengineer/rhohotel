@@ -81,6 +81,20 @@ frappe.ui.form.on("Hotel Room Check In", {
                                                 { label: 'Payment Reference', fieldname: 'payment_reference', fieldtype: 'Data', default: r.message.payment_reference, read_only: 1 },
                                                 { label: 'Total Amount', fieldname: 'total_amount', fieldtype: 'Currency', default: r.message.total_amount, read_only: 1 }
                                             ],
+                                            secondary_action_label: 'Resend Request',
+                                            secondary_action() {
+                                                frappe.call({
+                                                    method: 'rhohotel.api.resend_payment_request',
+                                                    args: { payment_session_name: r.message.name },
+                                                    callback: function (res) {
+                                                        if (res.message && res.message.success) {
+                                                            frappe.show_alert({ message: __('Payment request resent successfully.'), indicator: 'green' });
+                                                        } else {
+                                                            frappe.msgprint(__('Failed to resend payment request.'));
+                                                        }
+                                                    }
+                                                });
+                                            },
                                             primary_action_label: 'Confirm Payment',
                                             primary_action(values) {
                                                 frappe.call({
