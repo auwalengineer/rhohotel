@@ -23,30 +23,70 @@
 //         }
 //     }
 // });
-
-
 frappe.ui.form.on('Maintenance Request', {
     refresh: function(frm) {
-        if (!frm.doc.approved && frappe.user.has_role('Hotel Manager')) {
+        if (!frm.doc.approved) {
             frm.add_custom_button(__('Approve Request'), function() {
-                frappe.call({
-                    method: 'frappe.client.set_value',
-                    args: {
-                        doctype: 'Maintenance Request',
-                        name: frm.doc.name,
-                        fieldname: {
-                            'approved': 1,
-                            'approval_time': frappe.datetime.now_datetime()
-                        }
-                    },
-                    callback: function(r) {
-                        if (!r.exc) {
-                            frm.reload_doc();
-                            frappe.msgprint(__('Request approved successfully.'));
-                        }
-                    }
+                // Set the approved field
+                frm.set_value('approved', 1);
+                frm.set_value('approval_time', frappe.datetime.now_datetime());
+                
+                // Save the document - this will trigger on_update()
+                frm.save().then(() => {
+                    frappe.msgprint(__('Request approved successfully.'));
                 });
             });
         }
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+// frappe.ui.form.on('Maintenance Request', {
+//     refresh: function(frm) {
+//         if (frm.doc.name && frm.doc.status === 'Pending' && !frm.doc.approved) {
+//             if (frappe.user.has_role(['System Manager', 'Hotel Manager'])) {
+//                 frm.add_custom_button(__('Approve Request'), function() {
+//                     frappe.confirm(
+//                         __('Are you sure you want to approve this maintenance request?'),
+//                         function() {
+                         
+                            
+//                             frm.set_value('approved', 1);
+//                             frm.set_value('approval_time', frappe.datetime.now_datetime());
+                            
+                           
+                            
+//                             frm.save().then(() => {                                
+//                                 frappe.show_alert({
+//                                     message: __('Request approved successfully'),
+//                                     indicator: 'green'
+//                                 });
+                                
+//                                 // Force reload
+//                                 setTimeout(() => {
+//                                     frm.reload_doc();
+//                                 }, 500);
+//                             }).catch((error) => {
+//                                 console.error('Save promise rejected:', error);
+//                                 frappe.msgprint({
+//                                     title: __('Error'),
+//                                     message: error.message || __('Failed to approve request'),
+//                                     indicator: 'red'
+//                                 });
+//                             });
+//                         }
+//                     );
+//                 }, __('Actions'));
+//             }
+//         }
+//     }
+// });

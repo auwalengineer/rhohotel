@@ -31,6 +31,7 @@ app_license = "mit"
 # app_include_js = "/assets/rhohotel/js/rhohotel.js"
 app_include_js = [
     "/assets/rhohotel/js/pos_room_extension.js",
+    "/assets/rhohotel/js/pos_payment.js",
 ]
 # include js, css files in header of web template
 # web_include_css = "/assets/rhohotel/css/rhohotel.css"
@@ -278,6 +279,11 @@ frappe.csrf_exempt_methods = frappe_csrf_exempt_methods
 
 
 after_request = "rhohotel.api.add_cors_headers"
+
+override_doctype_class = {
+    "POS Invoice": "rhocom_hotel.pos_invoice.pos_invoice.POSInvoice"
+}
+
 
 
 # Scheduled Tasks

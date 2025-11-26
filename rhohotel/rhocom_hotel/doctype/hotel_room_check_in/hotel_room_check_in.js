@@ -274,6 +274,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                         frappe.msgprint(__('Guest transferred successfully to Room {0}').format(values.new_room_number));
                                         frm.reload_doc();
                                     }
+                                    frm.reload_doc();
                                 },
                                 error: function (r) {
                                     frappe.msgprint(__('Room transfer failed'));

@@ -171,8 +171,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-23 15:38:07.990968",
- "modified_by": "o.owoeye@rhocom.ng",
+ "modified": "2025-11-25 10:53:34.041707",
+ "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Maintenance Request",
  "naming_rule": "Expression",
@@ -201,6 +201,30 @@
    "report": 1,
    "role": "Hotel Manager",
    "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
    "share": 1,
    "write": 1
   }

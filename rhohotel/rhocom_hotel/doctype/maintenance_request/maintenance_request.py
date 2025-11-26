@@ -1,251 +1,8 @@
-# import frappe
-# from frappe.model.document import Document
-# from frappe.utils import get_datetime, now_datetime
-
-# class MaintenanceRequest(Document):
-
-#     def validate(self):
-#         self.validate_no_duplicate_pending()
-#         self.validate_required_fields()
-#         self.validate_request_type()
-#         self.validate_dates()
-
-#     def after_insert(self):
-#         if self.request_type == "Repair" and self.status == "Pending":
-#             self.create_asset_repair()
-    
-#     def on_update(self):
-#         """Update the maintenance flag in Hotel Room whenever approval changes"""
-#         self.update_room_maintenance_flag()
-
-#     def validate_no_duplicate_pending(self):
-#         existing = frappe.db.exists({
-#             "doctype": "Maintenance Request",
-#             "asset": self.asset,
-#             "room": self.room,
-#             "status": "Pending",
-#             "name": ["!=", self.name]
-#         })
-#         if existing:
-#             frappe.throw(f"A pending Maintenance Request already exists for this asset in this room ({existing}).")
-
-#     def validate_required_fields(self):
-#         required_fields = ["asset", "room", "issue_type", "request_type", "reported_by", "reported_at"]
-#         for field in required_fields:
-#             if not self.get(field):
-#                 frappe.throw(f"{field.replace('_', ' ').title()} is required.")
-
-#     def validate_request_type(self):
-#         if self.request_type == "Repair" and getattr(self, "asset_maintenance", None):
-#             frappe.throw("Cannot select Asset Maintenance for a Repair request.")
-#         if self.request_type == "Maintenance" and getattr(self, "asset_repair", None):
-#             frappe.throw("Cannot select Asset Repair for a Maintenance request.")
-    
-#     def validate_dates(self):
-#         if self.reported_at:
-#             reported_at_dt = get_datetime(self.reported_at)
-#             if reported_at_dt > now_datetime():
-#                 frappe.throw("Reported At cannot be in the future.")
-
-#     def create_asset_repair(self):
-#         asset_repair_doc = frappe.get_doc({
-#             "doctype": "Asset Repair",
-#             "asset": self.asset,
-#             "failure_date": self.reported_at,
-#             "repair_status": "Pending",
-#             "description": self.issue_description,
-#             "naming_series": "ACC-ASR-.YYYY.-",
-#             "maintenance_request": self.name
-#         })
-#         asset_repair_doc.insert(ignore_permissions=True)
-
-#         # Store the AR name as text
-#         self.db_set('asset_repair', asset_repair_doc.name)
-#         frappe.db.commit()
-    
-#     def before_delete(self):
-#         """Delete all linked Asset Repairs before MR is deleted"""
-#         if self.asset_repair:
-#             try:
-#                 # Find all versions of this Asset Repair (original + amendments)
-#                 all_versions = frappe.db.get_list(
-#                     "Asset Repair",
-#                     filters={"name": ["like", f"{self.asset_repair}%"]},
-#                     fields=["name"]
-#                 )
-                
-#                 frappe.logger().info(f"Deleting {len(all_versions)} Asset Repairs")
-                
-#                 # Delete all versions using SQL (bypass validation)
-#                 for ar in all_versions:
-#                     frappe.db.sql(
-#                         "DELETE FROM `tabAsset Repair` WHERE name = %s",
-#                         ar.name
-#                     )
-                
-#                 frappe.db.commit()
-#                 frappe.logger().info(f"Deleted {len(all_versions)} Asset Repairs for MR {self.name}")
-                
-#             except Exception as e:
-#                 frappe.logger().error(f"Error deleting Asset Repairs: {e}")
-#                 # Don't block deletion on error
-#                 pass
-    
-
-#     def update_room_maintenance_flag(self):
-#         if not self.room:
-#             return
-
-#         # Determine what the flag should be
-#         new_flag = 1 if self.approved else 0
-
-#         frappe.db.set_value("Hotel Room", self.room, "maintenance_flag", new_flag)
-
-#         # Optional: commit immediately to ensure real-time dashboard updates
-#         frappe.db.commit()
-
-
-
-
-
-
-
-
-
-# import frappe
-# from frappe.model.document import Document
-# from frappe.utils import get_datetime, now_datetime
-
-
-# class MaintenanceRequest(Document):
-
-#     def validate(self):
-#         self.validate_no_duplicate_pending()
-#         self.validate_required_fields()
-#         self.validate_request_type()
-#         self.validate_dates()
-
-#     def after_insert(self):
-#         """Run immediately after creation"""
-#         self.update_room_maintenance_flag()
-#         # Create Asset Repair only if approved upon creation
-#         if self.is_approved_for_repair():
-#             self.create_asset_repair()
-    
-#     def on_update(self):
-#         """Triggered on every update"""
-#         self.update_room_maintenance_flag()
-
-#         self.set_approval_time()
-
-#         # Only create Asset Repair when it becomes approved
-#         if self.is_approved_for_repair() and not self.asset_repair:
-#             self.create_asset_repair()
-
-#     # ---------------- VALIDATIONS ----------------
-#     def validate_no_duplicate_pending(self):
-#         existing = frappe.db.exists({
-#             "doctype": "Maintenance Request",
-#             "asset": self.asset,
-#             "room": self.room,
-#             "status": "Pending",
-#             "name": ["!=", self.name]
-#         })
-#         if existing:
-#             frappe.throw(f"A pending Maintenance Request already exists for this asset in this room ({existing}).")
-
-#     def validate_required_fields(self):
-#         required_fields = ["asset", "room", "issue_type", "request_type", "reported_by", "reported_at"]
-#         for field in required_fields:
-#             if not self.get(field):
-#                 frappe.throw(f"{field.replace('_', ' ').title()} is required.")
-
-#     def validate_request_type(self):
-#         if self.request_type == "Repair" and getattr(self, "asset_maintenance", None):
-#             frappe.throw("Cannot select Asset Maintenance for a Repair request.")
-#         if self.request_type == "Maintenance" and getattr(self, "asset_repair", None):
-#             frappe.throw("Cannot select Asset Repair for a Maintenance request.")
-    
-#     def validate_dates(self):
-#         if self.reported_at:
-#             reported_at_dt = get_datetime(self.reported_at)
-#             if reported_at_dt > now_datetime():
-#                 frappe.throw("Reported At cannot be in the future.")
-
-#     # ---------------- CORE LOGIC ----------------
-#     def is_approved_for_repair(self):
-#         """Helper to check if MR should create an Asset Repair"""
-#         return (
-#             self.request_type == "Repair"
-#             and self.status == "Pending"
-#             and bool(self.approved)
-#         )
-
-#     def create_asset_repair(self):
-#         """Create linked Asset Repair record"""
-#         asset_repair_doc = frappe.get_doc({
-#             "doctype": "Asset Repair",
-#             "asset": self.asset,
-#             "failure_date": self.reported_at,
-#             "repair_status": "Pending",
-#             "description": self.issue_description,
-#             "naming_series": "ACC-ASR-.YYYY.-",
-#             "maintenance_request": self.name
-#         })
-#         asset_repair_doc.insert(ignore_permissions=True)
-
-#         # Link to Maintenance Request
-#         self.db_set('asset_repair', asset_repair_doc.name)
-#         frappe.db.commit()
-
-#     def update_room_maintenance_flag(self):
-#         """Toggle Hotel Room maintenance flag based on approval"""
-#         if not self.room:
-#             return
-#         frappe.db.set_value("Hotel Room", self.room, "maintenance_flag", 1 if self.approved else 0)
-#         frappe.db.commit()
-
-#     def before_delete(self):
-#         """Delete linked Asset Repairs when MR is deleted"""
-#         if self.asset_repair:
-#             try:
-#                 all_versions = frappe.db.get_list(
-#                     "Asset Repair",
-#                     filters={"name": ["like", f"{self.asset_repair}%"]},
-#                     fields=["name"]
-#                 )
-#                 for ar in all_versions:
-#                     frappe.db.sql("DELETE FROM `tabAsset Repair` WHERE name = %s", ar.name)
-#                 frappe.db.commit()
-#             except Exception as e:
-#                 frappe.logger().error(f"Error deleting Asset Repairs: {e}")
-#                 pass
-
-#     def set_approval_time(self):
-#         """Set approval_time only when approved is checked"""
-#         if self.approved and not self.approval_time:
-#             self.approval_time = now_datetime()
-#         elif not self.approved and self.approval_time:
-#             # Optional: clear it when unapproved
-#             self.approval_time = None
-
-#     @frappe.whitelist()
-#     def approve_request(self):
-#         # Only allow users with the approval role
-#         if 'Hotel Manager' not in frappe.get_roles():
-#             frappe.throw("You do not have permission to approve this request.")
-        
-#         self.db_set('approved', 1)
-#         self.db_set('approval_time', now_datetime())
-        
-#         # Update Hotel Room maintenance flag
-#         if self.room:
-#             frappe.db.set_value("Hotel Room", self.room, "maintenance_flag", 1)
-
-
 import frappe
 from frappe.model.document import Document
 from frappe.utils import get_datetime, now_datetime
+from frappe.utils import strip_html_tags
+        
 
 
 class MaintenanceRequest(Document):
@@ -313,12 +70,13 @@ class MaintenanceRequest(Document):
 
     def create_asset_repair(self):
         """Create linked Asset Repair record"""
+        clean_description = strip_html_tags(self.issue_description) if self.issue_description else ""
         asset_repair_doc = frappe.get_doc({
             "doctype": "Asset Repair",
             "asset": self.asset,
             "failure_date": self.reported_at,
             "repair_status": "Pending",
-            "description": self.issue_description,
+            "description": clean_description,
             "naming_series": "ACC-ASR-.YYYY.-",
             "maintenance_request": self.name
         })
@@ -383,14 +141,37 @@ class MaintenanceRequest(Document):
             # Optional: clear it when unapproved
             self.approval_time = None
 
+    # @frappe.whitelist()
+    # def approve_request(self):
+    #     """Custom method to approve MR by authorized roles only"""
+    #     # if 'System Manager' not in frappe.get_roles():
+    #     #     frappe.throw("You do not have permission to approve this request.")
+        
+    #     self.db_set('approved', 1)
+    #     self.db_set('approval_time', now_datetime())
+        
+    #     # Update Hotel Room maintenance flag
+    #     self.update_room_maintenance_flag()
+
     @frappe.whitelist()
     def approve_request(self):
         """Custom method to approve MR by authorized roles only"""
-        if 'Hotel Manager' not in frappe.get_roles():
-            frappe.throw("You do not have permission to approve this request.")
+        user_roles = frappe.get_roles()
+        if 'System Manager' not in user_roles and 'Hotel Manager' not in user_roles:
+            frappe.error_log("You do not have permission to approve this request.")
         
-        self.db_set('approved', 1)
-        self.db_set('approval_time', now_datetime())
+        self.approved = 1
+        self.approval_time = now_datetime()
         
-        # Update Hotel Room maintenance flag
+        # Update maintenance flag
         self.update_room_maintenance_flag()
+        
+        # Create Asset Repair if conditions are met
+        if self.is_approved_for_repair() and not self.asset_repair:
+            self.create_asset_repair()
+        
+        # Save changes
+        self.db_set('approved', 1)
+        self.db_set('approval_time', self.approval_time)
+        
+        frappe.msgprint("Maintenance Request approved successfully")

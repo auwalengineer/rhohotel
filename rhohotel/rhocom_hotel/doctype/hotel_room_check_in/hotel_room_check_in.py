@@ -415,19 +415,17 @@ def extend_stay(check_in_name, number_of_nights):
 
 def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
 	"""Adjust room rate after transfer based on remaining nights, and auto-create rate difference invoice."""
-
 	old_room = frappe.get_doc("Hotel Room", old_room_number)
 	new_room = frappe.get_doc("Hotel Room", new_room_number)
 
-	# Get the rate from api.get_room_rate()
-	old_rate_data = get_room_rate(old_room.room_type, "", check_in_doc.check_in_datetime)
-	new_rate_data = get_room_rate(new_room.room_type, "", check_in_doc.check_in_datetime)
+	# Extract only the date (YYYY-MM-DD)
+	check_in_date = str(getdate(check_in_doc.check_in_datetime))
 
-	
-	old_rate = (old_rate_data)
+	old_rate_data = get_room_rate(old_room.room_type, "", check_in_date)
+	new_rate_data = get_room_rate(new_room.room_type, "", check_in_date)
+
+	old_rate = flt(old_rate_data)
 	new_rate = flt(new_rate_data)
-	frappe.msgprint(f"Old Rate Data: {old_rate}", alert=True)
-	frappe.msgprint(f"New Rate Data: {new_rate}", alert=True)
 
 	# Determine remaining nights
 	today = getdate(nowdate())
@@ -448,18 +446,26 @@ def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
 		return
 
 	guest = check_in_doc.guest
-	company = check_in_doc.company or frappe.defaults.get_user_default("Company")
+	company = frappe.defaults.get_user_default("Company")
 	posting_date = nowdate()
+	default_income = frappe.db.get_value(
+    	"Company",
+    	company,
+    	"default_income_account"
+	)
 
 	# Determine invoice type and direction
+	
 	if total_difference > 0:
 		# Guest owes extra
-		invoice_title = f"Room Upgrade Charge ({old_room_number} → {new_room_number})"
+		invoice_title = "Room Transfer Upgrade"
 		is_refund = 0
+		qty = 1
 	else:
 		# Refund guest
-		invoice_title = f"Room Downgrade Refund ({old_room_number} → {new_room_number})"
+		invoice_title = "Room Transfer Downgrade"
 		is_refund = 1
+		qty = -1
 
 	# Create the invoice
 	invoice = frappe.new_doc("Sales Invoice")
@@ -476,11 +482,9 @@ def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
 	invoice.append("items", {
 		"item_name": invoice_title,
 		"description": f"{invoice_title} for {remaining_nights} night(s)",
-		"qty": 1,
+		"qty": qty,
 		"rate": abs(total_difference),
-		"amount": abs(total_difference),
-		"income_account": frappe.db.get_value("Company", company, "default_income_account"),
-		"cost_center": frappe.db.get_value("Company", company, "default_cost_center"),
+		"income_account": default_income
 	})
 
 	invoice.save(ignore_permissions=True)
@@ -555,7 +559,7 @@ def transfer_room(check_in_name, new_room_number, note=None):
 	check_in_doc.save(ignore_permissions=True)
 
 	# Adjust rate if new room type has different tariff
-	# adjust_room_rate(check_in_doc, old_room_number, new_room_number)
+	adjust_room_rate(check_in_doc, old_room_number, new_room_number)
 
 	frappe.db.commit()
 	frappe.publish_realtime('rhohotel_front_desk_update')
