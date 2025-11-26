@@ -311,10 +311,16 @@ def make_check_out(source_name, target_doc=None):
 @frappe.whitelist()
 def make_refund(source_name, target_doc=None):
 	def get_mapped_doc():
+		# Get total payments made against the check-in
+		payments = frappe.get_all("Payment Entry", filters={"custom_hotel_room_check_in": source_name}, fields=["sum(paid_amount) as total_paid"])
+		total_paid = payments[0].total_paid if payments and payments[0].total_paid else 0
+
 		check_in = frappe.get_doc("Hotel Room Check In", source_name)
 		refund = frappe.new_doc("Hotel Refund")
 		refund.guest = check_in.guest
 		refund.check_in = check_in.name
+		refund.refund_amount = total_paid
+		refund.reason = f"Refund for Check In {check_in.name}"
 		return refund
 
 	doc = get_mapped_doc()
@@ -409,7 +415,7 @@ def extend_stay(check_in_name, number_of_nights):
 		text=_("Stay extended to {0}. New invoice {1} created for {2}.").format(new_expected_checkout, si.name, frappe.utils.fmt_money(extension_amount))
 	)
 
-	msgprint(_("Stay extended successfully. New invoice {0} created.").format(si.name))
+	frappe.msgprint(_("Stay extended successfully. New invoice {0} created.").format(si.name))
 	return {"sales_invoice": si.name}
 
 
@@ -463,32 +469,48 @@ def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
 		qty = 1
 	else:
 		# Refund guest
+		# Create a refund request
 		invoice_title = "Room Transfer Downgrade"
 		is_refund = 1
 		qty = -1
 
-	# Create the invoice
-	invoice = frappe.new_doc("Sales Invoice")
-	invoice.customer = guest
-	invoice.company = company
-	invoice.posting_date = posting_date
-	invoice.is_return = bool(is_refund)
-	invoice.remarks = _(
-		"Room transfer from {0} to {1}. Rate adjusted for {2} remaining night(s)."
-	).format(old_room_number, new_room_number, remaining_nights)
-	invoice.custom_hotel_room_check_in = check_in_doc.name
-	invoice.update_outstanding_for_self = bool(0)
-	# Add line item
-	invoice.append("items", {
-		"item_name": invoice_title,
-		"description": f"{invoice_title} for {remaining_nights} night(s)",
-		"qty": qty,
-		"rate": abs(total_difference),
-		"income_account": default_income
-	})
+	
+		# Create the invoice
+		invoice = frappe.new_doc("Sales Invoice")
+		invoice.customer = guest
+		invoice.company = company
+		invoice.posting_date = posting_date
+		invoice.is_return = bool(is_refund),
+		invoice.remarks = _(
+			"Room transfer from {0} to {1}. Rate adjusted for {2} remaining night(s)."
+		).format(old_room_number, new_room_number, remaining_nights)
+		invoice.custom_hotel_room_check_in = check_in_doc.name
+		invoice.update_outstanding_for_self = bool(0)
+		# Add line item
+		invoice.append("items", {
+			"item_name": invoice_title,
+			"description": f"{invoice_title} for {remaining_nights} night(s)",
+			"qty": qty,
+			"rate": abs(total_difference),
+			"income_account": default_income
+		})
 
-	invoice.save(ignore_permissions=True)
-	invoice.submit()
+		invoice.save(ignore_permissions=True)
+		invoice.submit()
+  
+		# create refund 
+		
+		refund = frappe.new_doc("Hotel Refund")
+		refund.guest = guest
+		refund.check_in = check_in_doc.name
+		refund.refund_amount = abs(total_difference)
+		refund.reason = f"Refund for Room Transfer from {old_room_number} to {new_room_number}"
+		refund.credit_note = invoice.name,
+		refund.status = "Approved",
+
+		refund.insert(ignore_permissions=True)
+		refund.submit()
+  
 
 	# Log comment on check-in
 	check_in_doc.add_comment(

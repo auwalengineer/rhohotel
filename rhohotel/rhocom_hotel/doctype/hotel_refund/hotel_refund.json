@@ -77,7 +77,22 @@
             "fieldtype": "Select",
             "label": "Status",
             "options": "Pending\nApproved\nRejected\nRefunded",
-            "allow_on_submit": 1
+            "allow_on_submit": 1,
+            "read_only": 1
+        },
+        {
+            "fieldname": "credit_note",
+            "fieldtype": "Link",
+            "label": "Credit Note",
+            "options": "Sales Invoice",
+            "read_only":1
+        },
+        {
+            "fieldname": "payment_entry",
+            "fieldtype": "Link",
+            "label": "Payment Entry",
+            "options": "Payment Entry",
+            "read_only": 1
         }
     ],
     "grid_page_length": 50,
