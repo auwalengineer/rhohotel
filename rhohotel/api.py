@@ -446,6 +446,8 @@ def complete_payment(payment_session):
                     new_payment_entry.paid_amount = invoice.outstanding_amount
                     new_payment_entry.received_amount = invoice.outstanding_amount
                     new_payment_entry.custom_hotel_room_check_in= session.hotel_room_check_in
+                    new_payment_entry.reference_no = session.payment_reference
+                    new_payment_entry.reference_date = datetime.now()
                     new_payment_entry.append("references", {
                         "reference_doctype": "Sales Invoice",
                         "reference_name": invoice.name,
