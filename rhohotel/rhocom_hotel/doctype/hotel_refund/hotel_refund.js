@@ -1,5 +1,12 @@
 frappe.ui.form.on("Hotel Refund", {
     refresh(frm) {
+
+        // Check if the current user has "Manager" role
+        const is_manager = frappe.user_roles.includes("Hotel Manager");
+
+        if (!is_manager) return; // exit if not a Manager
+
+        // Approve Refund button
         if (frm.doc.docstatus === 1 && frm.doc.status === "Pending Approval") {
 
             frm.add_custom_button("Approve Refund", () => {

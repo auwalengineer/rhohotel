@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"jkXWNy0FHx\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Hotel Setup</span>\",\"col\":12}},{\"id\":\"5hzc3n5rGB\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Rooms\",\"col\":3}},{\"id\":\"3Mz4gpPHTB\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Vacant Rooms\",\"col\":3}},{\"id\":\"ZexFTU9UDC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Occupied Rooms\",\"col\":3}},{\"id\":\"j6dCegD8d8\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"ocIGP7shGS\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Open Front desk\",\"col\":3}},{\"id\":\"Ry3hC3OWtv\",\"type\":\"card\",\"data\":{\"card_name\":\"Guest Operations\",\"col\":4}},{\"id\":\"aV2ZSxC5bm\",\"type\":\"card\",\"data\":{\"card_name\":\"Room Setup\",\"col\":4}},{\"id\":\"AQN499IVnR\",\"type\":\"card\",\"data\":{\"card_name\":\"Pricing Setup\",\"col\":4}},{\"id\":\"8OLktOScCE\",\"type\":\"card\",\"data\":{\"card_name\":\"Setups\",\"col\":4}},{\"id\":\"UBKRYjj8lL\",\"type\":\"card\",\"data\":{\"card_name\":\"House Keeping\",\"col\":4}},{\"id\":\"70An0-yVzm\",\"type\":\"card\",\"data\":{\"card_name\":\"Maintenance\",\"col\":4}},{\"id\":\"LdiR3CKhMM\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}},{\"id\":\"jr1MSVQFIa\",\"type\":\"card\",\"data\":{\"card_name\":\"Mis.\",\"col\":4}}]",
+ "content": "[{\"id\":\"jkXWNy0FHx\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Hotel Setup</span>\",\"col\":12}},{\"id\":\"5hzc3n5rGB\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Rooms\",\"col\":3}},{\"id\":\"3Mz4gpPHTB\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Vacant Rooms\",\"col\":3}},{\"id\":\"ZexFTU9UDC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Occupied Rooms\",\"col\":3}},{\"id\":\"j6dCegD8d8\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"ocIGP7shGS\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Open Front desk\",\"col\":3}},{\"id\":\"0NSxPKzvHe\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Refund\",\"col\":3}},{\"id\":\"Ry3hC3OWtv\",\"type\":\"card\",\"data\":{\"card_name\":\"Guest Operations\",\"col\":4}},{\"id\":\"aV2ZSxC5bm\",\"type\":\"card\",\"data\":{\"card_name\":\"Room Setup\",\"col\":4}},{\"id\":\"AQN499IVnR\",\"type\":\"card\",\"data\":{\"card_name\":\"Pricing Setup\",\"col\":4}},{\"id\":\"8OLktOScCE\",\"type\":\"card\",\"data\":{\"card_name\":\"Setups\",\"col\":4}},{\"id\":\"UBKRYjj8lL\",\"type\":\"card\",\"data\":{\"card_name\":\"House Keeping\",\"col\":4}},{\"id\":\"70An0-yVzm\",\"type\":\"card\",\"data\":{\"card_name\":\"Maintenance\",\"col\":4}},{\"id\":\"LdiR3CKhMM\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}},{\"id\":\"jr1MSVQFIa\",\"type\":\"card\",\"data\":{\"card_name\":\"Mis.\",\"col\":4}}]",
  "creation": "2025-10-31 09:23:30.657804",
  "custom_blocks": [],
  "docstatus": 0,
@@ -306,7 +306,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-11-23 01:10:47.790694",
+ "modified": "2025-11-26 15:21:37.288750",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Setup",
@@ -335,6 +335,14 @@
  ],
  "sequence_id": 9.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Refund",
+   "link_to": "Hotel Refund",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
   {
    "color": "Grey",
    "doc_view": "List",
