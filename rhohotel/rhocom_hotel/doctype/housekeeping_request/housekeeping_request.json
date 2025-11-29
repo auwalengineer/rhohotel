@@ -75,7 +75,7 @@
   },
   {
    "fieldname": "approval_time",
-   "fieldtype": "DateTime",
+   "fieldtype": "Datetime",
    "label": "Approval Time",
    "read_only": 1
   },
