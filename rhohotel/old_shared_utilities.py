@@ -83,76 +83,43 @@ def validate_date_range(check_in_date, check_out_date):
 # TARIFF & PRICING UTILITIES
 # ════════════════════════════════════════════════════════════════════════════
 
-def get_room_rate(room_type, rate_type=None, check_in_date=None):
+def get_room_tariff(room_type, check_date):
     """
-    Get the applicable rate for a room type on a specific date.
+    Get the applicable tariff for a room type on a specific date.
     Determines if date is weekend or weekday and gets corresponding rate.
     
     Args:
         room_type (str): Room type name
-        rate_type (str): Rate type (optional, currently unused)
-        check_in_date (str): Date to check (YYYY-MM-DD format)
-    
-    Returns:
-        float: Rate amount or 0 if not found
-    """
-    try:
-        # --- Convert and determine the day type ---
-        day_of_week = datetime.strptime(check_in_date, "%Y-%m-%d").weekday()
-        day_type = "Weekend" if day_of_week >= 5 else "Weekday"
-
-        # --- Base filters ---
-        base_filters = {
-            "room_type": room_type,
-            "is_active": 1
-        }
-
-        # --- 1. Try exact match: room type + day type ---
-        rate_amount = frappe.db.get_value(
-            "Hotel Room Tariff",
-            {**base_filters, "day_type": day_type},
-            "rate_amount"
-        )
-
-        # --- 2. If not found, try fallback: room type only ---
-        if not rate_amount:
-            rate_amount = frappe.db.get_value(
-                "Hotel Room Tariff",
-                base_filters,
-                "rate_amount"
-            )
-
-        # --- Final return ---
-        return rate_amount or 0
-
-    except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Error fetching room rate")
-        return 0
-
-
-def get_day_type(check_date):
-    """
-    Get the day type (Weekend/Weekday) for a given date.
-    
-    Args:
         check_date (str or date): Date to check
     
     Returns:
-        str: "Weekend" or "Weekday"
+        dict: {"rate_amount": float, "day_type": str} or None
     """
     try:
-        if isinstance(check_date, str):
-            date_obj = datetime.strptime(check_date, "%Y-%m-%d").date()
-        else:
-            date_obj = check_date
+        date_str, date_obj = parse_date(check_date, "check_date")
         
         day_of_week = date_obj.weekday()
-        # Friday(4), Saturday(5), Sunday(6) - but we're using >= 5 for Sat/Sun
-        return "Weekend" if day_of_week >= 5 else "Weekday"
+        is_weekend = day_of_week >= 4  # Friday(4) and Saturday(5)
+        day_type = "Weekend" if is_weekend else "Weekday"
+        
+        tariff = frappe.db.get_value(
+            "Hotel Room Tariff",
+            filters={
+                "room_type": room_type,
+                "day_type": day_type,
+                "is_active": 1
+            },
+            fieldname=["rate_amount", "day_type"]
+        )
+        
+        if tariff:
+            return {"rate_amount": tariff[0], "day_type": tariff[1]}
+        
+        return None
     
     except Exception as e:
-        frappe.log_error(f"Error getting day type: {str(e)}")
-        return "Weekday"
+        frappe.log_error(f"Error getting room tariff: {str(e)}")
+        return None
 
 
 def get_pricing_breakdown(room_type, check_in_date, check_out_date, base_rate):
@@ -177,20 +144,13 @@ def get_pricing_breakdown(room_type, check_in_date, check_out_date, base_rate):
         current_date = check_in
         
         while current_date < check_out:
-            current_date_str = current_date.strftime("%Y-%m-%d")
-            
-            # Get rate for this specific date
-            rate = get_room_rate(room_type, check_in_date=current_date_str)
-            if not rate or rate == 0:
-                rate = base_rate
-            
-            # Get day type
-            day_type = get_day_type(current_date)
+            tariff = get_room_tariff(room_type, current_date)
+            rate = float(tariff["rate_amount"]) if tariff else base_rate
             
             breakdown.append({
-                "date": current_date_str,
-                "day_type": day_type,
-                "rate": float(rate)
+                "date": current_date.strftime("%Y-%m-%d"),
+                "day_type": tariff["day_type"] if tariff else "Unknown",
+                "rate": rate
             })
             
             current_date += timedelta(days=1)
@@ -224,18 +184,11 @@ def calculate_room_price(room_type, check_in_date, num_nights, room_capacity, ad
         }
     """
     try:
-        # Parse check_in_date to string format
-        if isinstance(check_in_date, str):
-            check_in_str = check_in_date
-        else:
-            check_in_str = check_in_date.strftime("%Y-%m-%d")
-        
-        # Get rate for check-in date
-        rate_amount = get_room_rate(room_type, check_in_date=check_in_str)
-        if not rate_amount or rate_amount == 0:
+        tariff = get_room_tariff(room_type, check_in_date)
+        if not tariff:
             return None
         
-        base_rate = float(rate_amount)
+        base_rate = float(tariff.get("rate_amount", 0))
         price_per_night = base_rate
         
         # Calculate extra bed charges
@@ -248,21 +201,14 @@ def calculate_room_price(room_type, check_in_date, num_nights, room_capacity, ad
         
         total_price = (price_per_night * num_nights) + extra_charges
         
-        # Calculate checkout date for breakdown
-        check_in_date_obj = datetime.strptime(check_in_str, "%Y-%m-%d").date()
-        check_out_date_obj = check_in_date_obj + timedelta(days=num_nights)
-        
         return {
             "base_rate": base_rate,
             "price_per_night": price_per_night,
             "extra_charges": extra_charges,
             "total_price": total_price,
-            "breakdown": get_pricing_breakdown(
-                room_type, 
-                check_in_str, 
-                check_out_date_obj.strftime("%Y-%m-%d"),
-                base_rate
-            )
+            "breakdown": get_pricing_breakdown(room_type, check_in_date, 
+                                             datetime.strptime(str(check_in_date), "%Y-%m-%d").date() + timedelta(days=num_nights),
+                                             base_rate)
         }
     
     except Exception as e:
