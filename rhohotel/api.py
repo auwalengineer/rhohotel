@@ -95,42 +95,40 @@ def get_active_checkin_for_room(room_number):
     return checkin
 
 @frappe.whitelist()
-def get_room_rate(room_type, rate_type, check_in_date):
+def get_room_rate(room_type, rate_type=None, check_in_date=None):
     try:
-        # Determine the season
-            # season = frappe.db.get_value("Hotel Season", {
-            #     "start_date": ("<=", check_in_date),
-            #     "end_date": (">=", check_in_date),
-            #     "is_active": 1
-            # }, "name")
-
-            # if not season:
-            #     return {"error": "No active season found for the selected date."}
-        season = "Regular Season"  # Placeholder, implement actual season logic
-        # Determine the day type (Weekday/Weekend)
+        # --- Convert and determine the day type ---
         day_of_week = datetime.strptime(check_in_date, "%Y-%m-%d").weekday()
-        day_type = "Weekend" if day_of_week >= 5 else "Weekday" # 5: Saturday, 6: Sunday
+        day_type = "Weekend" if day_of_week >= 5 else "Weekday"
 
-
-        # Fetch the room rate
-        rate_amount = frappe.db.get_value("Hotel Room Tariff", {
+        # --- Base filters ---
+        base_filters = {
             "room_type": room_type,
-            "day_type": day_type,
             "is_active": 1
-        }, "rate_amount")
+        }
 
+        # --- 1. Try exact match: room type + day type ---
+        rate_amount = frappe.db.get_value(
+            "Hotel Room Tariff",
+            {**base_filters, "day_type": day_type},
+            "rate_amount"
+        )
+
+        # --- 2. If not found, try fallback: room type only ---
         if not rate_amount:
-            # Fallback to default tariff for the room type
-            rate_amount = frappe.db.get_value("Hotel Room Tariff", {
-                "room_type": room_type,
-                "is_active": 1
-            }, "rate_amount")
+            rate_amount = frappe.db.get_value(
+                "Hotel Room Tariff",
+                base_filters,
+                "rate_amount"
+            )
 
+        # --- Final return ---
         return rate_amount or 0
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching room rate")
         return {"error": str(e)}
+
 
 @frappe.whitelist()
 def get_payment_session_status(payment_session):
@@ -236,96 +234,178 @@ def get_access_token():
         )
         frappe.throw(_("Failed to authenticate with Moniepoint: {0}").format(str(e)))
 
-@frappe.whitelist()
-def initiate_payment(check_in, terminal_id):
-    # if isinstance(invoice_names, str):
-    #     invoice_names = json.loads(invoice_names)
+# ----------- pay with moniepoint -------------
+# @frappe.whitelist()
+# def initiate_payment(check_in, terminal_id):
+#     # if isinstance(invoice_names, str):
+#     #     invoice_names = json.loads(invoice_names)
 
-    if not check_in:
-        frappe.throw(_("Check in not supplied."))
+#     if not check_in:
+#         frappe.throw(_("Check in not supplied."))
 
-    invoice_names = frappe.db.get_all(
-            "Sales Invoice",
-            filters={"custom_hotel_room_check_in": check_in, "outstanding_amount": [">", 0]},
-            pluck="name"
-        )
+#     invoice_names = frappe.db.get_all(
+#             "Sales Invoice",
+#             filters={"custom_hotel_room_check_in": check_in, "outstanding_amount": [">", 0]},
+#             pluck="name"
+#         )
     
-    if not invoice_names:
-        frappe.throw(_("No invoices provided for payment."))
+#     if not invoice_names:
+#         frappe.throw(_("No invoices provided for payment."))
 
-    total_amount = sum(frappe.db.get_value("Sales Invoice", name, "grand_total") for name in invoice_names)
+#     total_amount = sum(frappe.db.get_value("Sales Invoice", name, "grand_total") for name in invoice_names)
 
-    # get moniepoint terminal from terminal_id
-    terminal = frappe.get_doc("Moniepoint Terminal", terminal_id)
-    if not terminal:
-        frappe.throw(_("Invalid Moniepoint Terminal."))
+#     # get moniepoint terminal from terminal_id
+#     terminal = frappe.get_doc("Moniepoint Terminal", terminal_id)
+#     if not terminal:
+#         frappe.throw(_("Invalid Moniepoint Terminal."))
 
-    # Create Payment Session
-    session = frappe.new_doc("Payment Session")
-    session.payment_reference =  frappe.generate_hash(length=10)
-    session.total_amount = total_amount
-    session.hotel_room_check_in = check_in
-    session.posting_date = datetime.now()
-    session.transaction_reference = ""
-    session.terminal_id = terminal.name
-    session.account_number = terminal.account
-    try:
-        session.insert(ignore_permissions=True)
-        frappe.db.commit()
-    except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Error creating Payment Session")
-        frappe.throw(_("Failed to create Payment Session: {0}").format(str(e)))
+#     # Create Payment Session
+#     session = frappe.new_doc("Payment Session")
+#     session.payment_reference =  frappe.generate_hash(length=10)
+#     session.total_amount = total_amount
+#     session.hotel_room_check_in = check_in
+#     session.posting_date = datetime.now()
+#     session.transaction_reference = ""
+#     session.terminal_id = terminal.name
+#     session.account_number = terminal.account
+#     try:
+#         session.insert(ignore_permissions=True)
+#         frappe.db.commit()
+#     except Exception as e:
+#         frappe.log_error(frappe.get_traceback(), "Error creating Payment Session")
+#         frappe.throw(_("Failed to create Payment Session: {0}").format(str(e)))
 
-    for inv_name in invoice_names:
-        invoice = frappe.new_doc("Payment Session Invoices")
-        invoice.invoice_number = inv_name
-        invoice.payment_session = session.name
-        invoice.insert()
-    frappe.db.commit()
+#     for inv_name in invoice_names:
+#         invoice = frappe.new_doc("Payment Session Invoices")
+#         invoice.invoice_number = inv_name
+#         invoice.payment_session = session.name
+#         invoice.insert()
+#     frappe.db.commit()
 
     
     
-    client_id, client_secret, terminal_serial, base_url = get_credentials()
-    token = get_access_token()
+#     client_id, client_secret, terminal_serial, base_url = get_credentials()
+#     token = get_access_token()
 
-    payload = {
-        "terminalSerial": terminal.serial_number,
-        "amount": int(float(total_amount) * 100),
-        "merchantReference": session.payment_reference,
-        "transactionType": "PURCHASE",
-        "paymentMethod": "ANY"
-    }
+#     payload = {
+#         "terminalSerial": terminal.serial_number,
+#         "amount": int(float(total_amount) * 100),
+#         "merchantReference": session.payment_reference,
+#         "transactionType": "PURCHASE",
+#         "paymentMethod": "ANY"
+#     }
 
-    try:
+#     try:
         
         
-        response = requests.post(
-            f"{base_url}/v1/transactions",
-            json=payload,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            }
-        )
+#         response = requests.post(
+#             f"{base_url}/v1/transactions",
+#             json=payload,
+#             headers={
+#                 "Authorization": f"Bearer {token}",
+#                 "Content-Type": "application/json"
+#             }
+#         )
         
-        # if response.status_code != 200:
-        #     error_msg = response.text
-        #     frappe.logger().error(f"Moniepoint Payment Error - Status: {response.status_code}, Response: {error_msg}")
-        #     session.status = "Failed"
-        #     session.save()
-        #     frappe.throw(_("Payment initiation failed. Please try again."))
+#         # if response.status_code != 200:
+#         #     error_msg = response.text
+#         #     frappe.logger().error(f"Moniepoint Payment Error - Status: {response.status_code}, Response: {error_msg}")
+#         #     session.status = "Failed"
+#         #     session.save()
+#         #     frappe.throw(_("Payment initiation failed. Please try again."))
 
-        # Update session status
-        session.status = "Pending"
-        session.save()
+#         # Update session status
+#         session.status = "Pending"
+#         session.save()
         
-        return session.as_dict()
+#         return session.as_dict()
         
-    except requests.exceptions.RequestException as e:
-        session.status = "Failed"
-        session.save()
-        frappe.log_error(f"Moniepoint Payment Error: {str(e)}", "Moniepoint Integration")
-        frappe.throw(_("Failed to initiate payment: {0}").format(str(e)))
+#     except requests.exceptions.RequestException as e:
+#         session.status = "Failed"
+#         session.save()
+#         frappe.log_error(f"Moniepoint Payment Error: {str(e)}", "Moniepoint Integration")
+#         frappe.throw(_("Failed to initiate payment: {0}").format(str(e)))
+
+#-------------- correct working one--------
+# @frappe.whitelist()
+# def initiate_payment(check_in, terminal_id):
+#     if not check_in:
+#         frappe.throw(_("Check in not supplied."))
+
+#     invoice_names = frappe.db.get_all(
+#         "Sales Invoice",
+#         filters={"custom_hotel_room_check_in": check_in, "outstanding_amount": [">", 0]},
+#         fields=["name", "grand_total"]
+#     )
+    
+#     if not invoice_names:
+#         frappe.throw(_("No invoices provided for payment."))
+
+#     total_amount = sum(inv.grand_total for inv in invoice_names)
+
+#     # Get moniepoint terminal from terminal_id
+#     terminal = frappe.get_doc("Moniepoint Terminal", terminal_id)
+#     if not terminal:
+#         frappe.throw(_("Invalid Moniepoint Terminal."))
+
+#     # Create Payment Session
+#     session = frappe.new_doc("Payment Session")
+#     session.payment_reference = frappe.generate_hash(length=10)
+#     session.total_amount = total_amount
+#     session.hotel_room_check_in = check_in
+#     session.posting_date = nowdate()
+#     session.transaction_reference = ""
+#     session.terminal_id = terminal.name
+#     session.account_number = terminal.account
+    
+#     # Add invoices as child table rows
+#     for inv in invoice_names:
+#         session.append("invoices", {
+#             "invoice_number": inv.name,
+#             "invoice_amount": inv.grand_total
+#         })
+    
+#     try:
+#         session.insert(ignore_permissions=True)
+#         frappe.db.commit()
+#     except Exception as e:
+#         frappe.log_error(frappe.get_traceback(), "Error creating Payment Session")
+#         frappe.throw(_("Failed to create Payment Session: {0}").format(str(e)))
+    
+#     client_id, client_secret, terminal_serial, base_url = get_credentials()
+#     token = get_access_token()
+
+#     payload = {
+#         "terminalSerial": terminal.serial_number,
+#         "amount": int(float(total_amount) * 100),
+#         "merchantReference": session.payment_reference,
+#         "transactionType": "PURCHASE",
+#         "paymentMethod": "ANY"
+#     }
+
+#     try:
+#         response = requests.post(
+#             f"{base_url}/v1/transactions",
+#             json=payload,
+#             headers={
+#                 "Authorization": f"Bearer {token}",
+#                 "Content-Type": "application/json"
+#             }
+#         )
+        
+#         # Update session status
+#         session.status = "Pending"
+#         session.save()
+        
+#         return session.as_dict()
+        
+#     except requests.exceptions.RequestException as e:
+#         session.status = "Failed"
+#         session.save()
+#         frappe.log_error(f"Moniepoint Payment Error: {str(e)}", "Moniepoint Integration")
+#         frappe.throw(_("Failed to initiate payment: {0}").format(str(e)))
+
+
 
 @frappe.whitelist()
 def resend_payment_request(payment_session_name):
@@ -377,131 +457,208 @@ def resend_payment_request(payment_session_name):
         frappe.log_error(frappe.get_traceback(), "Error resending payment request")
         return {"success": False, "message": str(e)}
 
-@frappe.whitelist(allow_guest=True)
-def complete_payment(payment_session):
-    try:
-        session = frappe.get_doc("Payment Session", payment_session)
-        if not session:
-            frappe.msgprint("Payment session not found")
-            return {"success": False, "message": "Payment session not found"}
+# @frappe.whitelist(allow_guest=True)
+# def complete_payment(payment_session):
+#     try:
+#         session = frappe.get_doc("Payment Session", payment_session)
+#         if not session:
+#             frappe.msgprint("Payment session not found")
+#             return {"success": False, "message": "Payment session not found"}
 
-        token = get_access_token()
-        _, _, _, base_url = get_credentials()
+#         token = get_access_token()
+#         _, _, _, base_url = get_credentials()
 
-        response = requests.get(
-            f"{base_url}/v1/transactions/merchants/{session.payment_reference}",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            }
-        )
+#         response = requests.get(
+#             f"{base_url}/v1/transactions/merchants/{session.payment_reference}",
+#             headers={
+#                 "Authorization": f"Bearer {token}",
+#                 "Content-Type": "application/json"
+#             }
+#         )
 
        
 
-        # if response.status != 200:
-        #     error_msg = f"Failed to verify payment: {response.text}"
-        #     frappe.log_error(error_msg, "Moniepoint Integration")
-        #     return {"success": False, "message": error_msg}
+#         # if response.status != 200:
+#         #     error_msg = f"Failed to verify payment: {response.text}"
+#         #     frappe.log_error(error_msg, "Moniepoint Integration")
+#         #     return {"success": False, "message": error_msg}
         
 
-        data = response.json()
+#         data = response.json()
         
-        responseMessage = data.get("responseMessage")
-        status = data.get("status")
+#         responseMessage = data.get("responseMessage")
+#         status = data.get("status")
         
-        processingStatus = data.get("processingStatus")
+#         processingStatus = data.get("processingStatus")
 
         
-        # if not processingStatus:
-        #     error_msg = "Payment status not found in response"
-        #     frappe.log_error(error_msg, "Moniepoint Integration")
-        #     #frappe.throw(_("Payment is still pending. Please try again later."))
-        #     return {"success": False, "message": error_msg}
+#         # if not processingStatus:
+#         #     error_msg = "Payment status not found in response"
+#         #     frappe.log_error(error_msg, "Moniepoint Integration")
+#         #     #frappe.throw(_("Payment is still pending. Please try again later."))
+#         #     return {"success": False, "message": error_msg}
             
-        if processingStatus == "PROCESSED" and responseMessage == "Transaction Approved":
-            session.db_set("status", "Paid")
+#         if processingStatus == "PROCESSED" and responseMessage == "Transaction Approved":
+#             session.db_set("status", "Paid")
 
-            # Create payment entries for all invoices
-            # Payment Session Invoices
-            invoices = frappe.get_all(
-                "Payment Session Invoices",
-                filters={"payment_session": session.name},
-                pluck="invoice_number"
-            )
+#             # Create payment entries for all invoices
+#             # Payment Session Invoices
+#             invoices = frappe.get_all(
+#                 "Payment Session Invoices",
+#                 filters={"payment_session": session.name},
+#                 pluck="invoice_number"
+#             )
             
-            company = frappe.defaults.get_user_default("Company")
+#             company = frappe.defaults.get_user_default("Company")
             
-            default_receivable = frappe.db.get_value("Company",company,"default_receivable_account")
+#             default_receivable = frappe.db.get_value("Company",company,"default_receivable_account")
 
-            for inv in invoices:
-                invoice = frappe.get_doc("Sales Invoice", inv)
+#             for inv in invoices:
+#                 invoice = frappe.get_doc("Sales Invoice", inv)
 
-                if invoice.docstatus == 1 and invoice.outstanding_amount > 0:
-                    new_payment_entry= frappe.new_doc("Payment Entry")
-                    new_payment_entry.payment_type = "Receive"                
-                    new_payment_entry.party_type = "Customer"
-                    new_payment_entry.party =  invoice.customer,
-                    new_payment_entry.paid_from = default_receivable
-                    new_payment_entry.paid_to =  session.account_number
-                    new_payment_entry.paid_amount = invoice.outstanding_amount
-                    new_payment_entry.received_amount = invoice.outstanding_amount
-                    new_payment_entry.custom_hotel_room_check_in= session.hotel_room_check_in
-                    new_payment_entry.reference_no = session.payment_reference
-                    new_payment_entry.reference_date = datetime.now()
-                    new_payment_entry.append("references", {
-                        "reference_doctype": "Sales Invoice",
-                        "reference_name": invoice.name,
-                        "total_amount": invoice.grand_total,
-                        "outstanding_amount": invoice.outstanding_amount,
-                        "allocated_amount": invoice.outstanding_amount
-                    })
-                    new_payment_entry.mode_of_payment = "Moniepoint"
+#                 if invoice.docstatus == 1 and invoice.outstanding_amount > 0:
+#                     new_payment_entry= frappe.new_doc("Payment Entry")
+#                     new_payment_entry.payment_type = "Receive"                
+#                     new_payment_entry.party_type = "Customer"
+#                     new_payment_entry.party =  invoice.customer,
+#                     new_payment_entry.paid_from = default_receivable
+#                     new_payment_entry.paid_to =  session.account_number
+#                     new_payment_entry.paid_amount = invoice.outstanding_amount
+#                     new_payment_entry.received_amount = invoice.outstanding_amount
+#                     new_payment_entry.custom_hotel_room_check_in= session.hotel_room_check_in
+#                     new_payment_entry.reference_no = session.payment_reference
+#                     new_payment_entry.reference_date = datetime.now()
+#                     new_payment_entry.append("references", {
+#                         "reference_doctype": "Sales Invoice",
+#                         "reference_name": invoice.name,
+#                         "total_amount": invoice.grand_total,
+#                         "outstanding_amount": invoice.outstanding_amount,
+#                         "allocated_amount": invoice.outstanding_amount
+#                     })
+#                     new_payment_entry.mode_of_payment = "Moniepoint"
                 
-                    new_payment_entry.insert(ignore_permissions=True)
-                    new_payment_entry.submit()
+#                     new_payment_entry.insert(ignore_permissions=True)
+#                     new_payment_entry.submit()
             
-            # submit payment session
-            session.submit()
-            return {"success": True, "message": "Payment completed successfully", "name": session.name}
-        else:
-            return {
-                "success": False, 
-                "message": f"Payment not yet successful. Current status: {status}"
-            }
+#             # submit payment session
+#             session.submit()
+#             return {"success": True, "message": "Payment completed successfully", "name": session.name}
+#         else:
+#             return {
+#                 "success": False, 
+#                 "message": f"Payment not yet successful. Current status: {status}"
+#             }
             
-    except Exception as e:
-        error_msg = f"Error processing payment: {str(e)}"
-        frappe.log_error(error_msg, "Moniepoint Integration")
-        return {"success": False, "message": error_msg}
+#     except Exception as e:
+#         error_msg = f"Error processing payment: {str(e)}"
+#         frappe.log_error(error_msg, "Moniepoint Integration")
+#         return {"success": False, "message": error_msg}
 
 
-    # if status == "SUCCESS":
-    #     session.db_set("status", "Paid")
-    #     for inv in session.invoices:
-    #         invoice = frappe.get_doc("Sales Invoice", inv.invoice)
-    #         if invoice.docstatus == 1 and invoice.outstanding_amount > 0:
-    #             payment_entry = frappe.get_doc({
-    #                 "doctype": "Payment Entry",
-    #                 "payment_type": "Receive",
-    #                 "party_type": "Customer",
-    #                 "party": invoice.customer,
-    #                 "paid_from": "Debtors - P",
-    #                 "paid_to": "Cash - P",
-    #                 "paid_amount": invoice.grand_total,
-    #                 "received_amount": invoice.grand_total,
-    #                 "references": [{
-    #                     "reference_doctype": "Sales Invoice",
-    #                     "reference_name": invoice.name
-    #                 }],
-    #                 "mode_of_payment": "Moniepoint",
-    #             })
-    #             payment_entry.insert(ignore_permissions=True)
-    #             payment_entry.submit()
+#     # if status == "SUCCESS":
+#     #     session.db_set("status", "Paid")
+#     #     for inv in session.invoices:
+#     #         invoice = frappe.get_doc("Sales Invoice", inv.invoice)
+#     #         if invoice.docstatus == 1 and invoice.outstanding_amount > 0:
+#     #             payment_entry = frappe.get_doc({
+#     #                 "doctype": "Payment Entry",
+#     #                 "payment_type": "Receive",
+#     #                 "party_type": "Customer",
+#     #                 "party": invoice.customer,
+#     #                 "paid_from": "Debtors - P",
+#     #                 "paid_to": "Cash - P",
+#     #                 "paid_amount": invoice.grand_total,
+#     #                 "received_amount": invoice.grand_total,
+#     #                 "references": [{
+#     #                     "reference_doctype": "Sales Invoice",
+#     #                     "reference_name": invoice.name
+#     #                 }],
+#     #                 "mode_of_payment": "Moniepoint",
+#     #             })
+#     #             payment_entry.insert(ignore_permissions=True)
+#     #             payment_entry.submit()
 
-    #     frappe.msgprint(_("Payment confirmed and invoices cleared."))
-    # else:
-    #     frappe.throw(_("Payment not yet successful. Current status: {0}").format(status))
+#     #     frappe.msgprint(_("Payment confirmed and invoices cleared."))
+#     # else:
+#     #     frappe.throw(_("Payment not yet successful. Current status: {0}").format(status))
 
+
+# ---------- latest correct one. ----------
+# @frappe.whitelist(allow_guest=True)
+# def complete_payment(payment_session):
+#     try:
+#         session = frappe.get_doc("Payment Session", payment_session)
+#         if not session:
+#             frappe.msgprint("Payment session not found")
+#             return {"success": False, "message": "Payment session not found"}
+
+#         token = get_access_token()
+#         _, _, _, base_url = get_credentials()
+
+#         response = requests.get(
+#             f"{base_url}/v1/transactions/merchants/{session.payment_reference}",
+#             headers={
+#                 "Authorization": f"Bearer {token}",
+#                 "Content-Type": "application/json"
+#             }
+#         )
+
+#         data = response.json()
+        
+#         responseMessage = data.get("responseMessage")
+#         status = data.get("status")
+#         processingStatus = data.get("processingStatus")
+            
+#         if processingStatus == "PROCESSED" and responseMessage == "Transaction Approved":
+#             session.db_set("status", "Paid")
+
+#             # Get invoices from child table
+#             company = frappe.defaults.get_user_default("Company")
+#             default_receivable = frappe.db.get_value("Company", company, "default_receivable_account")
+
+#             for invoice_row in session.invoices:
+#                 invoice = frappe.get_doc("Sales Invoice", invoice_row.invoice_number)
+
+#                 if invoice.docstatus == 1 and invoice.outstanding_amount > 0:
+#                     new_payment_entry = frappe.new_doc("Payment Entry")
+#                     new_payment_entry.payment_type = "Receive"                
+#                     new_payment_entry.party_type = "Customer"
+#                     new_payment_entry.party = invoice.customer
+#                     new_payment_entry.paid_from = default_receivable
+#                     new_payment_entry.paid_to = session.account_number
+#                     new_payment_entry.paid_amount = invoice.outstanding_amount
+#                     new_payment_entry.received_amount = invoice.outstanding_amount
+#                     new_payment_entry.custom_hotel_room_check_in = session.hotel_room_check_in
+#                     new_payment_entry.reference_no = session.payment_reference
+#                     new_payment_entry.reference_date = nowdate()
+#                     new_payment_entry.append("references", {
+#                         "reference_doctype": "Sales Invoice",
+#                         "reference_name": invoice.name,
+#                         "total_amount": invoice.grand_total,
+#                         "outstanding_amount": invoice.outstanding_amount,
+#                         "allocated_amount": invoice.outstanding_amount
+#                     })
+#                     new_payment_entry.mode_of_payment = "Moniepoint"
+                
+#                     new_payment_entry.insert(ignore_permissions=True)
+#                     new_payment_entry.submit()
+            
+#             # Submit payment session
+#             session.submit()
+#             return {"success": True, "message": "Payment completed successfully", "name": session.name}
+#         else:
+#             return {
+#                 "success": False, 
+#                 "message": f"Payment not yet successful. Current status: {status}"
+#             }
+            
+#     except Exception as e:
+#         error_msg = f"Error processing payment: {str(e)}"
+#         frappe.log_error(error_msg, "Moniepoint Integration")
+#         return {"success": False, "message": error_msg}
+
+
+# ----------- latest working ---------
 # @frappe.whitelist()
 # def complete_payment(payment_session):
 # 	payment_session_doc = frappe.get_doc("Payment Session", payment_session)
@@ -604,17 +761,263 @@ def moniepoint_webhook():
 
 
 
+@frappe.whitelist()
+def get_outstanding_invoices(check_in):
+    """Get all outstanding invoices for a check-in with details."""
+    if not check_in:
+        frappe.throw(_("Check in not supplied."))
+    
+    invoices = frappe.db.get_all(
+        "Sales Invoice",
+        filters={
+            "custom_hotel_room_check_in": check_in,
+            "outstanding_amount": [">", 0],
+            "docstatus": 1
+        },
+        fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"]
+    )
+    
+    return invoices
 
 
+@frappe.whitelist()
+def initiate_payment(check_in, terminal_id, invoice_allocations):
+    """
+    invoice_allocations: JSON string with format:
+    [
+        {"invoice_number": "INV-001", "allocated_amount": 10000},
+        {"invoice_number": "INV-002", "allocated_amount": 15000}
+    ]
+    """
+    if not check_in:
+        frappe.throw(_("Check in not supplied."))
+    
+    # Parse invoice allocations
+    if isinstance(invoice_allocations, str):
+        invoice_allocations = json.loads(invoice_allocations)
+    
+    if not invoice_allocations or len(invoice_allocations) == 0:
+        frappe.throw(_("No invoices selected for payment."))
+    
+    # Validate allocations and calculate total
+    total_amount = 0
+    validated_allocations = []
+    
+    for allocation in invoice_allocations:
+        invoice_number = allocation.get("invoice_number")
+        allocated_amount = float(allocation.get("allocated_amount", 0))
+        
+        if allocated_amount <= 0:
+            continue  # Skip invoices with zero or negative allocation
+        
+        # Get invoice details
+        invoice = frappe.get_doc("Sales Invoice", invoice_number)
+        
+        if invoice.docstatus != 1:
+            frappe.throw(_("Invoice {0} is not submitted.").format(invoice_number))
+        
+        if allocated_amount > invoice.outstanding_amount:
+            frappe.throw(
+                _("Allocated amount (₦{0}) exceeds outstanding amount (₦{1}) for invoice {2}").format(
+                    allocated_amount,
+                    invoice.outstanding_amount,
+                    invoice_number
+                )
+            )
+        
+        validated_allocations.append({
+            "invoice_number": invoice_number,
+            "outstanding_amount": invoice.outstanding_amount,
+            "allocated_amount": allocated_amount
+        })
+        
+        total_amount += allocated_amount
+    
+    if total_amount <= 0:
+        frappe.throw(_("Total payment amount must be greater than zero."))
+    
+    # Get moniepoint terminal
+    terminal = frappe.get_doc("Moniepoint Terminal", terminal_id)
+    if not terminal:
+        frappe.throw(_("Invalid Moniepoint Terminal."))
+    
+    # Create Payment Session
+    session = frappe.new_doc("Payment Session")
+    session.payment_reference = frappe.generate_hash(length=10)
+    session.total_amount = total_amount
+    session.hotel_room_check_in = check_in
+    session.posting_date = nowdate()
+    session.transaction_reference = ""
+    session.terminal_id = terminal.name
+    session.account_number = terminal.account
+    
+    try:
+        session.insert(ignore_permissions=True)
+        frappe.db.commit()
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error creating Payment Session")
+        frappe.throw(_("Failed to create Payment Session: {0}").format(str(e)))
+    
+    # Create Payment Session Invoices records (standalone documents)
+    for allocation in validated_allocations:
+        invoice_link = frappe.new_doc("Payment Session Invoices")
+        invoice_link.payment_session = session.name
+        invoice_link.invoice_number = allocation["invoice_number"]
+        invoice_link.outstanding_amount = allocation["outstanding_amount"]
+        invoice_link.allocated_amount = allocation["allocated_amount"]
+        
+        try:
+            invoice_link.insert(ignore_permissions=True)
+        except Exception as e:
+            frappe.log_error(
+                f"Error creating Payment Session Invoice link: {str(e)}",
+                "Payment Session Invoice Creation Error"
+            )
+            # Rollback the payment session if invoice link creation fails
+            frappe.db.rollback()
+            frappe.throw(_("Failed to create payment session invoice link: {0}").format(str(e)))
+    
+    frappe.db.commit()
+    
+    # Initiate Moniepoint payment
+    client_id, client_secret, terminal_serial, base_url = get_credentials()
+    token = get_access_token()
+    
+    payload = {
+        "terminalSerial": terminal.serial_number,
+        "amount": int(float(total_amount) * 100),  # Convert to kobo
+        "merchantReference": session.payment_reference,
+        "transactionType": "PURCHASE",
+        "paymentMethod": "ANY"
+    }
+    
+    try:
+        response = requests.post(
+            f"{base_url}/v1/transactions",
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # Update session status
+        session.status = "Pending"
+        session.save()
+        
+        return session.as_dict()
+        
+    except requests.exceptions.RequestException as e:
+        session.status = "Failed"
+        session.save()
+        frappe.log_error(f"Moniepoint Payment Error: {str(e)}", "Moniepoint Integration")
+        frappe.throw(_("Failed to initiate payment: {0}").format(str(e)))
 
 
-
-
-
-
-
-
-
+@frappe.whitelist(allow_guest=True)
+def complete_payment(payment_session):
+    try:
+        session = frappe.get_doc("Payment Session", payment_session)
+        if not session:
+            frappe.msgprint("Payment session not found")
+            return {"success": False, "message": "Payment session not found"}
+        
+        token = get_access_token()
+        _, _, _, base_url = get_credentials()
+        
+        response = requests.get(
+            f"{base_url}/v1/transactions/merchants/{session.payment_reference}",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        data = response.json()
+        
+        responseMessage = data.get("responseMessage")
+        status = data.get("status")
+        processingStatus = data.get("processingStatus")
+        
+        if processingStatus == "PROCESSED" and responseMessage == "Transaction Approved":
+            session.db_set("status", "Paid")
+            
+            # Get company and accounts
+            company = frappe.defaults.get_user_default("Company")
+            default_receivable = frappe.db.get_value("Company", company, "default_receivable_account")
+            
+            # Get all Payment Session Invoices for this session
+            invoice_allocations = frappe.get_all(
+                "Payment Session Invoices",
+                filters={"payment_session": session.name},
+                fields=["invoice_number", "allocated_amount", "outstanding_amount"]
+            )
+            
+            # Create payment entries for each allocated invoice
+            for allocation in invoice_allocations:
+                if allocation.allocated_amount <= 0:
+                    continue  # Skip if no allocation
+                
+                invoice = frappe.get_doc("Sales Invoice", allocation.invoice_number)
+                
+                if invoice.docstatus == 1 and invoice.outstanding_amount > 0:
+                    # Create payment entry for the allocated amount
+                    new_payment_entry = frappe.new_doc("Payment Entry")
+                    new_payment_entry.payment_type = "Receive"
+                    new_payment_entry.party_type = "Customer"
+                    new_payment_entry.party = invoice.customer
+                    new_payment_entry.paid_from = default_receivable
+                    new_payment_entry.paid_to = session.account_number
+                    new_payment_entry.paid_amount = allocation.allocated_amount
+                    new_payment_entry.received_amount = allocation.allocated_amount
+                    new_payment_entry.custom_hotel_room_check_in = session.hotel_room_check_in
+                    new_payment_entry.reference_no = session.payment_reference
+                    new_payment_entry.reference_date = nowdate()
+                    
+                    # Allocate to the specific invoice
+                    new_payment_entry.append("references", {
+                        "reference_doctype": "Sales Invoice",
+                        "reference_name": invoice.name,
+                        "total_amount": invoice.grand_total,
+                        "outstanding_amount": invoice.outstanding_amount,
+                        "allocated_amount": allocation.allocated_amount  # Use allocated amount from Payment Session Invoices
+                    })
+                    
+                    new_payment_entry.mode_of_payment = "Moniepoint"
+                    
+                    try:
+                        new_payment_entry.insert(ignore_permissions=True)
+                        new_payment_entry.submit()
+                    except Exception as e:
+                        frappe.log_error(
+                            f"Error creating payment entry for {invoice.name}: {str(e)}",
+                            "Payment Entry Creation Error"
+                        )
+                        # Continue with other invoices even if one fails
+                        continue
+            
+            # Submit payment session
+            session.submit()
+            return {
+                "success": True,
+                "message": "Payment completed successfully",
+                "name": session.name
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Payment not yet successful. Current status: {status}"
+            }
+            
+    except Exception as e:
+        error_msg = f"Error processing payment: {str(e)}"
+        frappe.log_error(error_msg, "Moniepoint Integration")
+        return {"success": False, "message": error_msg}
+    
+    
+    
+    
+    
 @frappe.whitelist(allow_guest=True)
 def add_cors_headers(response=None):
     """Add CORS headers to allow cross-origin requests."""

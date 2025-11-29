@@ -5,15 +5,18 @@
     "engine": "InnoDB",
     "field_order": [
         "section_break_1",
+        "verify_payment",
         "payment_reference",
-        "invoices",
         "total_amount",
         "status",
         "payment_entry",
         "hotel_room_check_in",
         "posting_date",
         "amended_from",
-        "transaction_reference"
+        "transaction_reference",
+        "section_break_2",
+        "terminal_id",
+        "account_number"
     ],
     "fields": [
         {
@@ -34,7 +37,6 @@
             "reqd": 1,
             "unique": 1
         },
-        
         {
             "fieldname": "total_amount",
             "fieldtype": "Currency",
@@ -108,8 +110,13 @@
         }
     ],
     "is_submittable": 1,
-    "links": [],
-    "modified": "2025-11-09 12:11:40.947191",
+    "links": [
+        {
+            "link_doctype": "Payment Session Invoices",
+            "link_fieldname": "payment_session"
+        }
+    ],
+    "modified": "2025-11-28 17:00:00.000000",
     "modified_by": "Administrator",
     "module": "Rhocom Hotel",
     "name": "Payment Session",

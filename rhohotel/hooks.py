@@ -280,9 +280,9 @@ frappe.csrf_exempt_methods = frappe_csrf_exempt_methods
 
 after_request = "rhohotel.api.add_cors_headers"
 
-override_doctype_class = {
-    "POS Invoice": "rhocom_hotel.pos_invoice.pos_invoice.POSInvoice"
-}
+# override_doctype_class = {
+#     "POS Invoice": "rhocom_hotel.pos_invoice.pos_invoice.POSInvoice"
+# }
 
 
 

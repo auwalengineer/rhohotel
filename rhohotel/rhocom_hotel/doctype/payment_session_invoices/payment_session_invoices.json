@@ -1,36 +1,58 @@
 {
     "actions": [],
-    "autoname": "field:invoice_number",
     "creation": "2025-11-09 11:43:27.585714",
     "doctype": "DocType",
     "engine": "InnoDB",
     "field_order": [
+        "payment_session",
         "invoice_number",
-        "payment_session"
+        "column_break_1",
+        "outstanding_amount",
+        "allocated_amount"
     ],
     "fields": [
+        {
+            "fieldname": "payment_session",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Payment Session",
+            "options": "Payment Session",
+            "reqd": 1
+        },
         {
             "fieldname": "invoice_number",
             "fieldtype": "Link",
             "in_list_view": 1,
             "label": "Invoice Number",
-            "options": "Sales Invoice"
+            "options": "Sales Invoice",
+            "reqd": 1
         },
         {
-            "fieldname": "payment_session",
-            "fieldtype": "Link",
-            "label": "Payment Session",
-            "options": "Payment Session"
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "outstanding_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Outstanding Amount",
+            "read_only": 1
+        },
+        {
+            "fieldname": "allocated_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Allocated Amount",
+            "reqd": 1
         }
     ],
-    "grid_page_length": 50,
     "index_web_pages_for_search": 1,
     "links": [],
-    "modified": "2025-11-09 12:05:56.679991",
+    "modified": "2025-11-28 16:00:00.000000",
     "modified_by": "Administrator",
     "module": "Rhocom Hotel",
     "name": "Payment Session Invoices",
-    "naming_rule": "By fieldname",
+    "naming_rule": "Autoincrement",
     "owner": "Administrator",
     "permissions": [
         {
@@ -46,10 +68,8 @@
             "write": 1
         }
     ],
-    "row_format": "Dynamic",
-    "show_title_field_in_link": 1,
     "sort_field": "modified",
     "sort_order": "DESC",
     "states": [],
-    "title_field": "invoice_number"
+    "track_changes": 1
 }
