@@ -501,24 +501,303 @@ def create_or_get_hotel_guest(guest_name, guest_email, guest_phone, customer_id)
 # STEP 3: PAYSTACK WEBHOOK - CONVERT TEMPORARY TO PERMANENT
 # ════════════════════════════════════════════════════════════════════════════
 
+# @frappe.whitelist(allow_guest=True)
+# def paystack_webhook():
+#     """
+#     Paystack Webhook: Payment successful → Convert temporary booking to permanent.
+#     ✅ Creates Hotel Guest (not Guest Profile)
+#     ✅ Invoice submission and Payment Entry creation happens HERE
+#     ✅ Booking status tracked in Temporary Booking only
+    
+#     Workflow:
+#     1. Verify payment with Paystack
+#     2. Get temporary booking
+#     3. Create Customer
+#     4. Create Sales Invoice & SUBMIT IT
+#     5. Create Hotel Room Reservations (one per room)
+#     6. Create Hotel Guest (or get existing by phone/email)
+#     7. Create Payment Entry & SUBMIT IT
+#     8. Update Temporary Booking status
+#     9. Queue confirmation email (background)
+#     """
+#     try:
+#         body = frappe.request.get_data(as_text=True)
+#         signature = frappe.request.headers.get("X-Paystack-Signature")
+#         data = frappe.request.get_json()
+        
+#         frappe.log_error(message=f"Webhook Payload: {data}", title="Paystack Webhook")
+        
+#         # === VERIFY SIGNATURE ===
+#         if not verify_paystack_signature(body, signature):
+#             frappe.log_error("Invalid signature", "Paystack Webhook")
+#             return {"status": "error", "message": "Invalid signature"}
+        
+#         # === EXTRACT DATA ===
+#         event = data.get("event")
+#         transaction_data = data.get("data", {})
+#         booking_number = transaction_data.get("reference")
+#         status = transaction_data.get("status")
+#         amount = transaction_data.get("amount") / 100  # Convert from kobo
+        
+#         if not booking_number:
+#             frappe.log_error("No booking reference", "Paystack Webhook")
+#             return {"status": "error", "message": "No booking reference"}
+        
+#         # === GET TEMPORARY BOOKING ===
+#         try:
+#             temp_booking = frappe.get_doc("Temporary Booking", {"booking_number": booking_number})
+#         except frappe.DoesNotExistError:
+#             frappe.log_error(f"Temp booking {booking_number} not found", "Paystack Webhook")
+#             return {"status": "error", "message": "Booking not found"}
+        
+#         # === PROCESS SUCCESSFUL PAYMENT ===
+#         if event == "charge.success" and status == "success":
+            
+#             # ✅ CHECK IF ALREADY PROCESSED (IDEMPOTENCY)
+#             if temp_booking.payment_status == "Paid":
+#                 frappe.logger().warning(f"⚠️ Payment already processed for {booking_number}")
+#                 return {
+#                     "status": "success",
+#                     "message": "Payment already processed",
+#                     "booking_number": booking_number
+#                 }
+            
+#             # Verify amount
+#             if amount != temp_booking.total_price:
+#                 frappe.log_error(
+#                     f"Amount mismatch: {amount} vs {temp_booking.total_price}",
+#                     "Paystack Webhook"
+#                 )
+#                 temp_booking.payment_status = "Failed"
+#                 temp_booking.save(ignore_permissions=True)
+#                 frappe.db.commit()
+#                 return {"status": "error", "message": "Amount mismatch"}
+            
+#             # === ELEVATE PRIVILEGES ===
+#             current_user = frappe.session.user
+#             frappe.set_user("Administrator")
+            
+#             try:
+#                 # ✅ STEP 1: CREATE CUSTOMER
+#                 customer_id = get_or_create_customer(
+#                     customer_name=temp_booking.guest_name,
+#                     customer_email=temp_booking.guest_email,
+#                     customer_phone=temp_booking.guest_phone
+#                 )
+#                 # customer_id = customer_doc.name
+                
+#                 frappe.logger().info(f"✅ Created Customer {customer_id}")
+                
+#                 # ✅ STEP 2: CREATE CONTACT
+#                 contact_name = None
+#                 if temp_booking.guest_email:
+#                     parts = temp_booking.guest_name.split(' ', 1)
+#                     contact_doc = frappe.get_doc({
+#                         "doctype": "Contact",
+#                         "first_name": parts[0],
+#                         "last_name": parts[1] if len(parts) > 1 else "",
+#                         "email_id": temp_booking.guest_email,
+#                         "phone": temp_booking.guest_phone or "",
+#                     }).insert(ignore_permissions=True)
+#                     contact_name = contact_doc.name
+#                     frappe.logger().info(f"✅ Created Contact {contact_name}")
+                
+#                 # ✅ STEP 3: CREATE SALES INVOICE
+#                 invoice_items = []
+#                 for room in temp_booking.rooms:
+#                     item_code = create_or_get_item(
+#                         room.room_number,
+#                         room.room_type,
+#                         None
+#                     )
+#                     invoice_items.append({
+#                         "item_code": item_code,
+#                         "item_name": room.room_number,
+#                         "qty": room.num_nights,
+#                         "rate": room.rate_per_night,
+#                         "description": f"Room {room.room_number} - {room.num_nights} night(s)"
+#                     })
+                
+#                 sales_invoice = frappe.get_doc({
+#                     "doctype": "Sales Invoice",
+#                     "customer": customer_id,
+#                     "contact_email": temp_booking.guest_email or "",
+#                     "posting_date": nowdate(),
+#                     "due_date": nowdate(),
+#                     "items": invoice_items
+#                 }).insert(ignore_permissions=True)
+                
+#                 frappe.logger().info(f"✅ Created Sales Invoice {sales_invoice.name}")
+                
+#                 # ✅ STEP 4: CREATE HOTEL ROOM RESERVATIONS
+#                 guest_profiles = []
+                
+#                 for room in temp_booking.rooms:
+#                     reservation_items = [{
+#                         "item": room.room_number,
+#                         "room_type": room.room_type,
+#                         "rate_type": room.rate_type,
+#                         "season_type": room.season_type,
+#                         "qty": room.num_nights,
+#                         "rate": room.rate_per_night,
+#                         "amount": room.total_price
+#                     }]
+                    
+#                     # CREATE HOTEL ROOM RESERVATION (linked to Temporary Booking)
+#                     reservation = frappe.get_doc({
+#                         "doctype": "Hotel Room Reservation",
+#                         "temporary_booking_reference": temp_booking.name,
+#                         "booking_number": booking_number,
+#                         "room_number": room.room_number,
+#                         "from_date": temp_booking.check_in_date,
+#                         "to_date": temp_booking.check_out_date,
+#                         "guest_name": temp_booking.guest_name,
+#                         "customer": customer_id,
+#                         "status": "Booked",
+#                         "payment_status": "Paid",
+#                         "hold_expires_at": None,
+#                         "sales_invoice": sales_invoice.name,
+#                         "items": reservation_items,
+#                         "net_total": room.total_price,
+#                     }).insert(ignore_permissions=True)
+                    
+#                     # Submit reservation
+#                     reservation.flags.ignore_permissions = True
+#                     reservation.submit()
+                    
+#                     frappe.logger().info(f"✅ Created & submitted Reservation {reservation.name}")
+                
+#                 # ✅ STEP 5: CREATE OR GET HOTEL GUEST (Check by phone/email first!)
+#                 frappe.logger().info(f"Creating/Getting Hotel Guest for {temp_booking.guest_name}")
+#                 hotel_guest_id = create_or_get_hotel_guest(
+#                     temp_booking.guest_name,
+#                     temp_booking.guest_email,
+#                     temp_booking.guest_phone,
+#                     customer_id
+#                 )
+#                 frappe.logger().info(f"✅ Hotel Guest: {hotel_guest_id}")
+                
+#                 # ✅ STEP 6: SUBMIT SALES INVOICE (IMMEDIATELY)
+#                 frappe.logger().info(f"Submitting Sales Invoice {sales_invoice.name}")
+#                 sales_invoice.flags.ignore_permissions = True
+#                 sales_invoice.submit()
+#                 frappe.logger().info(f"✅ Sales Invoice {sales_invoice.name} submitted")
+                
+#                 # ✅ STEP 7: CREATE & SUBMIT PAYMENT ENTRY (IMMEDIATELY)
+#                 frappe.logger().info(f"Creating Payment Entry for {booking_number}")
+                
+#                 mode_of_payment = frappe.db.get_value("Mode of Payment", {"name": "Paystack"}, "name")
+#                 if not mode_of_payment:
+#                     frappe.logger().error("Mode of Payment 'Paystack' not found")
+#                 else:
+#                     paid_to = frappe.db.get_value(
+#                         "Mode of Payment Account",
+#                         {"parent": "Paystack", "company": sales_invoice.company},
+#                         "default_account"
+#                     )
+                    
+#                     paid_from = sales_invoice.debit_to
+                    
+#                     if paid_to and paid_from:
+#                         pe = frappe.get_doc({
+#                             "doctype": "Payment Entry",
+#                             "payment_type": "Receive",
+#                             "party_type": "Customer",
+#                             "party": customer_id,
+#                             "posting_date": frappe.utils.today(),
+#                             "payment_date": frappe.utils.today(),
+#                             "mode_of_payment": mode_of_payment,
+#                             "paid_from": paid_from,
+#                             "paid_to": paid_to,
+#                             "paid_amount": sales_invoice.grand_total,
+#                             "received_amount": sales_invoice.grand_total,
+#                             "reference_no": booking_number,
+#                             "reference_date": frappe.utils.today(),
+#                             "remarks": f"Paystack payment for booking {booking_number}"
+#                         })
+                        
+#                         pe.append("references", {
+#                             "reference_doctype": "Sales Invoice",
+#                             "reference_name": sales_invoice.name,
+#                             "total_amount": sales_invoice.grand_total,
+#                             "outstanding_amount": 0,
+#                             "allocated_amount": sales_invoice.grand_total
+#                         })
+                        
+#                         pe.flags.ignore_permissions = True
+#                         pe.flags.ignore_mandatory = False
+#                         pe.flags.ignore_account_permission = True
+                        
+#                         pe.insert(ignore_permissions=True)
+#                         pe.submit()
+#                         frappe.logger().info(f"✅ Payment Entry {pe.name} created & submitted")
+#                     else:
+#                         frappe.logger().warning(f"Could not create payment entry: paid_to={paid_to}, paid_from={paid_from}")
+                
+#                 # ✅ STEP 8: UPDATE TEMPORARY BOOKING STATUS
+#                 temp_booking.status = "Payment Completed"
+#                 temp_booking.booking_status = "Reserved"  # ✅ NEW: Rooms are now reserved (payment completed)
+#                 temp_booking.payment_status = "Paid"
+#                 temp_booking.payment_received_at = datetime.now()
+#                 temp_booking.save(ignore_permissions=True)
+                
+#                 # ✅ STEP 8.5: SUBMIT TEMPORARY BOOKING (PERMANENT RECORD)
+#                 frappe.logger().info(f"Submitting Temporary Booking {temp_booking.name}")
+#                 temp_booking.flags.ignore_permissions = True
+#                 temp_booking.submit()
+#                 frappe.logger().info(f"✅ Temporary Booking {temp_booking.name} submitted permanently")
+                
+#                 frappe.db.commit()
+                
+#                 # ✅ STEP 9: SEND CONFIRMATION EMAIL (background - optional)
+#                 # frappe.enqueue(
+#                 #     'rhohotel.rhohotel.hotel_booking.send_booking_confirmation_email_bg',
+#                 #     temp_booking_name=temp_booking.name,
+#                 #     queue='short'
+#                 # )
+                
+#                 frappe.logger().info(f"✅ Booking {booking_number} fully converted from temporary")
+#                 return {
+#                     "status": "success",
+#                     "message": "Booking confirmed",
+#                     "booking_number": booking_number
+#                 }
+            
+#             finally:
+#                 frappe.set_user(current_user)
+        
+#         else:
+#             # Payment failed
+#             temp_booking.payment_status = "Failed"
+#             temp_booking.status = "Cancelled"
+#             temp_booking.booking_status = "Released"  # ✅ NEW: Rooms are released (payment failed)
+#             temp_booking.save(ignore_permissions=True)
+#             frappe.db.commit()
+            
+#             frappe.logger().warning(f"❌ Payment failed for {booking_number}")
+#             return {
+#                 "status": "failed",
+#                 "message": "Payment failed"
+#             }
+    
+#     except Exception as e:
+#         frappe.log_error(frappe.get_traceback(), "Paystack Webhook Error")
+#         return {
+#             "status": "error",
+#             "message": str(e)
+#         }
+
+
 @frappe.whitelist(allow_guest=True)
 def paystack_webhook():
     """
-    Paystack Webhook: Payment successful → Convert temporary booking to permanent.
-    ✅ Creates Hotel Guest (not Guest Profile)
-    ✅ Invoice submission and Payment Entry creation happens HERE
-    ✅ Booking status tracked in Temporary Booking only
+    Paystack Webhook: Receives payment notifications from Paystack.
+    ✅ Verifies signature
+    ✅ Extracts payment data
+    ✅ Calls shared processing function
     
-    Workflow:
-    1. Verify payment with Paystack
-    2. Get temporary booking
-    3. Create Customer
-    4. Create Sales Invoice & SUBMIT IT
-    5. Create Hotel Room Reservations (one per room)
-    6. Create Hotel Guest (or get existing by phone/email)
-    7. Create Payment Entry & SUBMIT IT
-    8. Update Temporary Booking status
-    9. Queue confirmation email (background)
+    Returns:
+        dict: Webhook response
     """
     try:
         body = frappe.request.get_data(as_text=True)
@@ -543,241 +822,59 @@ def paystack_webhook():
             frappe.log_error("No booking reference", "Paystack Webhook")
             return {"status": "error", "message": "No booking reference"}
         
-        # === GET TEMPORARY BOOKING ===
-        try:
-            temp_booking = frappe.get_doc("Temporary Booking", {"booking_number": booking_number})
-        except frappe.DoesNotExistError:
-            frappe.log_error(f"Temp booking {booking_number} not found", "Paystack Webhook")
-            return {"status": "error", "message": "Booking not found"}
+        frappe.logger().info(f"🔔 Webhook received for {booking_number}: {event}, {status}")
         
         # === PROCESS SUCCESSFUL PAYMENT ===
         if event == "charge.success" and status == "success":
+            # Prepare payment data
+            payment_data = {
+                "amount": amount,
+                "status": "success",
+                "reference": booking_number,
+                "channel": transaction_data.get("channel"),
+                "paid_at": transaction_data.get("paid_at"),
+                "transaction_date": transaction_data.get("transaction_date")
+            }
             
-            # ✅ CHECK IF ALREADY PROCESSED (IDEMPOTENCY)
-            if temp_booking.payment_status == "Paid":
-                frappe.logger().warning(f"⚠️ Payment already processed for {booking_number}")
+            # Call shared processing function
+            result = process_payment_transaction(
+                booking_number=booking_number,
+                payment_data=payment_data,
+                source="webhook"
+            )
+            
+            if result.get("success"):
                 return {
                     "status": "success",
-                    "message": "Payment already processed",
-                    "booking_number": booking_number
+                    "message": result.get("message"),
+                    "booking_number": booking_number,
+                    "already_processed": result.get("already_processed", False)
                 }
-            
-            # Verify amount
-            if amount != temp_booking.total_price:
-                frappe.log_error(
-                    f"Amount mismatch: {amount} vs {temp_booking.total_price}",
-                    "Paystack Webhook"
-                )
-                temp_booking.payment_status = "Failed"
-                temp_booking.save(ignore_permissions=True)
-                frappe.db.commit()
-                return {"status": "error", "message": "Amount mismatch"}
-            
-            # === ELEVATE PRIVILEGES ===
-            current_user = frappe.session.user
-            frappe.set_user("Administrator")
-            
-            try:
-                # ✅ STEP 1: CREATE CUSTOMER
-                customer_id = get_or_create_customer(
-                    customer_name=temp_booking.guest_name,
-                    customer_email=temp_booking.guest_email,
-                    customer_phone=temp_booking.guest_phone
-                )
-                # customer_id = customer_doc.name
-                
-                frappe.logger().info(f"✅ Created Customer {customer_id}")
-                
-                # ✅ STEP 2: CREATE CONTACT
-                contact_name = None
-                if temp_booking.guest_email:
-                    parts = temp_booking.guest_name.split(' ', 1)
-                    contact_doc = frappe.get_doc({
-                        "doctype": "Contact",
-                        "first_name": parts[0],
-                        "last_name": parts[1] if len(parts) > 1 else "",
-                        "email_id": temp_booking.guest_email,
-                        "phone": temp_booking.guest_phone or "",
-                    }).insert(ignore_permissions=True)
-                    contact_name = contact_doc.name
-                    frappe.logger().info(f"✅ Created Contact {contact_name}")
-                
-                # ✅ STEP 3: CREATE SALES INVOICE
-                invoice_items = []
-                for room in temp_booking.rooms:
-                    item_code = create_or_get_item(
-                        room.room_number,
-                        room.room_type,
-                        None
-                    )
-                    invoice_items.append({
-                        "item_code": item_code,
-                        "item_name": room.room_number,
-                        "qty": room.num_nights,
-                        "rate": room.rate_per_night,
-                        "description": f"Room {room.room_number} - {room.num_nights} night(s)"
-                    })
-                
-                sales_invoice = frappe.get_doc({
-                    "doctype": "Sales Invoice",
-                    "customer": customer_id,
-                    "contact_email": temp_booking.guest_email or "",
-                    "posting_date": nowdate(),
-                    "due_date": nowdate(),
-                    "items": invoice_items
-                }).insert(ignore_permissions=True)
-                
-                frappe.logger().info(f"✅ Created Sales Invoice {sales_invoice.name}")
-                
-                # ✅ STEP 4: CREATE HOTEL ROOM RESERVATIONS
-                guest_profiles = []
-                
-                for room in temp_booking.rooms:
-                    reservation_items = [{
-                        "item": room.room_number,
-                        "room_type": room.room_type,
-                        "rate_type": room.rate_type,
-                        "season_type": room.season_type,
-                        "qty": room.num_nights,
-                        "rate": room.rate_per_night,
-                        "amount": room.total_price
-                    }]
-                    
-                    # CREATE HOTEL ROOM RESERVATION (linked to Temporary Booking)
-                    reservation = frappe.get_doc({
-                        "doctype": "Hotel Room Reservation",
-                        "temporary_booking_reference": temp_booking.name,
-                        "booking_number": booking_number,
-                        "room_number": room.room_number,
-                        "from_date": temp_booking.check_in_date,
-                        "to_date": temp_booking.check_out_date,
-                        "guest_name": temp_booking.guest_name,
-                        "customer": customer_id,
-                        "status": "Booked",
-                        "payment_status": "Paid",
-                        "hold_expires_at": None,
-                        "sales_invoice": sales_invoice.name,
-                        "items": reservation_items,
-                        "net_total": room.total_price,
-                    }).insert(ignore_permissions=True)
-                    
-                    # Submit reservation
-                    reservation.flags.ignore_permissions = True
-                    reservation.submit()
-                    
-                    frappe.logger().info(f"✅ Created & submitted Reservation {reservation.name}")
-                
-                # ✅ STEP 5: CREATE OR GET HOTEL GUEST (Check by phone/email first!)
-                frappe.logger().info(f"Creating/Getting Hotel Guest for {temp_booking.guest_name}")
-                hotel_guest_id = create_or_get_hotel_guest(
-                    temp_booking.guest_name,
-                    temp_booking.guest_email,
-                    temp_booking.guest_phone,
-                    customer_id
-                )
-                frappe.logger().info(f"✅ Hotel Guest: {hotel_guest_id}")
-                
-                # ✅ STEP 6: SUBMIT SALES INVOICE (IMMEDIATELY)
-                frappe.logger().info(f"Submitting Sales Invoice {sales_invoice.name}")
-                sales_invoice.flags.ignore_permissions = True
-                sales_invoice.submit()
-                frappe.logger().info(f"✅ Sales Invoice {sales_invoice.name} submitted")
-                
-                # ✅ STEP 7: CREATE & SUBMIT PAYMENT ENTRY (IMMEDIATELY)
-                frappe.logger().info(f"Creating Payment Entry for {booking_number}")
-                
-                mode_of_payment = frappe.db.get_value("Mode of Payment", {"name": "Paystack"}, "name")
-                if not mode_of_payment:
-                    frappe.logger().error("Mode of Payment 'Paystack' not found")
-                else:
-                    paid_to = frappe.db.get_value(
-                        "Mode of Payment Account",
-                        {"parent": "Paystack", "company": sales_invoice.company},
-                        "default_account"
-                    )
-                    
-                    paid_from = sales_invoice.debit_to
-                    
-                    if paid_to and paid_from:
-                        pe = frappe.get_doc({
-                            "doctype": "Payment Entry",
-                            "payment_type": "Receive",
-                            "party_type": "Customer",
-                            "party": customer_id,
-                            "posting_date": frappe.utils.today(),
-                            "payment_date": frappe.utils.today(),
-                            "mode_of_payment": mode_of_payment,
-                            "paid_from": paid_from,
-                            "paid_to": paid_to,
-                            "paid_amount": sales_invoice.grand_total,
-                            "received_amount": sales_invoice.grand_total,
-                            "reference_no": booking_number,
-                            "reference_date": frappe.utils.today(),
-                            "remarks": f"Paystack payment for booking {booking_number}"
-                        })
-                        
-                        pe.append("references", {
-                            "reference_doctype": "Sales Invoice",
-                            "reference_name": sales_invoice.name,
-                            "total_amount": sales_invoice.grand_total,
-                            "outstanding_amount": 0,
-                            "allocated_amount": sales_invoice.grand_total
-                        })
-                        
-                        pe.flags.ignore_permissions = True
-                        pe.flags.ignore_mandatory = False
-                        pe.flags.ignore_account_permission = True
-                        
-                        pe.insert(ignore_permissions=True)
-                        pe.submit()
-                        frappe.logger().info(f"✅ Payment Entry {pe.name} created & submitted")
-                    else:
-                        frappe.logger().warning(f"Could not create payment entry: paid_to={paid_to}, paid_from={paid_from}")
-                
-                # ✅ STEP 8: UPDATE TEMPORARY BOOKING STATUS
-                temp_booking.status = "Payment Completed"
-                temp_booking.booking_status = "Reserved"  # ✅ NEW: Rooms are now reserved (payment completed)
-                temp_booking.payment_status = "Paid"
-                temp_booking.payment_received_at = datetime.now()
-                temp_booking.save(ignore_permissions=True)
-                
-                # ✅ STEP 8.5: SUBMIT TEMPORARY BOOKING (PERMANENT RECORD)
-                frappe.logger().info(f"Submitting Temporary Booking {temp_booking.name}")
-                temp_booking.flags.ignore_permissions = True
-                temp_booking.submit()
-                frappe.logger().info(f"✅ Temporary Booking {temp_booking.name} submitted permanently")
-                
-                frappe.db.commit()
-                
-                # ✅ STEP 9: SEND CONFIRMATION EMAIL (background - optional)
-                # frappe.enqueue(
-                #     'rhohotel.rhohotel.hotel_booking.send_booking_confirmation_email_bg',
-                #     temp_booking_name=temp_booking.name,
-                #     queue='short'
-                # )
-                
-                frappe.logger().info(f"✅ Booking {booking_number} fully converted from temporary")
+            else:
                 return {
-                    "status": "success",
-                    "message": "Booking confirmed",
-                    "booking_number": booking_number
+                    "status": "error",
+                    "message": result.get("message"),
+                    "error_code": result.get("error_code")
                 }
-            
-            finally:
-                frappe.set_user(current_user)
         
         else:
-            # Payment failed
-            temp_booking.payment_status = "Failed"
-            temp_booking.status = "Cancelled"
-            temp_booking.booking_status = "Released"  # ✅ NEW: Rooms are released (payment failed)
-            temp_booking.save(ignore_permissions=True)
-            frappe.db.commit()
+            # Payment failed or other event
+            frappe.logger().warning(f"⚠️ Webhook event not processed: {event}, status: {status}")
             
-            frappe.logger().warning(f"❌ Payment failed for {booking_number}")
+            # Try to update temporary booking status
+            try:
+                temp_booking = frappe.get_doc("Temporary Booking", {"booking_number": booking_number})
+                temp_booking.payment_status = "Failed"
+                temp_booking.status = "Cancelled"
+                temp_booking.booking_status = "Released"
+                temp_booking.save(ignore_permissions=True)
+                frappe.db.commit()
+            except:
+                pass
+            
             return {
                 "status": "failed",
-                "message": "Payment failed"
+                "message": f"Payment failed: {status}"
             }
     
     except Exception as e:
@@ -786,7 +883,8 @@ def paystack_webhook():
             "status": "error",
             "message": str(e)
         }
-
+        
+        
 
 def verify_paystack_signature(body, signature):
     """Verify Paystack webhook signature."""
@@ -812,6 +910,289 @@ def verify_paystack_signature(body, signature):
         return False
 
 
+# @frappe.whitelist(allow_guest=True)
+# def verify_callback_payment(reference):
+#     """
+#     Verify payment from callback URL (user redirect from Paystack).
+#     ✅ Verifies with Paystack API
+#     ✅ Calls shared processing function
+#     ✅ Idempotent - safe to call multiple times
+    
+#     Args:
+#         reference (str): Booking number / transaction reference
+    
+#     Returns:
+#         dict: Verification result
+#     """
+#     try:
+#         frappe.logger().info(f"🔍 Callback verification for: {reference}")
+        
+#         # === STEP 1: GET TEMPORARY BOOKING ===
+#         try:
+#             temp_booking = frappe.get_doc("Temporary Booking", {"booking_number": reference})
+#         except frappe.DoesNotExistError:
+#             frappe.logger().error(f"❌ Booking {reference} not found")
+#             return {
+#                 "success": False,
+#                 "message": "Booking not found. Please contact support."
+#             }
+        
+#         # === STEP 2: QUICK CHECK - Already Processed? ===
+#         if temp_booking.payment_status == "Paid":
+#             frappe.logger().info(f"✅ Booking {reference} already processed")
+#             return {
+#                 "success": True,
+#                 "booking_number": reference,
+#                 "message": "Payment confirmed",
+#                 "already_processed": True
+#             }
+        
+#         # === STEP 3: VERIFY WITH PAYSTACK API ===
+#         settings = frappe.get_doc("Hotel Settings")
+#         paystack_secret_key = settings.get_password("paystack_secret_key")
+        
+#         if not paystack_secret_key:
+#             frappe.logger().error("❌ Paystack secret key not configured")
+#             return {
+#                 "success": False,
+#                 "message": "Payment gateway configuration error"
+#             }
+        
+#         # Call Paystack Verify API
+#         verify_url = f"https://api.paystack.co/transaction/verify/{reference}"
+#         headers = {
+#             "Authorization": f"Bearer {paystack_secret_key}",
+#             "Content-Type": "application/json"
+#         }
+        
+#         frappe.logger().info(f"📡 Calling Paystack verify API for {reference}")
+        
+#         try:
+#             response = requests.get(verify_url, headers=headers, timeout=30)
+#             result = response.json()
+#         except requests.exceptions.Timeout:
+#             frappe.logger().error(f"❌ Paystack API timeout for {reference}")
+#             return {
+#                 "success": False,
+#                 "message": "Payment verification timeout. Please refresh or contact support."
+#             }
+#         except Exception as e:
+#             frappe.logger().error(f"❌ Paystack API error: {str(e)}")
+#             return {
+#                 "success": False,
+#                 "message": "Payment verification error. Please contact support."
+#             }
+        
+#         if response.status_code != 200 or not result.get("status"):
+#             error_msg = result.get("message", "Verification failed")
+#             frappe.logger().error(f"❌ Paystack verification failed: {error_msg}")
+#             return {
+#                 "success": False,
+#                 "message": f"Payment verification failed: {error_msg}"
+#             }
+        
+#         # === STEP 4: EXTRACT PAYMENT DATA ===
+#         transaction_data = result.get("data", {})
+#         payment_status = transaction_data.get("status")
+#         amount_paid = transaction_data.get("amount") / 100  # Convert from kobo
+        
+#         frappe.logger().info(f"💰 Payment status: {payment_status}, Amount: ₦{amount_paid}")
+        
+#         # Prepare payment data
+#         payment_data = {
+#             "amount": amount_paid,
+#             "status": payment_status,
+#             "reference": reference,
+#             "channel": transaction_data.get("channel"),
+#             "paid_at": transaction_data.get("paid_at"),
+#             "transaction_date": transaction_data.get("transaction_date")
+#         }
+        
+#         # === STEP 5: CALL SHARED PROCESSING FUNCTION ===
+#         result = process_payment_transaction(
+#             booking_number=reference,
+#             payment_data=payment_data,
+#             source="callback"
+#         )
+        
+#         if result.get("success"):
+#             return {
+#                 "success": True,
+#                 "booking_number": reference,
+#                 "message": result.get("message"),
+#                 "already_processed": result.get("already_processed", False),
+#                 "customer_id": result.get("customer_id"),
+#                 "sales_invoice": result.get("sales_invoice"),
+#                 "processed_via": result.get("processed_via")
+#             }
+#         else:
+#             return {
+#                 "success": False,
+#                 "message": result.get("message"),
+#                 "error_code": result.get("error_code")
+#             }
+    
+#     except Exception as e:
+#         frappe.log_error(frappe.get_traceback(), "Callback Payment Verification Error")
+#         frappe.logger().error(f"❌ Error in callback verification: {str(e)}")
+#         return {
+#             "success": False,
+#             "message": f"Verification error: {str(e)}"
+#         }
+
+
+@frappe.whitelist(allow_guest=True)
+def verify_callback_payment(reference):
+    """
+    Verify payment from callback URL (user redirect from Paystack).
+    ✅ Verifies with Paystack API
+    ✅ Calls shared processing function
+    ✅ Idempotent - safe to call multiple times
+    
+    Args:
+        reference (str): Booking number / transaction reference
+    
+    Returns:
+        dict: Verification result with booking details
+    """
+    try:
+        frappe.logger().info(f"🔍 Callback verification for: {reference}")
+        
+        # === STEP 1: GET TEMPORARY BOOKING ===
+        try:
+            temp_booking = frappe.get_doc("Temporary Booking", {"booking_number": reference})
+        except frappe.DoesNotExistError:
+            frappe.logger().error(f"❌ Booking {reference} not found")
+            return {
+                "success": False,
+                "message": "Booking not found. Please contact support."
+            }
+        
+        # === STEP 2: QUICK CHECK - Already Processed? ===
+        if temp_booking.payment_status == "Paid":
+            frappe.logger().info(f"✅ Booking {reference} already processed")
+            return {
+                "success": True,
+                "booking_number": reference,
+                "message": "Payment confirmed",
+                "already_processed": True,
+                "guest_name": temp_booking.guest_name,
+                "guest_email": temp_booking.guest_email,
+                "guest_phone": temp_booking.guest_phone,
+                "check_in_date": temp_booking.check_in_date,
+                "check_out_date": temp_booking.check_out_date,
+                "num_nights": temp_booking.num_nights,
+                "total_rooms": temp_booking.total_rooms,
+                "total_price": temp_booking.total_price,
+                "currency": temp_booking.currency or "NGN"
+            }
+        
+        # === STEP 3: VERIFY WITH PAYSTACK API ===
+        settings = frappe.get_doc("Hotel Settings")
+        paystack_secret_key = settings.get_password("paystack_secret_key")
+        
+        if not paystack_secret_key:
+            frappe.logger().error("❌ Paystack secret key not configured")
+            return {
+                "success": False,
+                "message": "Payment gateway configuration error"
+            }
+        
+        # Call Paystack Verify API
+        verify_url = f"https://api.paystack.co/transaction/verify/{reference}"
+        headers = {
+            "Authorization": f"Bearer {paystack_secret_key}",
+            "Content-Type": "application/json"
+        }
+        
+        frappe.logger().info(f"📡 Calling Paystack verify API for {reference}")
+        
+        try:
+            response = requests.get(verify_url, headers=headers, timeout=30)
+            result = response.json()
+        except requests.exceptions.Timeout:
+            frappe.logger().error(f"❌ Paystack API timeout for {reference}")
+            return {
+                "success": False,
+                "message": "Payment verification timeout. Please refresh or contact support."
+            }
+        except Exception as e:
+            frappe.logger().error(f"❌ Paystack API error: {str(e)}")
+            return {
+                "success": False,
+                "message": "Payment verification error. Please contact support."
+            }
+        
+        if response.status_code != 200 or not result.get("status"):
+            error_msg = result.get("message", "Verification failed")
+            frappe.logger().error(f"❌ Paystack verification failed: {error_msg}")
+            return {
+                "success": False,
+                "message": f"Payment verification failed: {error_msg}"
+            }
+        
+        # === STEP 4: EXTRACT PAYMENT DATA ===
+        transaction_data = result.get("data", {})
+        payment_status = transaction_data.get("status")
+        amount_paid = transaction_data.get("amount") / 100  # Convert from kobo
+        
+        frappe.logger().info(f"💰 Payment status: {payment_status}, Amount: ₦{amount_paid}")
+        
+        # Prepare payment data
+        payment_data = {
+            "amount": amount_paid,
+            "status": payment_status,
+            "reference": reference,
+            "channel": transaction_data.get("channel"),
+            "paid_at": transaction_data.get("paid_at"),
+            "transaction_date": transaction_data.get("transaction_date")
+        }
+        
+        # === STEP 5: CALL SHARED PROCESSING FUNCTION ===
+        result = process_payment_transaction(
+            booking_number=reference,
+            payment_data=payment_data,
+            source="callback"
+        )
+        
+        if result.get("success"):
+            # Refresh temp_booking to get updated data
+            temp_booking.reload()
+            
+            return {
+                "success": True,
+                "booking_number": reference,
+                "message": result.get("message"),
+                "already_processed": result.get("already_processed", False),
+                # "customer_id": result.get("customer_id"),
+                # "sales_invoice": result.get("sales_invoice"),
+                "processed_via": result.get("processed_via"),
+                "guest_name": temp_booking.guest_name,
+                "guest_email": temp_booking.guest_email,
+                "guest_phone": temp_booking.guest_phone,
+                "check_in_date": temp_booking.check_in_date,
+                "check_out_date": temp_booking.check_out_date,
+                "num_nights": temp_booking.num_nights,
+                "total_rooms": temp_booking.total_rooms,
+                "total_price": temp_booking.total_price,
+                "currency": temp_booking.currency or "NGN"
+            }
+        else:
+            return {
+                "success": False,
+                "message": result.get("message"),
+                "error_code": result.get("error_code")
+            }
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Callback Payment Verification Error")
+        frappe.logger().error(f"❌ Error in callback verification: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Verification error: {str(e)}"
+        }
+        
+        
 # ════════════════════════════════════════════════════════════════════════════
 # EMAIL & BACKGROUND JOBS
 # ════════════════════════════════════════════════════════════════════════════
@@ -960,7 +1341,308 @@ def release_expired_holds():
         return {"success": False, "error": str(e)}
 
 
-@frappe.whitelist()
-def manual_release_expired_holds():
-    """Manual trigger for hold release."""
-    return release_expired_holds()
+def process_payment_transaction(booking_number, payment_data, source="webhook"):
+    """
+    SHARED FUNCTION: Process payment and create booking documents.
+    ✅ Called by both webhook and callback
+    ✅ Idempotent - safe to call multiple times
+    ✅ Atomic - either completes fully or rolls back
+    
+    Args:
+        booking_number (str): Booking reference number
+        payment_data (dict): Payment details from Paystack
+            - amount (float): Amount paid in Naira
+            - status (str): Payment status
+            - reference (str): Transaction reference
+        source (str): "webhook" or "callback" (for logging)
+    
+    Returns:
+        dict: Processing result with success status
+    """
+    try:
+        frappe.logger().info(f"🔄 [{source.upper()}] Processing payment for {booking_number}")
+        
+        # === STEP 1: GET TEMPORARY BOOKING ===
+        try:
+            temp_booking = frappe.get_doc("Temporary Booking", {"booking_number": booking_number})
+        except frappe.DoesNotExistError:
+            frappe.logger().error(f"❌ [{source.upper()}] Booking {booking_number} not found")
+            return {
+                "success": False,
+                "message": "Booking not found",
+                "error_code": "BOOKING_NOT_FOUND"
+            }
+        
+        # === STEP 2: IDEMPOTENCY CHECK - Already Processed? ===
+        if temp_booking.payment_status == "Paid":
+            frappe.logger().info(f"✅ [{source.upper()}] Booking {booking_number} already processed")
+            return {
+                "success": True,
+                "message": "Payment already processed",
+                "booking_number": booking_number,
+                "already_processed": True,
+                "customer_id": temp_booking.customer if hasattr(temp_booking, 'customer') else None
+            }
+        
+        # === STEP 3: VERIFY PAYMENT DATA ===
+        amount_paid = float(payment_data.get("amount", 0))
+        payment_status = payment_data.get("status", "")
+        
+        # Check payment status
+        if payment_status != "success":
+            frappe.logger().warning(f"⚠️ [{source.upper()}] Payment not successful: {payment_status}")
+            temp_booking.payment_status = "Failed"
+            temp_booking.status = "Cancelled"
+            temp_booking.booking_status = "Released"
+            temp_booking.save(ignore_permissions=True)
+            frappe.db.commit()
+            return {
+                "success": False,
+                "message": f"Payment status: {payment_status}",
+                "error_code": "PAYMENT_FAILED"
+            }
+        
+        # Check amount
+        if amount_paid != temp_booking.total_price:
+            frappe.logger().error(f"❌ [{source.upper()}] Amount mismatch: {amount_paid} vs {temp_booking.total_price}")
+            temp_booking.payment_status = "Failed"
+            temp_booking.save(ignore_permissions=True)
+            frappe.db.commit()
+            return {
+                "success": False,
+                "message": "Amount mismatch",
+                "error_code": "AMOUNT_MISMATCH"
+            }
+        
+        # === STEP 4: LOCK CHECK (Race Condition Protection) ===
+        # Reload from database to get latest state
+        temp_booking.reload()
+        
+        if temp_booking.payment_status == "Paid":
+            frappe.logger().info(f"✅ [{source.upper()}] Booking {booking_number} was processed during verification")
+            return {
+                "success": True,
+                "message": "Payment already processed (race condition)",
+                "booking_number": booking_number,
+                "already_processed": True
+            }
+        
+        # === STEP 5: ELEVATE PRIVILEGES ===
+        current_user = frappe.session.user
+        frappe.set_user("Administrator")
+        
+        try:
+            # === STEP 6: CREATE CUSTOMER ===
+            customer_id = get_or_create_customer(
+                customer_name=temp_booking.guest_name,
+                customer_email=temp_booking.guest_email,
+                customer_phone=temp_booking.guest_phone
+            )
+            frappe.logger().info(f"✅ [{source.upper()}] Customer: {customer_id}")
+            
+            # === STEP 7: CREATE CONTACT ===
+            contact_name = None
+            if temp_booking.guest_email:
+                # Check if contact already exists
+                existing_contact = frappe.db.get_value(
+                    "Contact",
+                    {"email_id": temp_booking.guest_email},
+                    "name"
+                )
+                
+                if existing_contact:
+                    contact_name = existing_contact
+                    frappe.logger().info(f"✅ [{source.upper()}] Found existing Contact: {contact_name}")
+                else:
+                    parts = temp_booking.guest_name.split(' ', 1)
+                    contact_doc = frappe.get_doc({
+                        "doctype": "Contact",
+                        "first_name": parts[0],
+                        "last_name": parts[1] if len(parts) > 1 else "",
+                        "email_id": temp_booking.guest_email,
+                        "phone": temp_booking.guest_phone or "",
+                    }).insert(ignore_permissions=True)
+                    contact_name = contact_doc.name
+                    frappe.logger().info(f"✅ [{source.upper()}] Created Contact: {contact_name}")
+            
+            # === STEP 8: CREATE SALES INVOICE ===
+            invoice_items = []
+            for room in temp_booking.rooms:
+                item_code = create_or_get_item(
+                    room.room_number,
+                    room.room_type,
+                    None
+                )
+                invoice_items.append({
+                    "item_code": item_code,
+                    "item_name": room.room_number,
+                    "qty": room.num_nights,
+                    "rate": room.rate_per_night,
+                    "description": f"Room {room.room_number} - {room.num_nights} night(s)"
+                })
+            
+            sales_invoice = frappe.get_doc({
+                "doctype": "Sales Invoice",
+                "customer": customer_id,
+                "contact_email": temp_booking.guest_email or "",
+                "posting_date": nowdate(),
+                "due_date": nowdate(),
+                "items": invoice_items
+            }).insert(ignore_permissions=True)
+            
+            frappe.logger().info(f"✅ [{source.upper()}] Sales Invoice: {sales_invoice.name}")
+            
+            # === STEP 9: CREATE HOTEL ROOM RESERVATIONS ===
+            reservation_names = []
+            for room in temp_booking.rooms:
+                reservation_items = [{
+                    "item": room.room_number,
+                    "room_type": room.room_type,
+                    "rate_type": room.rate_type,
+                    "season_type": room.season_type,
+                    "qty": room.num_nights,
+                    "rate": room.rate_per_night,
+                    "amount": room.total_price
+                }]
+                
+                # CREATE HOTEL ROOM RESERVATION
+                reservation = frappe.get_doc({
+                    "doctype": "Hotel Room Reservation",
+                    "temporary_booking_reference": temp_booking.name,
+                    "booking_number": booking_number,
+                    "room_number": room.room_number,
+                    "from_date": temp_booking.check_in_date,
+                    "to_date": temp_booking.check_out_date,
+                    "guest_name": temp_booking.guest_name,
+                    "customer": customer_id,
+                    "status": "Booked",
+                    "payment_status": "Paid",
+                    "hold_expires_at": None,
+                    "sales_invoice": sales_invoice.name,
+                    "items": reservation_items,
+                    "net_total": room.total_price,
+                }).insert(ignore_permissions=True)
+                
+                # Submit reservation
+                reservation.flags.ignore_permissions = True
+                reservation.submit()
+                reservation_names.append(reservation.name)
+                
+                frappe.logger().info(f"✅ [{source.upper()}] Reservation: {reservation.name}")
+            
+            # === STEP 10: CREATE OR GET HOTEL GUEST ===
+            hotel_guest_id = create_or_get_hotel_guest(
+                temp_booking.guest_name,
+                temp_booking.guest_email,
+                temp_booking.guest_phone,
+                customer_id
+            )
+            frappe.logger().info(f"✅ [{source.upper()}] Hotel Guest: {hotel_guest_id}")
+            
+            # === STEP 11: SUBMIT SALES INVOICE ===
+            sales_invoice.flags.ignore_permissions = True
+            sales_invoice.submit()
+            frappe.logger().info(f"✅ [{source.upper()}] Invoice submitted: {sales_invoice.name}")
+            
+            # === STEP 12: CREATE & SUBMIT PAYMENT ENTRY ===
+            payment_entry_name = None
+            mode_of_payment = frappe.db.get_value("Mode of Payment", {"name": "Paystack"}, "name")
+            
+            if not mode_of_payment:
+                frappe.logger().error(f"❌ [{source.upper()}] Mode of Payment 'Paystack' not found")
+            else:
+                paid_to = frappe.db.get_value(
+                    "Mode of Payment Account",
+                    {"parent": "Paystack", "company": sales_invoice.company},
+                    "default_account"
+                )
+                
+                paid_from = sales_invoice.debit_to
+                
+                if paid_to and paid_from:
+                    pe = frappe.get_doc({
+                        "doctype": "Payment Entry",
+                        "payment_type": "Receive",
+                        "party_type": "Customer",
+                        "party": customer_id,
+                        "posting_date": frappe.utils.today(),
+                        "payment_date": frappe.utils.today(),
+                        "mode_of_payment": mode_of_payment,
+                        "paid_from": paid_from,
+                        "paid_to": paid_to,
+                        "paid_amount": sales_invoice.grand_total,
+                        "received_amount": sales_invoice.grand_total,
+                        "reference_no": booking_number,
+                        "reference_date": frappe.utils.today(),
+                        "remarks": f"Paystack payment for booking {booking_number} (via {source})"
+                    })
+                    
+                    pe.append("references", {
+                        "reference_doctype": "Sales Invoice",
+                        "reference_name": sales_invoice.name,
+                        "total_amount": sales_invoice.grand_total,
+                        "outstanding_amount": 0,
+                        "allocated_amount": sales_invoice.grand_total
+                    })
+                    
+                    pe.flags.ignore_permissions = True
+                    pe.flags.ignore_mandatory = False
+                    pe.flags.ignore_account_permission = True
+                    
+                    pe.insert(ignore_permissions=True)
+                    pe.submit()
+                    payment_entry_name = pe.name
+                    frappe.logger().info(f"✅ [{source.upper()}] Payment Entry: {pe.name}")
+                else:
+                    frappe.logger().warning(f"⚠️ [{source.upper()}] Could not create payment entry: paid_to={paid_to}, paid_from={paid_from}")
+            
+            # === STEP 13: UPDATE TEMPORARY BOOKING ===
+            temp_booking.status = "Payment Completed"
+            temp_booking.booking_status = "Reserved"
+            temp_booking.payment_status = "Paid"
+            temp_booking.payment_received_at = datetime.now()
+            temp_booking.customer = customer_id  # Link customer
+            temp_booking.save(ignore_permissions=True)
+            
+            # === STEP 14: SUBMIT TEMPORARY BOOKING ===
+            temp_booking.flags.ignore_permissions = True
+            temp_booking.submit()
+            frappe.logger().info(f"✅ [{source.upper()}] Temporary Booking submitted: {temp_booking.name}")
+            
+            # === STEP 15: COMMIT TRANSACTION ===
+            frappe.db.commit()
+            
+            # === STEP 16: SEND CONFIRMATION EMAIL (background) ===
+            frappe.enqueue(
+                'rhohotel.rhohotel.hotel_booking.send_booking_confirmation_email_bg',
+                temp_booking_name=temp_booking.name,
+                queue='short'
+            )
+            
+            frappe.logger().info(f"✅ [{source.upper()}] Payment processed successfully for {booking_number}")
+            
+            return {
+                "success": True,
+                "message": "Booking confirmed",
+                "booking_number": booking_number,
+                "customer_id": customer_id,
+                "sales_invoice": sales_invoice.name,
+                "payment_entry": payment_entry_name,
+                "reservations": reservation_names,
+                "hotel_guest": hotel_guest_id,
+                "processed_via": source,
+                "already_processed": False
+            }
+        
+        finally:
+            # Restore user
+            frappe.set_user(current_user)
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Payment Processing Error ({source})")
+        frappe.logger().error(f"❌ [{source.upper()}] Error processing payment: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Processing error: {str(e)}",
+            "error_code": "PROCESSING_ERROR"
+        }
