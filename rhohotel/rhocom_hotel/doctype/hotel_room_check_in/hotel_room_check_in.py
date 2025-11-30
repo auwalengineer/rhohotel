@@ -133,7 +133,9 @@ class HotelRoomCheckIn(Document):
 		reservation = frappe.get_all("Hotel Room Reservation",
 			filters={
 					"room_number": self.room_number,
-        			"from_date": ["between", [day_start, day_end]]
+        			"from_date": ["between", [day_start, day_end]],
+					"guest_name": ["not in", [self.guest]],
+					"status": ["in", ["booked", "Confirmed"]]
 				}
 			)
 
@@ -167,6 +169,10 @@ class HotelRoomCheckIn(Document):
 		self.update_room_status("Occupied")
 		self.update_room()
 		self.make_sales_invoice()
+  
+		if self.reservation:
+			frappe.db.set_value("Hotel Room Reservation", self.reservation, "status", "Checked-In")
+   
 		frappe.publish_realtime('rhohotel_front_desk_update')
 
 	def on_cancel(self):
@@ -212,6 +218,11 @@ class HotelRoomCheckIn(Document):
 			"description": _("Room charge for {0} from {1} to {2}").format(self.room_number, get_datetime(self.check_in_datetime).date(), get_datetime(self.expected_check_out_datetime).date())
 		})
 		si.set_taxes()
+  
+		# set discount
+		if self.discount:
+			si.discount_amount = self.discount
+		
 		si.insert(ignore_permissions=True)
 		si.submit()
 

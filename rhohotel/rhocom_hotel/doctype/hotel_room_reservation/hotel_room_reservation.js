@@ -16,14 +16,14 @@ frappe.ui.form.on('Hotel Room Reservation', {
 						fieldtype: 'Date',
 						reqd: 1
 					}
-				], function(values){
+				], function (values) {
 					frappe.call({
 						method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.extend_reservation',
 						args: {
 							reservation_id: frm.doc.name,
 							to_date: values.to_date
 						},
-						callback: function(r) {
+						callback: function (r) {
 							frappe.set_route('Form', 'Hotel Room Reservation', r.message.name);
 						}
 					});
@@ -31,11 +31,9 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			});
 		}
 	},
-	from_date: function (frm) {
-		frm.trigger("recalculate_rates");
-	},
+
 	to_date: function (frm) {
-		frm.trigger("recalculate_rates");
+		//frm.trigger("recalculate_rates");
 	},
 	recalculate_rates: function (frm) {
 		if (!frm.doc.from_date || !frm.doc.to_date
@@ -77,6 +75,37 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				frappe.set_route("Form", invoice.doctype, invoice.name);
 			});
 		});
+	},
+
+	from_date: function (frm) {
+		frm.trigger("recalculate_rates");
+		// Step 1: Get room type from selected room
+		frappe.db.get_value("Hotel Room", frm.doc.room_number, "room_type")
+			.then(res => {
+				if (!res.message || !res.message.room_type) return;
+
+				let room_type = res.message.room_type;
+				let check_in_date = frm.doc.from_date;
+
+				if (!check_in_date) {
+					frappe.msgprint("Please select Check-in Date first.");
+					return;
+				}
+
+				// Step 2: Call backend to get rate
+				frappe.call({
+					method: "rhohotel.api.get_room_rate",
+					args: {
+						room_type: room_type,
+						check_in_date: check_in_date
+					},
+					callback: function (r) {
+						if (r.message) {
+							frm.set_value("rate", r.message);
+						}
+					}
+				});
+			});
 	}
 });
 
@@ -86,5 +115,46 @@ frappe.ui.form.on('Hotel Room Reservation Item', {
 	},
 	qty: function (frm) {
 		frm.trigger("recalculate_rates");
+	}
+});
+
+frappe.ui.form.on("Hotel Reservation Room", {
+	room_number: function (frm, cdt, cdn) {
+		let row = frappe.get_doc(cdt, cdn);
+
+		if (!row.room_number) {
+			frm.refresh_field("rooms");
+			return;
+		}
+
+		// Step 1: Get room type from selected room
+		frappe.db.get_value("Hotel Room", row.room_number, "room_type")
+			.then(res => {
+				if (!res.message || !res.message.room_type) return;
+
+				let room_type = res.message.room_type;
+				let check_in_date = frm.doc.from_date;
+
+				if (!check_in_date) {
+					frappe.msgprint("Please select Check-in Date first.");
+					return;
+				}
+
+				// Step 2: Call backend to get rate
+				frappe.call({
+					method: "rhohotel.api.get_room_rate",
+					args: {
+						room_type: room_type,
+						check_in_date: check_in_date
+					},
+					callback: function (r) {
+						if (r.message) {
+							frappe.model.set_value(cdt, cdn, "rate", r.message);
+						}
+					}
+				});
+			});
+
+		frm.refresh_field("rooms");
 	}
 });

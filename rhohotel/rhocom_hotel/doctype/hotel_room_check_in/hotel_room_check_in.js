@@ -694,15 +694,29 @@
 
 frappe.ui.form.on("Hotel Room Check In", {
     refresh(frm) {
+
+        if (!frm.is_new()) {
+            frm.add_custom_button(__('Payment'), () => {
+
+                frappe.route_options = {
+                    party_type: "Customer",
+                    party: frm.doc.guest,
+                    custom_hotel_room_check_in: frm.doc.name
+                };
+
+                frappe.new_doc("Payment Entry");
+            }, __("Create"));
+        }
+
         if (frm.doc.docstatus === 1) {
             frm.add_custom_button(__("Refund"), () => {
                 frappe.model.open_mapped_doc({
                     method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_refund',
                     frm: frm
                 });
-            });
+            }, __("Create"));
         }
-        
+
         if (frm.doc.docstatus === 1) {
             frappe.call({
                 method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.get_linked_documents',
@@ -730,7 +744,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                 callback: function (res) {
                                     const terminals = res.message || [];
                                     const button_label = __('Pay with Moniepoint');
-                                    
+
                                     if (terminals.length > 1) {
                                         frm.add_custom_button(button_label, null, button_label);
                                         terminals.forEach(terminal => {
@@ -789,6 +803,8 @@ frappe.ui.form.on("Hotel Room Check In", {
                 }
             });
         }
+
+
 
         // Add custom buttons based on status
         if (frm.doc.docstatus === 1 && frm.doc.status === "Checked In") {
@@ -968,6 +984,17 @@ frappe.ui.form.on("Hotel Room Check In", {
         }
     },
 
+    // get number of nights from two dates
+    calculate_number_of_nights(frm) {
+        if (frm.doc.check_in_datetime && frm.doc.expected_check_out_datetime) {
+            const checkInDate = new Date(frm.doc.check_in_datetime);
+            const checkOutDate = new Date(frm.doc.expected_check_out_datetime);
+            const timeDiff = checkOutDate - checkInDate;
+            const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            frm.set_value('number_of_nights', nights);
+        }
+    },
+
     setup(frm) {
         frm.set_query("room", function () {
             return {
@@ -994,7 +1021,7 @@ frappe.ui.form.on("Hotel Room Check In", {
 
     reservation(frm) {
         if (frm.doc.reservation) {
-            frm.set_df_property('room_number', 'read_only', 1);
+
             frappe.call({
                 method: "frappe.client.get",
                 args: {
@@ -1002,10 +1029,31 @@ frappe.ui.form.on("Hotel Room Check In", {
                     name: frm.doc.reservation
                 },
                 callback: function (r) {
+                    console.log(r);
                     if (r.message) {
+                        //frm.set_value('check_in_datetime', r.message.from_date);
+                        frm.set_value('expected_check_out_datetime', r.message.to_date);
                         frm.set_value('room_number', r.message.room_number);
-                        frm.set_value('room_type', r.message.room_type);
-                        frm.set_value('number_of_nights', r.message.number_of_nights);
+                        frm.set_value('rate_amount', r.message.rate);
+                        frm.set_value('guest', r.message.guest_name);
+                        //frm.set_value('room_type', r.message.room_type);
+
+                        //frm.set_value('number_of_nights', frm.calculate_number_of_nights());
+
+                        frm.set_value('discount', r.message.discount);
+
+                        let from = frappe.datetime.str_to_obj(r.message.from_date);
+                        let to = frappe.datetime.str_to_obj(r.message.to_date);
+                        let nights = frappe.datetime.get_day_diff(to, from);
+                        frm.set_value('number_of_nights', nights);
+
+                        frm.set_df_property('room_number', 'read_only', 1);
+                        frm.set_df_property('number_of_nights', 'read_only', 1);
+                        frm.set_df_property('discount', 'read_only', 1);
+                        frm.set_df_property('rate_amount', 'read_only', 1);
+                        frm.set_df_property('room_type', 'read_only', 1);
+
+
                     }
                 },
             });
@@ -1014,6 +1062,7 @@ frappe.ui.form.on("Hotel Room Check In", {
             frm.set_value('room_number', null);
             frm.set_value('room_type', null);
             frm.set_value('number_of_nights', null);
+            frm.set_value('discount', null);
         }
     },
 
@@ -1032,7 +1081,7 @@ frappe.ui.form.on("Hotel Room Check In", {
     calculate_total_charges: function (frm) {
         if (frm.doc.check_in_datetime && frm.doc.expected_check_out_datetime && frm.doc.rate_amount) {
             let nights = frm.doc.number_of_nights;
-            frm.set_value('total_charges', nights * frm.doc.rate_amount);
+            frm.set_value('total_charges', (nights * frm.doc.rate_amount) - frm.doc.discount);
         }
     },
 
@@ -1124,16 +1173,16 @@ function show_invoice_selection_dialog(frm, terminal_id) {
         args: {
             check_in: frm.doc.name
         },
-        callback: function(r) {
+        callback: function (r) {
             if (!r.message || r.message.length === 0) {
                 frappe.msgprint(__('No outstanding invoices found.'));
                 return;
             }
-            
+
             const invoices = r.message;
             let invoice_fields = [];
             let invoice_map = {};
-            
+
             // Create HTML for invoice selection
             let html = `
                 <div class="invoice-selection-container">
@@ -1205,7 +1254,7 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                     </style>
                     <div id="invoice-list">
             `;
-            
+
             invoices.forEach((invoice, index) => {
                 invoice_map[invoice.name] = invoice;
                 html += `
@@ -1240,7 +1289,7 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                     </div>
                 `;
             });
-            
+
             html += `
                     </div>
                     <div class="total-section">
@@ -1251,7 +1300,7 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                     </div>
                 </div>
             `;
-            
+
             // Create dialog
             const d = new frappe.ui.Dialog({
                 title: __('Select Invoices to Pay'),
@@ -1263,18 +1312,18 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                     }
                 ],
                 primary_action_label: __('Proceed to Payment'),
-                primary_action: function() {
+                primary_action: function () {
                     // Collect selected invoices and allocations
                     let invoice_allocations = [];
                     let total = 0;
-                    
+
                     invoices.forEach((invoice, index) => {
                         const checkbox = document.getElementById(`chk_${index}`);
                         const amount_input = document.getElementById(`amt_${index}`);
-                        
+
                         if (checkbox && checkbox.checked && amount_input) {
                             const allocated_amount = parseFloat(amount_input.value) || 0;
-                            
+
                             if (allocated_amount > 0) {
                                 invoice_allocations.push({
                                     invoice_number: invoice.name,
@@ -1284,53 +1333,53 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                             }
                         }
                     });
-                    
+
                     if (invoice_allocations.length === 0) {
                         frappe.msgprint(__('Please select at least one invoice to pay.'));
                         return;
                     }
-                    
+
                     if (total <= 0) {
                         frappe.msgprint(__('Total payment amount must be greater than zero.'));
                         return;
                     }
-                    
+
                     // Proceed with payment
                     d.hide();
                     initiate_payment_with_allocations(frm, terminal_id, invoice_allocations);
                 }
             });
-            
+
             d.show();
-            
+
             // Add event listeners after dialog is shown
             setTimeout(() => {
                 // Update total when checkbox changes
                 document.querySelectorAll('.invoice-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function() {
+                    checkbox.addEventListener('change', function () {
                         const invoice_name = this.getAttribute('data-invoice');
                         const amount_input = document.querySelector(`input.allocation-input[data-invoice="${invoice_name}"]`);
-                        
+
                         if (!this.checked) {
                             amount_input.value = 0;
                         } else {
                             const invoice = invoice_map[invoice_name];
                             amount_input.value = invoice.outstanding_amount;
                         }
-                        
+
                         update_total();
                     });
                 });
-                
+
                 // Update total when amount changes
                 document.querySelectorAll('.allocation-input').forEach(input => {
-                    input.addEventListener('input', function() {
+                    input.addEventListener('input', function () {
                         const invoice_name = this.getAttribute('data-invoice');
                         const checkbox = document.querySelector(`input.invoice-checkbox[data-invoice="${invoice_name}"]`);
                         const invoice = invoice_map[invoice_name];
-                        
+
                         let value = parseFloat(this.value) || 0;
-                        
+
                         // Validate amount
                         if (value > invoice.outstanding_amount) {
                             value = invoice.outstanding_amount;
@@ -1340,19 +1389,19 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                                 indicator: 'orange'
                             });
                         }
-                        
+
                         if (value < 0) {
                             value = 0;
                             this.value = 0;
                         }
-                        
+
                         // Auto-check/uncheck checkbox based on amount
                         checkbox.checked = value > 0;
-                        
+
                         update_total();
                     });
                 });
-                
+
                 function update_total() {
                     let total = 0;
                     document.querySelectorAll('.allocation-input').forEach(input => {
@@ -1361,7 +1410,7 @@ function show_invoice_selection_dialog(frm, terminal_id) {
                             total += parseFloat(input.value) || 0;
                         }
                     });
-                    
+
                     document.getElementById('total-payment-amount').textContent = format_currency(total, 'NGN');
                 }
             }, 100);
@@ -1385,7 +1434,7 @@ function initiate_payment_with_allocations(frm, terminal_id, invoice_allocations
                 frappe.msgprint(__('Failed to initiate payment. Please try again.'));
             }
         },
-        error: function(r) {
+        error: function (r) {
             frappe.msgprint(__('Error initiating payment: {0}', [r.message || 'Unknown error']));
         }
     });
@@ -1404,19 +1453,19 @@ function show_payment_dialog(frm, payment_session) {
                     Please complete the transaction on the POS terminal, then click "Confirm Payment" below.
                 </div>`
             },
-            { 
-                label: 'Payment Reference', 
-                fieldname: 'payment_reference', 
-                fieldtype: 'Data', 
-                default: payment_session.payment_reference, 
-                read_only: 1 
+            {
+                label: 'Payment Reference',
+                fieldname: 'payment_reference',
+                fieldtype: 'Data',
+                default: payment_session.payment_reference,
+                read_only: 1
             },
-            { 
-                label: 'Total Amount', 
-                fieldname: 'total_amount', 
-                fieldtype: 'Currency', 
-                default: payment_session.total_amount, 
-                read_only: 1 
+            {
+                label: 'Total Amount',
+                fieldname: 'total_amount',
+                fieldtype: 'Currency',
+                default: payment_session.total_amount,
+                read_only: 1
             }
         ],
         secondary_action_label: 'Resend Request',
@@ -1426,9 +1475,9 @@ function show_payment_dialog(frm, payment_session) {
                 args: { payment_session_name: payment_session.name },
                 callback: function (res) {
                     if (res.message && res.message.success) {
-                        frappe.show_alert({ 
-                            message: __('Payment request resent successfully.'), 
-                            indicator: 'green' 
+                        frappe.show_alert({
+                            message: __('Payment request resent successfully.'),
+                            indicator: 'green'
                         });
                         // Update the payment reference in the dialog
                         frappe.call({
@@ -1438,7 +1487,7 @@ function show_payment_dialog(frm, payment_session) {
                                 filters: { name: payment_session.name },
                                 fieldname: 'payment_reference'
                             },
-                            callback: function(r) {
+                            callback: function (r) {
                                 if (r.message) {
                                     d.set_value('payment_reference', r.message.payment_reference);
                                 }
@@ -1458,14 +1507,14 @@ function show_payment_dialog(frm, payment_session) {
         primary_action(values) {
             // Disable the button to prevent multiple clicks
             d.get_primary_btn().prop('disabled', true);
-            
+
             frappe.call({
                 method: 'rhohotel.api.complete_payment',
                 args: { payment_session: payment_session.name },
                 callback: function (res) {
                     // Re-enable the button
                     d.get_primary_btn().prop('disabled', false);
-                    
+
                     if (res.message && res.message.success === true) {
                         frappe.show_alert({
                             message: __('Payment verified successfully!'),
@@ -1501,7 +1550,7 @@ function show_payment_dialog(frm, payment_session) {
                         });
                     }
                 },
-                error: function(r) {
+                error: function (r) {
                     d.get_primary_btn().prop('disabled', false);
                     frappe.msgprint({
                         title: __('Error'),

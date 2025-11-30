@@ -23,6 +23,7 @@
         "column_break_ddup",
         "room_type",
         "rate_amount",
+        "discount",
         "keycard_assigned",
         "amended_from",
         "section_break_jcll",
@@ -164,6 +165,12 @@
             "no_copy": 1,
             "options": "Hotel Room Check In",
             "print_hide": 1,
+            "read_only": 1
+        },
+        {
+            "fieldtype": "Currency",
+            "fieldname": "discount",
+            "label": "Discount",
             "read_only": 1
         },
         {

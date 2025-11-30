@@ -16,6 +16,8 @@
     "room_number",
     "from_date",
     "to_date",
+    "rate",
+    "discount",
     "late_checkin",
     "column_break_6",
     "status",
@@ -38,9 +40,7 @@
       "fieldtype": "Link",
       "label": "Temporary Booking",
       "options": "Temporary Booking",
-      "reqd": 1,
       "description": "Link to the Temporary Booking document",
-      "in_list_view": 1,
       "in_standard_filter": 1
     },
     {
@@ -74,6 +74,18 @@
       "reqd": 1
     },
     {
+      "fieldname": "rate",
+      "fieldtype": "Currency",
+      "label": "Rate",
+      "read_only": 1
+    },
+    {
+      "fieldname": "discount",
+      "fieldtype": "Currency",
+      "label": "Discount",
+      "default": 0
+    },
+    {
       "fieldname": "from_date",
       "fieldtype": "Date",
       "label": "From Date",
@@ -100,7 +112,8 @@
       "fieldtype": "Select",
       "label": "Status",
       "options": "Pending Payment\nBooked\nChecked-In\nCompleted\nCancelled",
-      "reqd": 1
+      "reqd": 1,
+      "allow_on_submit": 1
     },
     {
       "fieldname": "payment_status",
@@ -144,7 +157,8 @@
       "options": "Sales Invoice",
       "label": "Sales Invoice",
       "read_only": 1,
-      "description": "Invoice for this reservation"
+      "description": "Invoice for this reservation",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "transaction_id",
@@ -161,8 +175,18 @@
       "fieldname": "items",
       "fieldtype": "Table",
       "label": "Items",
-      "options": "Hotel Room Reservation Item",
-      "reqd": 1
+      "options": "Hotel Room Reservation Item"
+    },
+    {
+      "fieldname": "section_break_9",
+      "fieldtype": "Section Break",
+      "label": "Rooms"
+    },
+    {
+      "fieldname": "rooms",
+      "fieldtype": "Table",
+      "label": "Rooms",
+      "options": "Hotel Reservation Room"
     },
     {
       "fieldname": "net_total",
