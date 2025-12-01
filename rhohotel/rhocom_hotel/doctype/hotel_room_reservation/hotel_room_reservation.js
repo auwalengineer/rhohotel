@@ -3,10 +3,17 @@
 
 frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
-		if (frm.doc.docstatus == 1) {
-			frm.add_custom_button(__('Create Invoice'), () => {
+
+		// add create invoice button if sales invoice is not created
+		if (!frm.doc.sales_invoice && frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Create Invoice'), function () {
 				frm.trigger("make_invoice");
 			});
+		}
+
+
+		if (frm.doc.docstatus == 1) {
+
 
 			frm.add_custom_button(__('Extend Reservation'), () => {
 				frappe.prompt([
@@ -55,25 +62,23 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		});
 	},
 	make_invoice: function (frm) {
-		frappe.model.with_doc("Hotel Settings", "Hotel Settings", () => {
-			frappe.model.with_doctype("Sales Invoice", () => {
-				let hotel_settings = frappe.get_doc("Hotel Settings", "Hotel Settings");
-				let invoice = frappe.model.get_new_doc("Sales Invoice");
-				invoice.customer = frm.doc.customer || hotel_settings.default_customer;
-				if (hotel_settings.default_invoice_naming_series) {
-					invoice.naming_series = hotel_settings.default_invoice_naming_series;
+		frappe.call({
+			method: "rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.make_invoice",
+			args: {
+				name: frm.doc.name
+			},
+			callback: function (r) {
+				if (r.message) {
+					frappe.msgprint({
+						title: "Invoice Created",
+						message: `Sales Invoice <b>${r.message}</b> created successfully.`,
+						indicator: "green"
+					});
+					frm.reload_doc();
+				} else {
+					frappe.msgprint("Could not create invoice");
 				}
-				for (let d of frm.doc.items) {
-					let invoice_item = frappe.model.add_child(invoice, "items")
-					invoice_item.item_code = d.item;
-					invoice_item.qty = d.qty;
-					invoice_item.rate = d.rate;
-				}
-				if (hotel_settings.default_taxes_and_charges) {
-					invoice.taxes_and_charges = hotel_settings.default_taxes_and_charges;
-				}
-				frappe.set_route("Form", invoice.doctype, invoice.name);
-			});
+			}
 		});
 	},
 

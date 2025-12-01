@@ -1,14 +1,105 @@
 # Copyright (c) 2017, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+from datetime import datetime
 import json
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import get_datetime
 
 class HotelRoomReservation(Document):
-    pass
+    def validate(self):
+        self.validate_room_availability()
+        number_of_nights = frappe.utils.date_diff(self.to_date, self.from_date)
+        self.net_total = (number_of_nights * self.rate) - self.discount
+
+    def before_insert(self):
+        number_of_nights = frappe.utils.date_diff(self.to_date, self.from_date)
+        self.net_total = (number_of_nights * self.rate) - self.discount
+
+        
+    def validate_room_availability(self):
+        """Validate if the room is available for the given period"""
+
+        overlapping = frappe.db.sql("""
+            SELECT name FROM `tabHotel Room Reservation`
+            WHERE room_number = %s
+            AND docstatus = 1 AND status != 'Cancelled'
+            AND name != %s
+            AND (
+                from_date < %s  -- existing start < new end
+                AND
+                to_date > %s    -- existing end > new start
+            )
+        """, (
+            self.room_number,
+            self.name,
+            self.to_date,
+            self.from_date,
+        ))
+
+        if overlapping:
+            frappe.throw(_("Room {0} is already booked between {1} and {2}.")
+                        .format(self.room_number, self.from_date, self.to_date))
+
+    
+@frappe.whitelist()
+def make_invoice(name):
+    
+    self = frappe.get_doc("Hotel Room Reservation", name)
+    
+    """ Make Sales Invoice for the  Hotel Room Reservation """
+    
+    # guest = frappe.get_doc("Hotel Guest", self.guest_name)
+    # if not guest:
+    #     #create new guest
+    #     new_guest = frappe.new_doc("Hotel Guest")
+    #     new_guest.hotel_guest_name = self.guest_name
+    #     new_guest.insert(ignore_permissions=True)
+    #     new_guest.submit()
+    #     guest = new_guest.name
+    
+    customer = frappe.get_value("Hotel Guest", self.guest_name, "customer")
+    if not customer:
+        # create customer if not exists
+        customer_doc = frappe.new_doc("Customer")
+        customer_doc.customer_name = self.guest_name
+        customer_doc.customer_type = "Individual"
+        customer_doc.customer_group = frappe.get_cached_value('Selling Settings',  None,  'default_customer_group')
+        customer_doc.territory = frappe.get_cached_value('Selling Settings',  None,  'default_territory')
+        customer_doc.insert(ignore_permissions=True)
+        customer = customer_doc.name
+        #frappe.db.set_value("Hotel Guest", self.guest_name, "customer", customer)
+    
+    room_doc = frappe.get_doc("Hotel Room", self.room_number)
+    
+    number_of_nights = frappe.utils.date_diff(self.to_date, self.from_date)
+    
+    si = frappe.new_doc("Sales Invoice")
+    si.customer = customer
+    # si.custom_hotel_room_check_in = self.name
+    si.due_date = get_datetime(self.to_date).date()
+    si.posting_date = datetime.now().date()	
+    si.append("items", {
+        "item_code": room_doc.erpnext_item,
+        "rate": self.rate,
+        "qty": number_of_nights,
+        "amount": self.net_total,
+        "description": _("Reservation charge for {0} from {1} to {2}").format(self.room_number, get_datetime(self.from_date).date(), get_datetime(self.to_date).date())
+    })
+    si.set_taxes()
+
+    # set discount
+    if self.discount:
+        si.discount_amount = self.discount
+
+    si.insert(ignore_permissions=True)
+    si.submit()
+    
+    self.db_set("sales_invoice", si.name)
+
 
 # import json
 

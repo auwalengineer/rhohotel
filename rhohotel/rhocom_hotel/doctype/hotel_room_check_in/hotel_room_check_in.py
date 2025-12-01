@@ -200,6 +200,13 @@ class HotelRoomCheckIn(Document):
 
 	def make_sales_invoice(self):
 
+		if self.reservation:
+			reservation = frappe.get_doc("Hotel Room Reservation", self.reservation)
+			if reservation.sales_invoice:
+				# Sales Invoice already created from reservation
+				self.db_set("sales_invoice", "custom_hotel_room_check_in",  self.name)
+				return
+
 		# Get ERPNEXT item using selected room
 		room_doc = frappe.get_doc("Hotel Room", self.room_number)
 

@@ -846,7 +846,10 @@ class FrontDesk {
 
                 if (!reservations || reservations.length === 0) {
                     table_content = `<p class="text-muted">No reservations found.</p>`;
-                    $view.html(`<div class="frappe-card"><div class="frappe-card-head"><h4>Reservations</h4></div><div class="frappe-card-body">${table_content}</div></div>`);
+                    $view.html(`<div class="frappe-card"><div class="frappe-card-head">
+                        <h4>Reservations</h4>
+                        
+                        </div><div class="frappe-card-body">${table_content}</div></div>`);
                 } else {
                     const rows = reservations.map(res => `
                         <tr>
@@ -876,7 +879,10 @@ class FrontDesk {
                             <tbody>${rows}</tbody>
                         </table>`;
 
-                    $view.html(`<div class="frappe-card"><div class="frappe-card-head"><h4>Reservations</h4></div><div class="frappe-card-body">${table_content}</div></div>`);
+                    $view.html(`<div class="frappe-card"><div class="frappe-card-head">
+                        <h4>Reservations</h4>
+                        <a href="/app/hotel-room-reservation/new" class="btn btn-primary btn-sm">New Reservation</a>
+                        </div><div class="frappe-card-body">${table_content}</div></div>`);
 
                     // Initialize DataTable
                     setTimeout(() => {
@@ -1113,165 +1119,170 @@ class FrontDesk {
     // }
 
     show_room_actions(room) {
-    const actions = [];
+        const actions = [];
 
-    if (room.status === 'Vacant' && room.housekeeping_status === 'Clean') {
-        actions.push({
-            label: `New Check-in`,
-            action: () => frappe.new_doc('Hotel Room Check In', { room_number: room.room_number })
-        });
-    }
-
-    if (room.status === 'Occupied') {
-        actions.push({
-            label: 'Check-out',
-            action: () => {
-                frappe.call({
-                    method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out',
-                    args: {
-                        source_name: room.current_check_in
-                    },
-                    callback: (r) => {
-                        if (r.message) {
-                            frappe.set_route('Form', 'Hotel Room Check Out', r.message.name);
-                        }
-                    }
-                });
-            }
-        });
-        if (room.current_check_in) {
+        if (room.status === 'Vacant' && room.housekeeping_status === 'Clean') {
             actions.push({
-                label: 'Open Check-in',
-                action: () => frappe.set_route('Form', 'Hotel Room Check In', room.current_check_in)
+                label: `New Check-in`,
+                action: () => frappe.new_doc('Hotel Room Check In', { room_number: room.room_number })
             });
         }
-    }
 
-    if (room.status === 'Reserved') {
-        // Action to create check-in from reservation
-    }
-
-    actions.push({
-        label: 'Maintenance Request',
-        action: () => frappe.new_doc('Maintenance Request', { room: room.name })
-    });
-
-    actions.push({
-        label: 'Housekeeping Request',
-        action: () => frappe.new_doc('Housekeeping Request', { 
-            room: room.name,
-            request_date: frappe.datetime.get_today(),
-            requested_by: 'Front Desk'
-        })
-    });
-
-    actions.push({
-        label: 'Room Details',
-        action: () => frappe.set_route('Form', 'Hotel Room', room.name)
-    });
-
-    const dialog_fields = [];
-
-    if (room.status === 'Occupied') {
-        dialog_fields.push({ fieldtype: 'Section Break', label: 'Current Check-in Details' });
-        dialog_fields.push({
-            fieldtype: 'Data', label: 'Guest', default: room.current_guest, read_only: 1
-        });
-        dialog_fields.push({
-            fieldtype: 'Data', label: 'Check-in Time', default: room.check_in_datetime ? frappe.datetime.str_to_user(room.check_in_datetime) : 'N/A', read_only: 1,
-            wrapper_class: 'col-md-6'
-        });
-        dialog_fields.push({
-            fieldtype: 'Data', label: 'Expected Check-out', default: room.expected_check_out_datetime ? frappe.datetime.str_to_user(room.expected_check_out_datetime) : 'N/A', read_only: 1,
-            wrapper_class: 'col-md-6'
-        });
-    }
-    
-    dialog_fields.push(
-        { fieldtype: 'Section Break', label: 'Room Details' },
-        {
-            fieldtype: 'Data', label: 'Room Type', default: room.room_type, read_only: 1,
-            wrapper_class: 'col-md-6'
-        },
-        {
-            fieldtype: 'Data', label: 'Floor', default: room.floor, read_only: 1,
-            wrapper_class: 'col-md-6'
-        },
-        {
-            fieldtype: 'Data', label: 'Status', default: room.status, read_only: 1,
-            wrapper_class: 'col-md-6'
-        },
-        {
-            fieldtype: 'Data', label: 'Housekeeping', default: room.housekeeping_status, read_only: 1,
-            wrapper_class: 'col-md-6'
+        if (room.status === 'Occupied') {
+            actions.push({
+                label: 'Check-out',
+                action: () => {
+                    frappe.call({
+                        method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out',
+                        args: {
+                            source_name: room.current_check_in
+                        },
+                        callback: (r) => {
+                            if (r.message) {
+                                frappe.set_route('Form', 'Hotel Room Check Out', r.message.name);
+                            }
+                        }
+                    });
+                }
+            });
+            if (room.current_check_in) {
+                actions.push({
+                    label: 'Open Check-in',
+                    action: () => frappe.set_route('Form', 'Hotel Room Check In', room.current_check_in)
+                });
+            }
         }
-    );
 
-    // Add a section for actions at the bottom
-    dialog_fields.push({
-        fieldtype: 'Section Break',
-        label: 'Actions'
-    });
-    
-    dialog_fields.push({
-        fieldtype: 'HTML',
-        fieldname: 'actions_html',
-        options: this.get_actions_html(actions)
-    });
+        if (room.status === 'Reserved') {
+            // Action to create check-in from reservation
+        }
 
-    const dialog = new frappe.ui.Dialog({
-        title: `Room ${room.room_number}`,
-        fields: dialog_fields,
-        size: 'large'
-    });
-
-    // Bind click events for action buttons
-    actions.forEach((act, index) => {
-        dialog.$wrapper.find(`[data-action-index="${index}"]`).on('click', () => {
-            act.action();
-            dialog.hide();
+        actions.push({
+            label: 'Maintenance Request',
+            action: () => frappe.new_doc('Maintenance Request', { room: room.name })
         });
-    });
 
-    dialog.show();
-}
+        actions.push({
+            label: 'Housekeeping Request',
+            action: () => frappe.new_doc('Housekeeping Request', {
+                room: room.name,
+                request_date: frappe.datetime.get_today(),
+                requested_by: 'Front Desk'
+            })
+        });
 
-get_actions_html(actions) {
-    const buttons_html = actions.map((act, index) => {
-        const icon_map = {
-            'New Check-in': 'sign-in',
-            'Check-out': 'sign-out',
-            'Open Check-in': 'folder-open',
-            'Maintenance Request': 'wrench',
-            'Housekeeping Request': 'tasks',
-            'Room Details': 'info-circle'
-        };
-        
-        const button_color_map = {
-            'New Check-in': 'btn-primary',
-            'Check-out': 'btn-danger',
-            'Open Check-in': 'btn-info',
-            'Maintenance Request': 'btn-warning',
-            'Housekeeping Request': 'btn-success',
-            'Room Details': 'btn-default'
-        };
-        
-        const icon = icon_map[act.label] || 'hand-pointer-o';
-        const color = button_color_map[act.label] || 'btn-default';
-        
-        return `
+        actions.push({
+            label: 'Make Reservation',
+            action: () => frappe.new_doc('Hotel Room Reservation', { room_number: room.room_number })
+        });
+
+        actions.push({
+            label: 'Room Details',
+            action: () => frappe.set_route('Form', 'Hotel Room', room.name)
+        });
+
+        const dialog_fields = [];
+
+        if (room.status === 'Occupied') {
+            dialog_fields.push({ fieldtype: 'Section Break', label: 'Current Check-in Details' });
+            dialog_fields.push({
+                fieldtype: 'Data', label: 'Guest', default: room.current_guest, read_only: 1
+            });
+            dialog_fields.push({
+                fieldtype: 'Data', label: 'Check-in Time', default: room.check_in_datetime ? frappe.datetime.str_to_user(room.check_in_datetime) : 'N/A', read_only: 1,
+                wrapper_class: 'col-md-6'
+            });
+            dialog_fields.push({
+                fieldtype: 'Data', label: 'Expected Check-out', default: room.expected_check_out_datetime ? frappe.datetime.str_to_user(room.expected_check_out_datetime) : 'N/A', read_only: 1,
+                wrapper_class: 'col-md-6'
+            });
+        }
+
+        dialog_fields.push(
+            { fieldtype: 'Section Break', label: 'Room Details' },
+            {
+                fieldtype: 'Data', label: 'Room Type', default: room.room_type, read_only: 1,
+                wrapper_class: 'col-md-6'
+            },
+            {
+                fieldtype: 'Data', label: 'Floor', default: room.floor, read_only: 1,
+                wrapper_class: 'col-md-6'
+            },
+            {
+                fieldtype: 'Data', label: 'Status', default: room.status, read_only: 1,
+                wrapper_class: 'col-md-6'
+            },
+            {
+                fieldtype: 'Data', label: 'Housekeeping', default: room.housekeeping_status, read_only: 1,
+                wrapper_class: 'col-md-6'
+            }
+        );
+
+        // Add a section for actions at the bottom
+        dialog_fields.push({
+            fieldtype: 'Section Break',
+            label: 'Actions'
+        });
+
+        dialog_fields.push({
+            fieldtype: 'HTML',
+            fieldname: 'actions_html',
+            options: this.get_actions_html(actions)
+        });
+
+        const dialog = new frappe.ui.Dialog({
+            title: `Room ${room.room_number}`,
+            fields: dialog_fields,
+            size: 'large'
+        });
+
+        // Bind click events for action buttons
+        actions.forEach((act, index) => {
+            dialog.$wrapper.find(`[data-action-index="${index}"]`).on('click', () => {
+                act.action();
+                dialog.hide();
+            });
+        });
+
+        dialog.show();
+    }
+
+    get_actions_html(actions) {
+        const buttons_html = actions.map((act, index) => {
+            const icon_map = {
+                'New Check-in': 'sign-in',
+                'Check-out': 'sign-out',
+                'Open Check-in': 'folder-open',
+                'Maintenance Request': 'wrench',
+                'Housekeeping Request': 'tasks',
+                'Room Details': 'info-circle'
+            };
+
+            const button_color_map = {
+                'New Check-in': 'btn-primary',
+                'Check-out': 'btn-danger',
+                'Open Check-in': 'btn-info',
+                'Maintenance Request': 'btn-warning',
+                'Housekeeping Request': 'btn-success',
+                'Room Details': 'btn-default'
+            };
+
+            const icon = icon_map[act.label] || 'hand-pointer-o';
+            const color = button_color_map[act.label] || 'btn-default';
+
+            return `
             <button class="btn btn-sm ${color}" data-action-index="${index}" style="margin: 0.25rem;">
                 <i class="fa fa-${icon}"></i> ${act.label}
             </button>
         `;
-    }).join('');
-    
-    return `
+        }).join('');
+
+        return `
         <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem;">
             ${buttons_html}
         </div>
     `;
-}
+    }
 
 
     render_housekeeping_view() {
