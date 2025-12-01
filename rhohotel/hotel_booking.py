@@ -1076,6 +1076,17 @@ def verify_callback_payment(reference):
             children = temp_booking.get("children") or 0
             total_guests = adults + children if (adults or children) else None
             
+            # Get room details with room types
+            rooms_list = []
+            for room in temp_booking.rooms:
+                rooms_list.append({
+                    "room_number": room.room_number,
+                    "room_type": room.room_type,
+                    "rate_per_night": room.rate_per_night,
+                    "num_nights": room.num_nights,
+                    "total_price": room.total_price
+                })
+            
             return {
                 "success": True,
                 "booking_number": reference,
@@ -1090,6 +1101,7 @@ def verify_callback_payment(reference):
                 "total_rooms": temp_booking.total_rooms,
                 "total_price": temp_booking.total_price,
                 "currency": temp_booking.currency or "NGN",
+                "rooms": rooms_list,
                 "payment_date": temp_booking.payment_received_at.strftime("%Y-%m-%d %H:%M:%S") if temp_booking.payment_received_at else None,
                 "guests": {
                     "adults": adults,
@@ -1187,6 +1199,7 @@ def verify_callback_payment(reference):
                 "total_rooms": temp_booking.total_rooms,
                 "total_price": temp_booking.total_price,
                 "currency": temp_booking.currency or "NGN",
+                "rooms": rooms_list,
                 "payment_date": temp_booking.payment_received_at.strftime("%Y-%m-%d %H:%M:%S") if temp_booking.payment_received_at else None,
                 "guests": {
                     "adults": adults,
