@@ -4,6 +4,21 @@
 frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
 
+		// add Check In button if status is Booked
+		if (frm.doc.status == "Booked" && frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Check In'), function () {
+				frappe.call({
+					method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.check_in_reservation',
+					args: {
+						reservation_id: frm.doc.name
+					},
+					callback: function (r) {
+						frappe.set_route('Form', 'Hotel Room Reservation', r.message.name);
+					}
+				});
+			});
+		}
+
 		// add create invoice button if sales invoice is not created
 		if (!frm.doc.sales_invoice && frm.doc.docstatus == 1) {
 			frm.add_custom_button(__('Create Invoice'), function () {
@@ -75,9 +90,9 @@ frappe.ui.form.on('Hotel Room Reservation', {
 						indicator: "green"
 					});
 					frm.reload_doc();
-				} else {
-					frappe.msgprint("Could not create invoice");
 				}
+
+				frm.reload_doc();
 			}
 		});
 	},

@@ -26,7 +26,7 @@ class HotelRoomReservation(Document):
         overlapping = frappe.db.sql("""
             SELECT name FROM `tabHotel Room Reservation`
             WHERE room_number = %s
-            AND docstatus = 1 AND status != 'Cancelled'
+            AND docstatus = 1 AND status != 'Cancelled' AND status != 'Completed'
             AND name != %s
             AND (
                 from_date < %s  -- existing start < new end

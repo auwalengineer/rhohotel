@@ -859,7 +859,7 @@ class FrontDesk {
                             <td>${frappe.datetime.str_to_user(res.from_date)}</td>
                             <td>${frappe.datetime.str_to_user(res.to_date)}</td>
                             <td>${res.status}</td>
-                            <td>${res.payment_status}</td>
+                           
                         </tr>
                     `).join('');
 
@@ -873,7 +873,7 @@ class FrontDesk {
                                     <th>From Date</th>
                                     <th>To Date</th>
                                     <th>Status</th>
-                                    <th>Payment Status</th>
+                                   
                                 </tr>
                             </thead>
                             <tbody>${rows}</tbody>

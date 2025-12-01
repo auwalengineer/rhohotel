@@ -204,7 +204,27 @@ class HotelRoomCheckIn(Document):
 			reservation = frappe.get_doc("Hotel Room Reservation", self.reservation)
 			if reservation.sales_invoice:
 				# Sales Invoice already created from reservation
-				self.db_set("sales_invoice", "custom_hotel_room_check_in",  self.name)
+				# get the linked invoice and link to check-in
+				invoice = frappe.get_doc("Sales Invoice", reservation.sales_invoice)
+				invoice.db_set("custom_hotel_room_check_in", self.name)		
+
+				# get payment entries linked to reservation invoice and link to check-in
+				
+				payments = frappe.db.get_all(
+					"Payment Entry Reference",
+					filters={
+						"reference_doctype": "Sales Invoice",
+						"reference_name": reservation.sales_invoice
+					},
+					fields=["parent"]
+				)
+
+				for payment in payments:
+					payment_doc = frappe.get_doc("Payment Entry", payment.parent)
+					payment_doc.db_set("custom_hotel_room_check_in", self.name)
+					payment_doc.save(ignore_permissions=True)
+
+
 				return
 
 		# Get ERPNEXT item using selected room

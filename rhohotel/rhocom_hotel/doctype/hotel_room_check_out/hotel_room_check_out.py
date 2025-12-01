@@ -77,6 +77,7 @@ class HotelRoomCheckOut(Document):
         self.status = "Completed"
         self.update_check_in()
         self.update_room()
+        self.update_reservation()  
         self.create_housekeeping_task()
         frappe.publish_realtime('rhohotel_front_desk_update')
 
@@ -85,6 +86,15 @@ class HotelRoomCheckOut(Document):
         frappe.db.set_value("Hotel Room Check In", self.check_in, {
             "status": "Checked Out"        
         })
+        
+    def update_reservation(self):
+        """Update reservation status if linked"""
+        check_in = frappe.get_doc("Hotel Room Check In", self.check_in)
+        if check_in.reservation:
+            reservation = frappe.get_doc("Hotel Room Reservation", check_in.reservation)
+            reservation.status = "Completed"
+            reservation.db_update()
+        
 
     # create house keeping task on checkout
     def create_housekeeping_task(self):
