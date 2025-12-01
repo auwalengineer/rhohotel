@@ -1075,6 +1075,7 @@ def verify_callback_payment(reference):
             adults = temp_booking.get("adults") or 0
             children = temp_booking.get("children") or 0
             total_guests = adults + children if (adults or children) else None
+            
             return {
                 "success": True,
                 "booking_number": reference,
@@ -1088,7 +1089,13 @@ def verify_callback_payment(reference):
                 "num_nights": temp_booking.num_nights,
                 "total_rooms": temp_booking.total_rooms,
                 "total_price": temp_booking.total_price,
-                "currency": temp_booking.currency or "NGN"
+                "currency": temp_booking.currency or "NGN",
+                "payment_date": temp_booking.payment_received_at.strftime("%Y-%m-%d %H:%M:%S") if temp_booking.payment_received_at else None,
+                "guests": {
+                    "adults": adults,
+                    "children": children,
+                    "total": total_guests
+                } if total_guests else None
             }
         
         # === STEP 3: VERIFY WITH PAYSTACK API ===
@@ -1179,7 +1186,13 @@ def verify_callback_payment(reference):
                 "num_nights": temp_booking.num_nights,
                 "total_rooms": temp_booking.total_rooms,
                 "total_price": temp_booking.total_price,
-                "currency": temp_booking.currency or "NGN"
+                "currency": temp_booking.currency or "NGN",
+                "payment_date": temp_booking.payment_received_at.strftime("%Y-%m-%d %H:%M:%S") if temp_booking.payment_received_at else None,
+                "guests": {
+                    "adults": adults,
+                    "children": children,
+                    "total": total_guests
+                } if total_guests else None
             }
         else:
             return {
