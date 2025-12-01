@@ -984,12 +984,14 @@ frappe.ui.form.on("Hotel Room Check In", {
         }
 
         // Load route options only when creating a new doc
+        console.log(frappe.route_options);
+
         if (frm.is_new() && frappe.route_options) {
             frm.set_value("reservation", frappe.route_options.reservation);
             frm.set_value("guest", frappe.route_options.guest);
             frm.set_value("room_number", frappe.route_options.room_number);
             frm.set_value("rate_amount", frappe.route_options.rate_amount);
-            frm.set_value("check_in_datetime", frappe.route_options.check_in_datetime);
+            // frm.set_value("check_in_datetime", frappe.route_options.check_in_datetime);
             frm.set_value("expected_check_out_datetime", frappe.route_options.expected_check_out_datetime);
 
             // Clear route options after using them

@@ -1071,6 +1071,10 @@ def verify_callback_payment(reference):
         # === STEP 2: QUICK CHECK - Already Processed? ===
         if temp_booking.payment_status == "Paid":
             frappe.logger().info(f"✅ Booking {reference} already processed")
+            # Get guest count information
+            adults = temp_booking.get("adults") or 0
+            children = temp_booking.get("children") or 0
+            total_guests = adults + children if (adults or children) else None
             return {
                 "success": True,
                 "booking_number": reference,

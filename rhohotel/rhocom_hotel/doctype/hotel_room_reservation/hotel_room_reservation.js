@@ -6,20 +6,20 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 		// add Check In button if status is Booked
 		if (!frm.is_new() && frm.doc.docstatus === 1) {
+
 			frm.add_custom_button(__('Check In Guest'), () => {
-				// Build URL for new Check-in form
 
-				//let nights = calculate_nights(frm);
-
-				frappe.set_route('Form', 'Hotel Room Check In', 'new-hotel-room-check-in', {
+				frappe.route_options = {
 					reservation: frm.doc.name,
 					guest: frm.doc.guest_name,
 					room_number: frm.doc.room_number,
 					rate_amount: frm.doc.rate,
-					//number_of_nights: nights,
-					check_in_datetime: frm.doc.from_date,
+					discount: frm.doc.discount,
+					//check_in_datetime: frm.doc.from_date,
 					expected_check_out_datetime: frm.doc.to_date
-				});
+				};
+
+				frappe.set_route('Form', 'Hotel Room Check In', 'new-hotel-room-check-in');
 			});
 		}
 		// add create invoice button if sales invoice is not created
