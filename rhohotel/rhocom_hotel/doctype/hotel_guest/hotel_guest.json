@@ -45,15 +45,13 @@
       "fieldname": "gender",
       "fieldtype": "Select",
       "label": "Gender",
-      "options": "Male\nFemale",
-      "reqd": 1
+      "options": "Male\nFemale"
     },
     {
       "fieldname": "id_type",
       "fieldtype": "Select",
       "label": "ID Type",
-      "options": "Passport\nNational ID\nDriver's License",
-      "reqd": 1
+      "options": "Passport\nNational ID\nDriver's License"
     },
     {
       "fieldname": "id_number",

@@ -5,20 +5,23 @@ frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
 
 		// add Check In button if status is Booked
-		if (frm.doc.status == "Booked" && frm.doc.docstatus == 1) {
-			frm.add_custom_button(__('Check In'), function () {
-				frappe.call({
-					method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.check_in_reservation',
-					args: {
-						reservation_id: frm.doc.name
-					},
-					callback: function (r) {
-						frappe.set_route('Form', 'Hotel Room Reservation', r.message.name);
-					}
+		if (!frm.is_new() && frm.doc.docstatus === 1) {
+			frm.add_custom_button(__('Check In Guest'), () => {
+				// Build URL for new Check-in form
+
+				//let nights = calculate_nights(frm);
+
+				frappe.set_route('Form', 'Hotel Room Check In', 'new-hotel-room-check-in', {
+					reservation: frm.doc.name,
+					guest: frm.doc.guest_name,
+					room_number: frm.doc.room_number,
+					rate_amount: frm.doc.rate,
+					//number_of_nights: nights,
+					check_in_datetime: frm.doc.from_date,
+					expected_check_out_datetime: frm.doc.to_date
 				});
 			});
 		}
-
 		// add create invoice button if sales invoice is not created
 		if (!frm.doc.sales_invoice && frm.doc.docstatus == 1) {
 			frm.add_custom_button(__('Create Invoice'), function () {
@@ -128,6 +131,22 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			});
 	}
 });
+
+function calculate_nights(frm) {
+	const check_in = frm.doc.from_date;
+	const check_out = frm.doc.to_date;
+
+	if (check_in && check_out) {
+		let nights = frappe.datetime.get_diff(check_out, check_in);
+
+		// Prevent negative or zero nights
+		if (nights < 1) {
+			frm.set_value("number_of_nights", 0);
+		} else {
+			frm.set_value("number_of_nights", nights);
+		}
+	}
+}
 
 frappe.ui.form.on('Hotel Room Reservation Item', {
 	item: function (frm, doctype, name) {

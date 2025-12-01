@@ -170,8 +170,7 @@
         {
             "fieldtype": "Currency",
             "fieldname": "discount",
-            "label": "Discount",
-            "read_only": 1
+            "label": "Discount"
         },
         {
             "allow_on_submit": 1,

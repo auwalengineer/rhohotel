@@ -18,6 +18,15 @@ class HotelRoomReservation(Document):
     def before_insert(self):
         number_of_nights = frappe.utils.date_diff(self.to_date, self.from_date)
         self.net_total = (number_of_nights * self.rate) - self.discount
+        self.create_guest_if_not_exists()
+        
+    def create_guest_if_not_exists(self):
+        """Create Hotel Guest if not exists"""
+        if not frappe.db.exists("Hotel Guest", self.guest_name):
+            guest = frappe.new_doc("Hotel Guest")
+            guest.hotel_guest_name = self.guest_name
+            guest.insert(ignore_permissions=True)
+            guest.submit()
 
         
     def validate_room_availability(self):
@@ -52,14 +61,18 @@ def make_invoice(name):
     
     """ Make Sales Invoice for the  Hotel Room Reservation """
     
-    # guest = frappe.get_doc("Hotel Guest", self.guest_name)
-    # if not guest:
-    #     #create new guest
-    #     new_guest = frappe.new_doc("Hotel Guest")
-    #     new_guest.hotel_guest_name = self.guest_name
-    #     new_guest.insert(ignore_permissions=True)
-    #     new_guest.submit()
-    #     guest = new_guest.name
+    guest = None
+
+    # Check if guest exists
+    if frappe.db.exists("Hotel Guest", self.guest_name):
+        guest = frappe.get_doc("Hotel Guest", self.guest_name)
+    else:
+        # Create new guest
+        guest = frappe.new_doc("Hotel Guest")
+        guest.hotel_guest_name = self.guest_name
+        guest.phone_number = ""
+        guest.insert(ignore_permissions=True)
+        guest.submit()
     
     customer = frappe.get_value("Hotel Guest", self.guest_name, "customer")
     if not customer:
@@ -71,7 +84,7 @@ def make_invoice(name):
         customer_doc.territory = frappe.get_cached_value('Selling Settings',  None,  'default_territory')
         customer_doc.insert(ignore_permissions=True)
         customer = customer_doc.name
-        #frappe.db.set_value("Hotel Guest", self.guest_name, "customer", customer)
+        frappe.db.set_value("Hotel Guest", self.guest_name, "customer", customer)
     
     room_doc = frappe.get_doc("Hotel Room", self.room_number)
     
