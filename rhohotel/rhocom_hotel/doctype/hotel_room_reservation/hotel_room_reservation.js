@@ -51,14 +51,13 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									label: __('From Date'),
 									fieldname: 'from_date',
 									fieldtype: 'Datetime',
-									default: frm.doc.check_in_datetime,
-									read_only: 1
+									default: frm.doc.from_date
 								},
 								{
 									label: __('To Date'),
 									fieldname: 'to_date',
 									fieldtype: 'Datetime',
-									default: frm.doc.expected_check_out_datetime,
+									default: frm.doc.to_date,
 									read_only: 1
 								},
 								{
@@ -292,15 +291,17 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.adjust_reservation',
 									args: {
 										reservation_name: frm.doc.name,
-										new_checkout: values.new_checkout
+										new_checkout: values.new_checkout,
+										new_check_in: values.from_date
+
 									},
 									freeze: true,
-									freeze_message: __("Processing stay adjustment..."),
+									freeze_message: __("Processing reservation adjustment..."),
 									callback: (r) => {
 										if (!r.exc) {
 											const adjustment_type = r.message?.adjustment_type || values.adjustment_type;
 											frappe.show_alert({
-												message: __('Stay {0} completed successfully!', [adjustment_type]),
+												message: __('Reservation {0} completed successfully!', [adjustment_type]),
 												indicator: 'green'
 											}, 5);
 											frm.reload_doc();
@@ -310,7 +311,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									error: (r) => {
 										frappe.msgprint({
 											title: __("Error"),
-											message: __("Failed to adjust stay. Please try again or contact support."),
+											message: __("Failed to adjust reservation. Please try again or contact support."),
 											indicator: "red"
 										});
 									}
@@ -332,31 +333,31 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		}
 
 
-		if (frm.doc.docstatus == 1) {
+		// if (frm.doc.docstatus == 1) {
 
 
-			frm.add_custom_button(__('Extend Reservation'), () => {
-				frappe.prompt([
-					{
-						label: __('New To Date'),
-						fieldname: 'to_date',
-						fieldtype: 'Date',
-						reqd: 1
-					}
-				], function (values) {
-					frappe.call({
-						method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.extend_reservation',
-						args: {
-							reservation_id: frm.doc.name,
-							to_date: values.to_date
-						},
-						callback: function (r) {
-							frappe.set_route('Form', 'Hotel Room Reservation', r.message.name);
-						}
-					});
-				}, __('Extend Reservation'), __('Extend'));
-			});
-		}
+		// 	frm.add_custom_button(__('Extend Reservation'), () => {
+		// 		frappe.prompt([
+		// 			{
+		// 				label: __('New To Date'),
+		// 				fieldname: 'to_date',
+		// 				fieldtype: 'Date',
+		// 				reqd: 1
+		// 			}
+		// 		], function (values) {
+		// 			frappe.call({
+		// 				method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.extend_reservation',
+		// 				args: {
+		// 					reservation_id: frm.doc.name,
+		// 					to_date: values.to_date
+		// 				},
+		// 				callback: function (r) {
+		// 					frappe.set_route('Form', 'Hotel Room Reservation', r.message.name);
+		// 				}
+		// 			});
+		// 		}, __('Extend Reservation'), __('Extend'));
+		// 	});
+		// }
 	},
 
 	to_date: function (frm) {

@@ -238,6 +238,160 @@ def make_invoice(name):
     
     self.db_set("sales_invoice", si.name)
 
+@frappe.whitelist()
+def adjust_reservation(reservation_name, new_checkout, new_check_in):
+    """
+    Unified function for extending or reducing stay.
+    Creates invoice (extension) or credit note (reduction) and logs adjustment in child table.
+    """
+    from frappe.utils import now_datetime, get_datetime, getdate, date_diff, flt
+    
+    doc = frappe.get_doc("Hotel Room Reservation", reservation_name)
+    
+    # Convert to datetime objects
+    new_dt = get_datetime(new_checkout)
+    current_dt = get_datetime(doc.expected_check_out_datetime)
+    checkin_dt = get_datetime(doc.check_in_datetime)
+    now_dt = now_datetime()
+    
+    # VALIDATION 1: New checkout must be different from current
+    if new_dt == current_dt:
+        frappe.throw("New checkout is the same as current checkout. No adjustment needed.")
+    
+    # VALIDATION 2: New checkout must be after check-in
+    if new_dt <= checkin_dt:
+        frappe.throw("New checkout must be after check-in date/time.")
+    
+    # VALIDATION 3: Cannot be in the past
+    if new_dt < now_dt:
+        frappe.throw("New checkout cannot be in the past.")
+    
+    # Determine adjustment type
+    adjustment_type = 'Extension' if new_dt > current_dt else 'Reduction'
+    
+    # VALIDATION 4: Special validation for reductions to "today"
+    if adjustment_type == 'Reduction':
+        today = getdate(now_dt)
+        new_date = getdate(new_dt)
+        
+        # Get hotel settings for default checkout time
+        settings = frappe.get_doc("Hotel Settings")
+        default_time = settings.default_check_out_time
+        
+        # Build today's default checkout datetime (timezone-aware)
+        today_default_dt = get_datetime(f"{today} {default_time}")
+        
+        # If reducing to today, check special rules
+        if new_date == today:
+            # Rule 1: Can't reduce to today if default checkout time has passed
+            if now_dt > today_default_dt:
+                frappe.throw(
+                    f"Cannot reduce stay to today; default checkout time ({default_time}) has already passed."
+                )
+            
+            # Rule 2: New checkout time for today must not exceed default checkout time
+            if new_dt > today_default_dt:
+                frappe.throw(
+                    f"New checkout for today must be on or before default checkout time ({default_time})."
+                )
+    
+    # Calculate new number of nights
+    new_nights = date_diff(getdate(new_dt), getdate(doc.check_in_datetime))
+    if new_nights < 1:
+        new_nights = 1
+    
+    # Calculate difference
+    current_nights = doc.number_of_nights or 1
+    diff_nights = abs(current_nights - new_nights)
+    amount = flt(doc.rate_amount) * diff_nights
+    
+    # VALIDATION 5: Ensure there's actually a difference in nights
+    if diff_nights == 0:
+        frappe.throw("The new checkout results in the same number of nights. No adjustment needed.")
+    
+    adjustment_invoice_name = None
+    
+    try:
+        if adjustment_type == 'Extension':
+            # Create invoice for extra nights
+            invoice = frappe.get_doc({
+                "doctype": "Sales Invoice",
+                "customer": doc.guest,
+                "is_return": 0,
+                "update_stock": 0,
+                "check_in": doc.name,
+                "custom_hotel_room_check_in": doc.name,
+                "items": [{
+                    "item_code": doc.room_type,
+                    "qty": diff_nights,
+                    "rate": doc.rate_amount,
+                    "amount": amount
+                }],
+                "posting_date": frappe.utils.today(),
+                "remarks": f"Invoice for stay extension: {diff_nights} additional night(s)"
+            })
+            invoice.insert()
+            invoice.submit()
+            adjustment_invoice_name = invoice.name
+            
+        else:  # Reduction
+            # Create credit note
+            credit_note = frappe.get_doc({
+                "doctype": "Sales Invoice",
+                "customer": doc.guest,
+                "is_return": 1,
+                "update_stock": 0,
+                "check_in": doc.name,
+                "custom_hotel_room_check_in": doc.name,
+                "items": [{
+                    "item_code": doc.room_type,
+                    "qty": -diff_nights,
+                    "rate": doc.rate_amount,
+                    "amount": amount
+                }],
+                "posting_date": frappe.utils.today(),
+                "remarks": f"Credit note for stay reduction: {diff_nights} night(s) removed"
+            })
+            credit_note.insert()
+            credit_note.submit()
+            adjustment_invoice_name = credit_note.name
+        
+        # Add adjustment to child table
+        doc.append('adjustments', {
+            "adjustment_date": frappe.utils.now_datetime(),
+            "adjustment_type": adjustment_type,
+            "previous_checkout_datetime": doc.expected_check_out_datetime,
+            "new_checkout_datetime": new_dt,
+            "previous_number_of_nights": current_nights,
+            "new_number_of_nights": new_nights,
+            "nights_difference": diff_nights if adjustment_type == 'Extension' else -diff_nights,
+            "adjustment_invoice": adjustment_invoice_name,
+            "amount": amount
+        })
+        
+        # Update parent doc
+        doc.expected_check_out_datetime = new_dt
+        doc.number_of_nights = new_nights
+        doc.save()
+        
+        frappe.db.commit()
+        
+        return {
+            "status": "success",
+            "adjustment_type": adjustment_type,
+            "new_checkout": str(new_dt),
+            "previous_nights": current_nights,
+            "new_nights": new_nights,
+            "nights_difference": diff_nights if adjustment_type == 'Extension' else -diff_nights,
+            "adjustment_invoice": adjustment_invoice_name,
+            "amount": amount
+        }
+        
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error(f"Stay Adjustment Error: {str(e)}", "adjust_stay")
+        frappe.throw(f"Failed to process stay adjustment: {str(e)}")
+
 
 # import json
 
