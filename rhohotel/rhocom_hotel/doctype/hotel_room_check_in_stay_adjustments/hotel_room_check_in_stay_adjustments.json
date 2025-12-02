@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-02 10:29:24.373568",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "adjustment_date",
+  "adjustment_type",
+  "previous_checkout_datetime",
+  "new_checkout_datetime",
+  "previous_number_of_nights",
+  "new_number_of_nights",
+  "adjustment_nvoice",
+  "amount",
+  "reason",
+  "workflow_state"
+ ],
+ "fields": [
+  {
+   "fieldname": "adjustment_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Adjustment Date"
+  },
+  {
+   "fieldname": "adjustment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Adjustment Type",
+   "options": "Extension\nReduction"
+  },
+  {
+   "fieldname": "previous_checkout_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Previous Checkout Datetime"
+  },
+  {
+   "fieldname": "new_checkout_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "New Checkout Date"
+  },
+  {
+   "fieldname": "previous_number_of_nights",
+   "fieldtype": "Int",
+   "label": "Previous Number of Nights",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "new_number_of_nights",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "New Number of Nights",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "adjustment_nvoice",
+   "fieldtype": "Link",
+   "label": "adjustment_invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-02 10:40:04.159676",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Room Check In Stay Adjustments",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

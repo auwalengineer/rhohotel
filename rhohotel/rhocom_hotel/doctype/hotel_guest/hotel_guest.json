@@ -35,7 +35,7 @@
       "fieldname": "title",
       "fieldtype": "Select",
       "label": "Title",
-      "options": "Mr\nMrs\nMiss\nDr\nProf"
+      "options": "Mr\nMrs\nMiss\nDr\nProf\nCorporate"
     },
     {
       "fieldname": "hotel_guest_name",

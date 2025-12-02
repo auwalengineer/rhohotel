@@ -1,694 +1,3 @@
-// // Copyright (c) 2024, Rhocom Technologies and contributors
-// // For license information, please see license.txt
-
-// frappe.ui.form.on("Hotel Room Check In", {
-//     refresh(frm) {
-//         if (frm.doc.docstatus === 1) {
-//             frm.add_custom_button(__("Refund"), () => {
-//                 frappe.model.open_mapped_doc({
-//                     method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_refund',
-//                     frm: frm
-//                 });
-//             });
-//         }
-//         if (frm.doc.docstatus === 1) {
-//             frappe.call({
-//                 method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.get_linked_documents',
-//                 args: {
-//                     check_in: frm.doc.name
-//                 },
-//                 callback: function (r) {
-
-//                     if (r.message) {
-
-//                         frm.fields_dict.invoices_html.html(render_invoices(r.message.invoices));
-//                         frm.fields_dict.payments_html.html(render_payments(r.message.payments));
-//                         //frm.set_value('total_outstanding_amount', r.message.total_outstanding_amount);
-//                         //frm.set_value('total_charges', r.message.total_outstanding_amount);
-
-
-//                         if (r.message.total_outstanding_amount > 0) {
-//                             // Fetch terminals and create payment buttons
-//                             frappe.call({
-//                                 method: 'frappe.client.get_list',
-//                                 args: {
-//                                     doctype: 'Moniepoint Terminal',
-//                                     parent: 'Moniepoint Settings',
-//                                     fields: ['name', 'terminal_name'],
-//                                     filters: {
-//                                         parenttype: 'Moniepoint Settings',
-//                                         parentfield: 'terminals'
-//                                     }
-//                                 },
-//                                 callback: function (res) {
-//                                     const terminals = res.message || [];
-//                                     const button_label = __('Pay with Moniepoint');
-//                                     if (terminals.length > 1) {
-//                                         // Dropdown for multiple terminals - clean Frappe way, no manual DOM
-//                                         frm.add_custom_button(button_label, null, button_label);
-
-//                                         terminals.forEach(terminal => {
-//                                             frm.add_custom_button(
-//                                                 terminal.terminal_name || terminal.name,
-//                                                 function () {
-//                                                     initiate_payment(frm, terminal.name);
-//                                                 },
-//                                                 button_label
-//                                             );
-//                                         });
-//                                     } else if (terminals.length === 1) {
-//                                         // Single terminal - normal button
-//                                         frm.add_custom_button(button_label, function () {
-//                                             initiate_payment(frm, terminals[0].name);
-//                                         });
-//                                     }
-//                                 }
-//                             });
-//                         }
-
-//                         function initiate_payment(frm, terminal_id) {
-//                             frappe.call({
-//                                 method: 'rhohotel.api.initiate_payment',
-//                                 args: {
-//                                     check_in: frm.doc.name,
-//                                     terminal_id: terminal_id
-//                                 },
-//                                 callback: function (r) {
-//                                     if (r.message && r.message.name) {
-//                                         const d = new frappe.ui.Dialog({
-//                                             title: `Payment request was successfully sent to pos terminal: ${r.message.terminal_id}, \nComplete the transaction and select Confirm payment`,
-//                                             fields: [
-//                                                 { label: 'Payment Reference', fieldname: 'payment_reference', fieldtype: 'Data', default: r.message.payment_reference, read_only: 1 },
-//                                                 { label: 'Total Amount', fieldname: 'total_amount', fieldtype: 'Currency', default: r.message.total_amount, read_only: 1 }
-//                                             ],
-//                                             secondary_action_label: 'Resend Request',
-//                                             secondary_action() {
-//                                                 frappe.call({
-//                                                     method: 'rhohotel.api.resend_payment_request',
-//                                                     args: { payment_session_name: r.message.name },
-//                                                     callback: function (res) {
-//                                                         if (res.message && res.message.success) {
-//                                                             frappe.show_alert({ message: __('Payment request resent successfully.'), indicator: 'green' });
-//                                                         } else {
-//                                                             frappe.msgprint(__('Failed to resend payment request.'));
-//                                                         }
-//                                                     }
-//                                                 });
-//                                             },
-//                                             primary_action_label: 'Confirm Payment',
-//                                             primary_action(values) {
-//                                                 frappe.call({
-//                                                     method: 'rhohotel.api.complete_payment',
-//                                                     args: { payment_session: r.message.name },
-//                                                     callback: function (res) {
-//                                                         if (res.message.success === false) {
-//                                                             frappe.msgprint(__('Payment is still pending. Please try again later.'));
-//                                                             return;
-//                                                         } else {
-//                                                             frappe.msgprint(__('Payment Verified successfully.'));
-//                                                             d.hide();
-//                                                             frm.reload_doc();
-
-//                                                             frappe.confirm(
-//                                                                 __('Do you want to print the payment receipt?'),
-//                                                                 () => {
-//                                                                     frappe.open_route_options({ "doctype": "Payment Session", "name": r.message.name, "print_format": "Payment Receipt" });
-//                                                                 }
-//                                                             );
-//                                                         }
-//                                                     }
-//                                                 });
-//                                             }
-//                                         });
-//                                         d.show();
-//                                     }
-//                                 }
-//                             });
-//                         }
-
-//                         // Add Print Receipt button if there are paid sessions
-//                         if (r.message.payment_sessions && r.message.payment_sessions.length > 0) {
-//                             frm.add_custom_button(__('Print Receipt'), function () {
-//                                 let dialog = new frappe.ui.Dialog({
-//                                     title: __('Select a Payment to Print'),
-//                                     fields: [
-//                                         {
-//                                             label: __('Payment Session'),
-//                                             fieldname: 'payment_session',
-//                                             fieldtype: 'Link',
-//                                             options: 'Payment Session',
-//                                             reqd: 1,
-//                                             get_query: function () {
-//                                                 return {
-//                                                     filters: {
-//                                                         'hotel_room_check_in': frm.doc.name,
-//                                                         'status': 'Paid'
-//                                                     }
-//                                                 };
-//                                             }
-//                                         }
-//                                     ],
-//                                     primary_action_label: __('Print'),
-//                                     primary_action: (values) => {
-//                                         window.open(
-//                                             `/printview?doctype=Payment%20Session&name=${values.payment_session}&format=Payment%20Receipt&no_letterhead=0`,
-//                                             '_blank'
-//                                         );
-//                                         dialog.hide();
-//                                     }
-//                                 });
-//                                 dialog.show();
-//                             });
-
-//                         }
-//                     }
-//                 }
-//             });
-//         }
-
-
-//         // Add custom buttons based on status
-//         if (frm.doc.docstatus === 1 && frm.doc.status === "Checked In") {
-//             frm.add_custom_button(__("Check Out"), () => {
-//                 frappe.model.open_mapped_doc({
-//                     method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
-//                     frm: frm
-//                 });
-//             });
-
-//             frm.add_custom_button(__("Extend Stay"), () => {
-//                 let d = new frappe.ui.Dialog({
-//                     title: __('Extend Stay'),
-//                     fields: [
-//                         {
-//                             label: __('Current Expected Check-out'),
-//                             fieldname: 'current_checkout',
-//                             fieldtype: 'Datetime',
-//                             default: frm.doc.expected_check_out_datetime,
-//                             read_only: 1
-//                         },
-//                         {
-//                             label: __('Number of Nights'),
-//                             fieldname: 'number_of_nights',
-//                             fieldtype: 'Int',
-//                             reqd: 1,
-//                             default: 1,
-//                             onchange: () => {
-//                                 let nights = d.get_value('number_of_nights');
-//                                 if (nights > 0) {
-//                                     let current_checkout = frm.doc.expected_check_out_datetime;
-//                                     let new_checkout = frappe.datetime.add_days(current_checkout, nights);
-
-//                                     // set time part from default check-out time from Hotel Settings
-//                                     frappe.call({
-//                                         method: "rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time",
-//                                         callback: function (r) {
-//                                             if (!r.exc) {
-//                                                 let default_check_out_time = r.message;
-//                                                 if (default_check_out_time) {
-//                                                     let datePart = new_checkout.split(" ")[0];
-//                                                     new_checkout = datePart + " " + default_check_out_time;
-//                                                     d.set_value('new_checkout', new_checkout);
-//                                                 } else {
-//                                                     d.set_value('new_checkout', new_checkout);
-//                                                 }
-//                                             } else {
-//                                                 d.set_value('new_checkout', '');
-
-//                                             }
-//                                         }
-//                                     });
-
-
-//                                 } else {
-//                                     d.set_value('new_checkout', '');
-//                                 }
-//                             }
-//                         },
-//                         {
-//                             label: __('New Expected Check-out'),
-//                             fieldname: 'new_checkout',
-//                             fieldtype: 'Datetime',
-//                             read_only: 1
-//                         }
-//                     ],
-//                     on_page_show: () => { d.fields_dict.number_of_nights.df.onchange(); },
-//                     primary_action_label: __('Confirm Extension'),
-//                     primary_action: (values) => {
-//                         frappe.call({
-//                             method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.extend_stay',
-//                             args: {
-//                                 check_in_name: frm.doc.name,
-//                                 number_of_nights: values.number_of_nights
-//                             },
-//                             callback: (r) => {
-//                                 if (!r.exc) {
-//                                     frm.reload_doc();
-//                                     d.hide();
-//                                 }
-//                             }
-//                         });
-//                     }
-//                 });
-//                 d.show();
-//             });
-
-//             if (frm.doc.docstatus === 1 && frm.doc.status === "Checked In") {
-//                 frm.add_custom_button(__('Transfer Room'), function () {
-//                     const dialog = new frappe.ui.Dialog({
-//                         title: __('Transfer Guest to Another Room'),
-//                         fields: [
-//                             {
-//                                 label: 'New Room',
-//                                 fieldname: 'new_room_number',
-//                                 fieldtype: 'Link',
-//                                 options: 'Hotel Room',
-//                                 reqd: 1,
-//                                 get_query: () => ({
-//                                     filters: { status: 'Vacant', housekeeping_status: 'Clean' }
-//                                 })
-//                             },
-//                             {
-//                                 label: 'Transfer Reason / Note',
-//                                 fieldname: 'transfer_note',
-//                                 fieldtype: 'Small Text'
-//                             }
-//                         ],
-//                         primary_action_label: 'Transfer',
-//                         primary_action(values) {
-//                             frappe.call({
-//                                 method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.transfer_room',
-//                                 args: {
-//                                     check_in_name: frm.doc.name,
-//                                     new_room_number: values.new_room_number,
-//                                     note: values.transfer_note
-//                                 },
-//                                 callback: function (r) {
-//                                     if (!r.exc) {
-//                                         frappe.msgprint(__('Guest transferred successfully to Room {0}').format(values.new_room_number));
-//                                         frm.reload_doc();
-//                                     }
-//                                     frm.reload_doc();
-//                                 },
-//                                 error: function (r) {
-//                                     frappe.msgprint(__('Room transfer failed'));
-//                                 }
-//                             });
-//                             dialog.hide();
-//                         }
-//                     });
-//                     dialog.show();
-//                 });
-//             }
-
-//             // frm.add_custom_button(__("Transfer Room"), () => {
-//             //     let d = new frappe.ui.Dialog({
-//             //         title: __('Transfer Room'),
-//             //         fields: [
-//             //             {
-//             //                 label: __('New Room'),
-//             //                 fieldname: 'new_room',
-//             //                 fieldtype: 'Link',
-//             //                 options: 'Hotel Room',
-//             //                 reqd: 1,
-//             //                 get_query: function () {
-//             //                     return {
-//             //                         filters: {
-//             //                             'status': 'Vacant'
-//             //                         }
-//             //                     };
-//             //                 }
-//             //             },
-//             //             {
-//             //                 label: __('Reason'),
-//             //                 fieldname: 'reason',
-//             //                 fieldtype: 'Text'
-//             //             }
-//             //         ],
-//             //         primary_action_label: __('Confirm Transfer'),
-//             //         primary_action: (values) => {
-//             //             frappe.call({
-//             //                 method: 'frappe.client.insert',
-//             //                 args: {
-//             //                     doc: {
-//             //                         doctype: 'Hotel Room Transfer',
-//             //                         check_in: frm.doc.name,
-//             //                         from_room: frm.doc.room_number,
-//             //                         to_room: values.new_room,
-//             //                         reason: values.reason,
-//             //                         docstatus: 1
-//             //                     }
-//             //                 },
-//             //                 callback: (r) => {
-//             //                     if (!r.exc) {
-//             //                         frm.reload_doc();
-//             //                         d.hide();
-//             //                     }
-//             //                 }
-//             //             });
-//             //         }
-//             //     });
-//             //     d.show();
-//             // });
-
-
-
-//         }
-
-//         // Set dynamic filter for Business Source
-//         frm.set_query("business_source", function () {
-//             return {
-//                 filters: {
-//                     reservation_source: frm.doc.market_source || ""
-
-//                 }
-//             };
-//         })
-//     },
-
-//     on_submit: function (frm) {
-//         frappe.confirm(
-//             __('Do you want to issue a key card for this guest?'),
-//             () => {
-//                 const guestName = frm.doc.guest_name;
-//                 const checkInName = frm.doc.name;
-//                 const roomNumber = frm.doc.room_number;
-//                 const checkInDateTime = frm.doc.check_in_datetime;
-//                 const checkOutDateTime = frm.doc.expected_check_out_datetime;
-
-//                 const url = `hotel-key-card-issuer://issue?guestName=${encodeURIComponent(guestName)}&checkInName=${encodeURIComponent(checkInName)}&roomNumber=${encodeURIComponent(roomNumber)}&checkInDateTime=${encodeURIComponent(checkInDateTime)}&checkOutDateTime=${encodeURIComponent(checkOutDateTime)}`;
-//                 window.open(url, '_self');
-//             },
-//             () => { }
-//         );
-//     },
-
-//     onload: function (frm) {
-//         if (!frm.is_new() && frm.doc.guest) {
-//             frm.add_custom_button(__('Ledger'), function () {
-//                 frappe.call({
-//                     method: 'frappe.client.get_value',
-//                     args: {
-//                         doctype: 'Hotel Guest',
-//                         filters: { name: frm.doc.guest },
-//                         fieldname: 'customer'
-//                     },
-//                     callback: function (r) {
-//                         if (r.message && r.message.customer) {
-//                             frappe.set_route('query-report', 'General Ledger', {
-//                                 party_type: 'Customer',
-//                                 party: r.message.customer
-//                             });
-//                         }
-//                     }
-//                 });
-//             });
-//         }
-//     },
-
-
-//     setup(frm) {
-//         // Fetch check-out date from reservation when reservation is set
-//         frm.set_query("room", function () {
-//             return {
-//                 filters: {
-//                     "status": "Vacant"
-//                 }
-//             };
-//         });
-
-//         frm.set_query("reservation", function () {
-//             return {
-//                 filters: {
-//                     "docstatus": 1,
-//                     "status": ["in", ["Confirmed", "Booked"]]
-//                 }
-//             };
-//         });
-//     },
-
-
-//     market_source: function (frm) {
-//         // Clear old value when market source changes
-//         frm.set_value('business_source', null);
-
-//         // Trigger the query update
-//         frm.fields_dict.business_source.get_query();
-//     },
-//     reservation(frm) {
-//         if (frm.doc.reservation) {
-//             frm.set_df_property('room_number', 'read_only', 1);
-//             frappe.call({
-//                 method: "frappe.client.get",
-//                 args: {
-//                     doctype: "Hotel Room Reservation",
-//                     name: frm.doc.reservation
-//                 },
-//                 callback: function (r) {
-//                     if (r.message) { // r.message contains the reservation document
-//                         frm.set_value('room_number', r.message.room_number);
-//                         frm.set_value('room_type', r.message.room_type);
-//                         frm.set_value('number_of_nights', r.message.number_of_nights);
-//                     }
-//                 },
-//             });
-//         } else {
-//             frm.set_df_property('room_number', 'read_only', 0);
-//             // Clear fields if reservation is cleared
-//             frm.set_value('room_number', null);
-//             frm.set_value('room_type', null);
-//             frm.set_value('number_of_nights', null);
-
-//         }
-//     },
-
-//     expected_check_out_datetime: function (frm) {
-//         frm.trigger('calculate_total_charges');
-//     },
-
-//     number_of_nights: function (frm) {
-//         frm.trigger('calculate_total_charges');
-//     },
-
-//     rate_amount: function (frm) {
-//         frm.trigger('calculate_total_charges');
-//     },
-
-//     calculate_total_charges: function (frm) {
-//         if (frm.doc.check_in_datetime && frm.doc.expected_check_out_datetime && frm.doc.rate_amount) {
-//             //let check_in = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
-//             //let check_out = frappe.datetime.str_to_obj(frm.doc.expected_check_out_datetime);
-//             let nights = frm.doc.number_of_nights;
-//             frm.set_value('total_charges', nights * frm.doc.rate_amount);
-//         }
-//     },
-
-//     room_number: function (frm) {
-//         if (frm.doc.room_number) {
-//             frappe.call({
-//                 method: 'frappe.client.get_value',
-//                 args: {
-//                     doctype: 'Hotel Room',
-//                     filters: { name: frm.doc.room_number },
-//                     fieldname: 'room_type'
-//                 },
-//                 callback: function (response) {
-//                     if (response.message) {
-//                         frm.set_value('room_type', response.message.room_type);
-//                         frm.trigger('fetch_rate');
-//                     }
-//                 }
-//             });
-//         }
-//     },
-
-//     rate_type: function (frm) {
-//         frm.trigger('fetch_rate');
-//     },
-
-//     check_in_datetime: function (frm) {
-//         frm.trigger('fetch_rate');
-//     },
-
-//     fetch_rate: function (frm) {
-//         // Do not fetch rate if a reservation is already linked
-//         if (frm.doc.reservation) {
-//             frappe.show_alert({ message: __("Rate is based on the linked reservation."), indicator: "info" });
-//             return;
-//         }
-
-//         if (frm.doc.room_type && frm.doc.check_in_datetime) {
-//             frappe.call({
-//                 method: 'rhohotel.api.get_room_rate',
-//                 args: {
-//                     room_type: frm.doc.room_type,
-//                     rate_type: "",
-//                     check_in_date: frm.doc.check_in_datetime.split(" ")[0] // Pass only the date part
-//                 },
-//                 callback: function (response) {
-//                     if (response.message && !response.message.error) {
-//                         frm.set_value('rate_amount', response.message);
-//                     } else {
-//                         if (response.message.error) {
-//                             frappe.show_alert({
-//                                 message: __(response.message.error),
-//                                 indicator: 'red'
-//                             });
-//                         }
-//                         frm.set_value('rate_amount', 0);
-//                     }
-//                 }
-//             });
-//         }
-//     },
-
-//     number_of_nights: function (frm) {
-//         if (frm.doc.check_in_datetime && frm.doc.number_of_nights) {
-//             let check_in = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
-//             let new_checkout = frappe.datetime.add_days(check_in, frm.doc.number_of_nights);
-
-//             // set time part from default check-out time from Hotel Settings
-//             frappe.call({
-//                 method: 'rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time',
-//                 callback: function (r) {
-
-//                     if (r.message) {
-//                         let time_part = r.message;
-//                         let date_str = frappe.datetime.obj_to_str(new_checkout);
-//                         new_checkout = date_str + " " + time_part;
-
-//                         frm.set_value('expected_check_out_datetime', new_checkout);
-//                     } else {
-//                         frm.set_value('expected_check_out_datetime', new_checkout);
-//                     }
-//                 }
-//             });
-//             //
-//             frm.set_value('expected_check_out_datetime', new_checkout);
-//         }
-//     }
-// });
-
-// function render_invoices(invoices) {
-
-//     let html = `<table class="table table-bordered">
-//         <thead>
-//             <tr>
-//                 <th>Sales Invoice</th>
-//                 <th>Customer</th>
-//                 <th>Posting Date</th>
-//                 <th>Grand Total</th>
-//                 <th>Balance</th>
-//             </tr>
-//         </thead>
-//         <tbody>`;
-//     let total_grand_total = 0;
-//     let total_outstanding_amount = 0;
-//     if (invoices.length > 0) {
-//         invoices.forEach(invoice => {
-//             total_grand_total += invoice.grand_total || 0;
-//             total_outstanding_amount += invoice.outstanding_amount || 0;
-//             html += `<tr>
-//                 <td><a href="/app/sales-invoice/${invoice.name}">${invoice.name}</a></td>
-//                 <td>${invoice.customer}</td>
-//                 <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
-//                 <td>${format_currency(invoice.grand_total)}</td>
-//                 <td>${format_currency(invoice.outstanding_amount)}</td>
-//             </tr>`;
-//         });
-//     } else {
-//         html += '<tr><td colspan="5" class="text-center">No Invoices Found</td></tr>';
-//     }
-//     html += '</tbody>';
-//     if (invoices.length > 0) {
-//         html += `<tfoot>
-//             <tr style="font-weight: bold; background-color: #f8f9fa;">
-//                 <td colspan="3">Total</td>
-//                 <td>${format_currency(total_grand_total)}</td>
-//                 <td>${format_currency(total_outstanding_amount)}</td>
-//             </tr>
-//         </tfoot>`;
-//     }
-//     html += '</table>';
-
-//     return html;
-// }
-
-// function render_payments(payments) {
-//     let html = `<table class="table table-bordered">
-//         <thead>
-//             <tr>
-//                 <th>Payment Entry</th>
-//                 <th>Party</th>
-//                 <th>Posting Date</th>
-//                 <th>Paid Amount</th>
-//             </tr>
-//         </thead>
-//         <tbody>`;
-//     let total_paid_amount = 0;
-//     if (payments.length > 0) {
-//         payments.forEach(payment => {
-//             total_paid_amount += payment.paid_amount || 0;
-//             html += `<tr>
-//                 <td><a href="/app/payment-entry/${payment.name}">${payment.name}</a></td>
-//                 <td>${payment.party}</td>
-//                 <td>${frappe.datetime.str_to_user(payment.posting_date)}</td>
-//                 <td>${format_currency(payment.paid_amount)}</td>
-//             </tr>`;
-//         });
-//     } else {
-//         html += '<tr><td colspan="4" class="text-center">No Payments Found</td></tr>';
-//     }
-//     html += '</tbody>';
-//     if (payments.length > 0) {
-//         html += `<tfoot>
-//             <tr style="font-weight: bold; background-color: #f8f9fa;">
-//                 <td colspan="3">Total</td>
-//                 <td>${format_currency(total_paid_amount)}</td>
-//             </tr>
-//         </tfoot>`;
-//     }
-//     html += '</table>';
-//     return html;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Copyright (c) 2024, Rhocom Technologies and contributors
 // For license information, please see license.txt
 
@@ -815,79 +124,553 @@ frappe.ui.form.on("Hotel Room Check In", {
                 });
             });
 
-            frm.add_custom_button(__("Extend Stay"), () => {
-                let d = new frappe.ui.Dialog({
-                    title: __('Extend Stay'),
-                    fields: [
-                        {
-                            label: __('Current Expected Check-out'),
-                            fieldname: 'current_checkout',
-                            fieldtype: 'Datetime',
-                            default: frm.doc.expected_check_out_datetime,
-                            read_only: 1
-                        },
-                        {
-                            label: __('Number of Nights'),
-                            fieldname: 'number_of_nights',
-                            fieldtype: 'Int',
-                            reqd: 1,
-                            default: 1,
-                            onchange: () => {
-                                let nights = d.get_value('number_of_nights');
-                                if (nights > 0) {
-                                    let current_checkout = frm.doc.expected_check_out_datetime;
-                                    let new_checkout = frappe.datetime.add_days(current_checkout, nights);
 
-                                    frappe.call({
-                                        method: "rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time",
-                                        callback: function (r) {
-                                            if (!r.exc) {
-                                                let default_check_out_time = r.message;
-                                                if (default_check_out_time) {
-                                                    let datePart = new_checkout.split(" ")[0];
-                                                    new_checkout = datePart + " " + default_check_out_time;
-                                                    d.set_value('new_checkout', new_checkout);
-                                                } else {
-                                                    d.set_value('new_checkout', new_checkout);
-                                                }
+            if (frm.doc.docstatus === 1 && !frm.doc.actual_check_out_datetime) {
+                frm.add_custom_button(__('Adjust Stay'), () => {
+                    // Fetch default checkout time from hotel settings
+                    frappe.call({
+                        method: "rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time",
+                        callback: function (res) {
+                            const default_checkout_time = res.message || "11:00:00";
+                            const today_date = frappe.datetime.get_today();
+                            const default_dt_str = today_date + " " + default_checkout_time;
+                            const default_dt = frappe.datetime.str_to_obj(default_dt_str);
+                            const now_dt = frappe.datetime.str_to_obj(frappe.datetime.now_datetime());
+
+                            let d = new frappe.ui.Dialog({
+                                title: __('Adjust Stay'),
+                                fields: [
+                                    {
+                                        label: __('Current Check-in'),
+                                        fieldname: 'current_checkin',
+                                        fieldtype: 'Datetime',
+                                        default: frm.doc.check_in_datetime,
+                                        read_only: 1
+                                    },
+                                    {
+                                        label: __('Current Expected Check-out'),
+                                        fieldname: 'current_checkout',
+                                        fieldtype: 'Datetime',
+                                        default: frm.doc.expected_check_out_datetime,
+                                        read_only: 1
+                                    },
+                                    {
+                                        fieldtype: 'Column Break'
+                                    },
+                                    {
+                                        label: __('Current Nights'),
+                                        fieldname: 'current_nights',
+                                        fieldtype: 'Int',
+                                        default: frm.doc.number_of_nights || 1,
+                                        read_only: 1
+                                    },
+                                    {
+                                        label: __('Room Rate'),
+                                        fieldname: 'room_rate',
+                                        fieldtype: 'Currency',
+                                        default: frm.doc.rate_amount || 0,
+                                        read_only: 1
+                                    },
+                                    {
+                                        fieldtype: 'Section Break'
+                                    },
+                                    {
+                                        label: __('New Expected Check-out'),
+                                        fieldname: 'new_checkout',
+                                        fieldtype: 'Datetime',
+                                        reqd: 1,
+                                        description: __("Select new check-out date. Time defaults to {0}.", [default_checkout_time]),
+                                        onchange: function () {
+                                            let new_dt_str = d.get_value('new_checkout');
+                                            if (!new_dt_str) return;
+
+                                            // Auto-set time to default checkout time
+                                            const selected_date = new_dt_str.split(" ")[0];
+                                            const new_datetime_with_default_time = selected_date + " " + default_checkout_time;
+
+                                            // Update the field with default time
+                                            if (new_dt_str !== new_datetime_with_default_time) {
+                                                d.set_value('new_checkout', new_datetime_with_default_time);
+                                                return; // onchange will trigger again with correct value
+                                            }
+
+                                            let current_checkout = frm.doc.expected_check_out_datetime;
+                                            let current_dt = frappe.datetime.str_to_obj(current_checkout);
+                                            let selected_dt = frappe.datetime.str_to_obj(new_datetime_with_default_time);
+                                            let checkin_dt = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
+
+                                            // Determine adjustment type
+                                            let type = '';
+                                            let type_color = '';
+                                            if (selected_dt > current_dt) {
+                                                type = 'Extension';
+                                                type_color = 'blue';
+                                            } else if (selected_dt < current_dt) {
+                                                type = 'Reduction';
+                                                type_color = 'orange';
                                             } else {
-                                                d.set_value('new_checkout', '');
+                                                type = 'No Change';
+                                                type_color = 'grey';
+                                            }
+
+                                            d.set_value('adjustment_type', type);
+                                            d.fields_dict.adjustment_type.$wrapper.find('.control-value').css('color', type_color);
+
+                                            // Calculate difference in nights
+                                            let diff_days = frappe.datetime.get_day_diff(
+                                                new_datetime_with_default_time,
+                                                frm.doc.check_in_datetime
+                                            );
+                                            if (diff_days < 1) diff_days = 1;
+                                            d.set_value('new_nights', diff_days);
+
+                                            // Calculate night difference
+                                            let current_nights = frm.doc.number_of_nights || 1;
+                                            let nights_diff = diff_days - current_nights;
+                                            d.set_value('nights_difference', nights_diff);
+
+                                            // Calculate amount
+                                            let room_rate = frm.doc.rate_amount || 0;
+                                            let amount_change = nights_diff * room_rate;
+                                            d.set_value('amount_change', amount_change);
+
+                                            // Show total new amount
+                                            let new_total = diff_days * room_rate;
+                                            d.set_value('new_total_amount', new_total);
+                                        }
+                                    },
+                                    {
+                                        fieldtype: 'Column Break'
+                                    },
+                                    {
+                                        label: __('Adjustment Type'),
+                                        fieldname: 'adjustment_type',
+                                        fieldtype: 'Data',
+                                        read_only: 1
+                                    },
+                                    {
+                                        label: __('New Number of Nights'),
+                                        fieldname: 'new_nights',
+                                        fieldtype: 'Int',
+                                        read_only: 1
+                                    },
+                                    {
+                                        label: __('Nights Difference'),
+                                        fieldname: 'nights_difference',
+                                        fieldtype: 'Int',
+                                        read_only: 1
+                                    },
+                                    {
+                                        fieldtype: 'Section Break',
+                                        label: __('Financial Impact')
+                                    },
+                                    {
+                                        label: __('Amount Change'),
+                                        fieldname: 'amount_change',
+                                        fieldtype: 'Currency',
+                                        read_only: 1,
+                                        description: __('Positive = Additional charge, Negative = Refund/Credit')
+                                    },
+                                    {
+                                        fieldtype: 'Column Break'
+                                    },
+                                    {
+                                        label: __('New Total Amount'),
+                                        fieldname: 'new_total_amount',
+                                        fieldtype: 'Currency',
+                                        read_only: 1
+                                    }
+                                ],
+                                primary_action_label: __('Confirm Adjustment'),
+                                primary_action: (values) => {
+                                    const new_checkout = values.new_checkout;
+                                    if (!new_checkout) {
+                                        frappe.msgprint({
+                                            title: __("Invalid"),
+                                            message: __("Please select new expected checkout."),
+                                            indicator: "orange"
+                                        });
+                                        return;
+                                    }
+
+                                    // Convert to Date objects for validation
+                                    const new_dt = frappe.datetime.str_to_obj(new_checkout);
+                                    const current_dt = frappe.datetime.str_to_obj(frm.doc.expected_check_out_datetime);
+                                    const checkin_dt = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
+
+                                    // Determine if this is extension or reduction
+                                    const is_extension = new_dt > current_dt;
+                                    const is_reduction = new_dt < current_dt;
+
+                                    if (!is_extension && !is_reduction) {
+                                        frappe.msgprint({
+                                            title: __("No Change"),
+                                            message: __("The new checkout time is the same as current. No adjustment needed."),
+                                            indicator: "blue"
+                                        });
+                                        return;
+                                    }
+
+                                    // VALIDATION 1: Must be after check-in datetime
+                                    if (new_dt <= checkin_dt) {
+                                        frappe.msgprint({
+                                            title: __("Invalid Date"),
+                                            indicator: "red",
+                                            message: __("New checkout must be after the check-in date/time: {0}",
+                                                [frappe.datetime.global_format(checkin_dt)])
+                                        });
+                                        return;
+                                    }
+
+                                    // VALIDATION 2: Cannot be in the past
+                                    if (new_dt < now_dt) {
+                                        frappe.msgprint({
+                                            title: __("Invalid Date"),
+                                            indicator: "red",
+                                            message: __("New checkout cannot be in the past. Current time is: {0}",
+                                                [frappe.datetime.global_format(now_dt)])
+                                        });
+                                        return;
+                                    }
+
+                                    // VALIDATION 3: For REDUCTION only - special rules for "today"
+                                    if (is_reduction) {
+                                        const new_date_str = new_checkout.split(" ")[0];
+
+                                        if (new_date_str === today_date) {
+                                            // If current time has already passed default checkout -> NOT allowed
+                                            if (now_dt > default_dt) {
+                                                frappe.msgprint({
+                                                    title: __("Not Allowed"),
+                                                    indicator: "red",
+                                                    message: __("Reducing stay to today is not allowed because the hotel's default checkout time for today ({0}) has already passed.",
+                                                        [frappe.datetime.global_format(default_dt)])
+                                                });
+                                                return;
+                                            }
+
+                                            // If reducing to today, time must be on or before default checkout
+                                            if (new_dt > default_dt) {
+                                                frappe.msgprint({
+                                                    title: __("Invalid Time"),
+                                                    indicator: "red",
+                                                    message: __("For today, new checkout must be on or before the hotel's default checkout time: {0}",
+                                                        [frappe.datetime.global_format(default_dt)])
+                                                });
+                                                return;
                                             }
                                         }
-                                    });
-                                } else {
-                                    d.set_value('new_checkout', '');
-                                }
-                            }
-                        },
-                        {
-                            label: __('New Expected Check-out'),
-                            fieldname: 'new_checkout',
-                            fieldtype: 'Datetime',
-                            read_only: 1
-                        }
-                    ],
-                    on_page_show: () => { d.fields_dict.number_of_nights.df.onchange(); },
-                    primary_action_label: __('Confirm Extension'),
-                    primary_action: (values) => {
-                        frappe.call({
-                            method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.extend_stay',
-                            args: {
-                                check_in_name: frm.doc.name,
-                                number_of_nights: values.number_of_nights
-                            },
-                            callback: (r) => {
-                                if (!r.exc) {
-                                    frm.reload_doc();
-                                    d.hide();
-                                }
-                            }
-                        });
-                    }
-                });
-                d.show();
-            });
+                                    }
 
+                                    // VALIDATION 4 (Optional): Minimum notice period for reductions
+                                    // Uncomment if you want to enforce advance notice
+                                    /*
+                                    if (is_reduction) {
+                                        const min_notice_hours = 1;
+                                        const earliest_allowed = frappe.datetime.add_to_date(now_dt, {hours: min_notice_hours});
+                                        if (new_dt < earliest_allowed) {
+                                            frappe.msgprint({
+                                                title: __("Insufficient Notice"),
+                                                indicator: "red",
+                                                message: __("Please provide at least {0} hour(s) notice for reductions. Earliest allowed checkout: {1}", 
+                                                           [min_notice_hours, frappe.datetime.global_format(earliest_allowed)])
+                                            });
+                                            return;
+                                        }
+                                    }
+                                    */
+
+                                    // All validations passed - proceed with adjustment
+                                    frappe.call({
+                                        method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.adjust_stay',
+                                        args: {
+                                            check_in_name: frm.doc.name,
+                                            new_checkout: values.new_checkout
+                                        },
+                                        freeze: true,
+                                        freeze_message: __("Processing stay adjustment..."),
+                                        callback: (r) => {
+                                            if (!r.exc) {
+                                                const adjustment_type = r.message?.adjustment_type || values.adjustment_type;
+                                                frappe.show_alert({
+                                                    message: __('Stay {0} completed successfully!', [adjustment_type]),
+                                                    indicator: 'green'
+                                                }, 5);
+                                                frm.reload_doc();
+                                                d.hide();
+                                            }
+                                        },
+                                        error: (r) => {
+                                            frappe.msgprint({
+                                                title: __("Error"),
+                                                message: __("Failed to adjust stay. Please try again or contact support."),
+                                                indicator: "red"
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+
+                            d.show();
+                        },
+                        error: (r) => {
+                            frappe.msgprint({
+                                title: __("Error"),
+                                message: __("Failed to fetch hotel settings. Please try again."),
+                                indicator: "red"
+                            });
+                        }
+                    });
+                });
+            }
+            // frm.add_custom_button(__("Extend Stay"), () => {
+            //     let d = new frappe.ui.Dialog({
+            //         title: __('Extend Stay'),
+            //         fields: [
+            //             {
+            //                 label: __('Current Expected Check-out'),
+            //                 fieldname: 'current_checkout',
+            //                 fieldtype: 'Datetime',
+            //                 default: frm.doc.expected_check_out_datetime,
+            //                 read_only: 1
+            //             },
+            //             {
+            //                 label: __('Number of Nights'),
+            //                 fieldname: 'number_of_nights',
+            //                 fieldtype: 'Int',
+            //                 reqd: 1,
+            //                 default: 1,
+            //                 onchange: () => {
+            //                     let nights = d.get_value('number_of_nights');
+            //                     if (nights > 0) {
+            //                         let current_checkout = frm.doc.expected_check_out_datetime;
+            //                         let new_checkout = frappe.datetime.add_days(current_checkout, nights);
+
+            //                         frappe.call({
+            //                             method: "rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time",
+            //                             callback: function (r) {
+            //                                 if (!r.exc) {
+            //                                     let default_check_out_time = r.message;
+            //                                     if (default_check_out_time) {
+            //                                         let datePart = new_checkout.split(" ")[0];
+            //                                         new_checkout = datePart + " " + default_check_out_time;
+            //                                         d.set_value('new_checkout', new_checkout);
+            //                                     } else {
+            //                                         d.set_value('new_checkout', new_checkout);
+            //                                     }
+            //                                 } else {
+            //                                     d.set_value('new_checkout', '');
+            //                                 }
+            //                             }
+            //                         });
+            //                     } else {
+            //                         d.set_value('new_checkout', '');
+            //                     }
+            //                 }
+            //             },
+            //             {
+            //                 label: __('New Expected Check-out'),
+            //                 fieldname: 'new_checkout',
+            //                 fieldtype: 'Datetime',
+            //                 read_only: 1
+            //             }
+            //         ],
+            //         on_page_show: () => { d.fields_dict.number_of_nights.df.onchange(); },
+            //         primary_action_label: __('Confirm Extension'),
+            //         primary_action: (values) => {
+            //             frappe.call({
+            //                 method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.extend_stay',
+            //                 args: {
+            //                     check_in_name: frm.doc.name,
+            //                     number_of_nights: values.number_of_nights
+            //                 },
+            //                 callback: (r) => {
+            //                     if (!r.exc) {
+            //                         frm.reload_doc();
+            //                         d.hide();
+            //                     }
+            //                 }
+            //             });
+            //         }
+            //     });
+            //     d.show();
+            // });
+            // frm.add_custom_button(__("Reduce Stay"), () => {
+            //     // fetch default checkout time but don't apply it to user's choice
+            //     frappe.call({
+            //         method: "rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time",
+            //         callback: function(res) {
+            //             const default_checkout_time = res.message || "11:00:00"; // only used for constraints
+            //             const today_date = frappe.datetime.get_today(); // "YYYY-MM-DD"
+            //             const default_dt_str = today_date + " " + default_checkout_time;
+            //             const default_dt = frappe.datetime.str_to_obj(default_dt_str); // today @ default checkout
+            //             const now_dt = frappe.datetime.str_to_obj(frappe.datetime.now_datetime());
+
+            //             const d = new frappe.ui.Dialog({
+            //                 title: __('Reduce Stay'),
+            //                 fields: [
+            //                     {
+            //                         label: __('Current Expected Check-out'),
+            //                         fieldname: 'current_checkout',
+            //                         fieldtype: 'Datetime',
+            //                         default: frm.doc.expected_check_out_datetime,
+            //                         read_only: 1
+            //                     },
+            //                     {
+            //                         label: __('New Expected Check-out'),
+            //                         fieldname: 'new_checkout',
+            //                         fieldtype: 'Datetime',
+            //                         reqd: 1,
+            //                         description: __("Pick the new expected check-out date. Time will default to hotel checkout time ({0}).", [default_checkout_time])
+            //                     }
+            //                 ],
+            //                 primary_action_label: __('Confirm Reduction'),
+            //                 primary_action: (values) => {
+            //                     const new_checkout = values.new_checkout;
+            //                     if (!new_checkout) {
+            //                         frappe.msgprint({
+            //                             title: __("Invalid"), 
+            //                             message: __("Please select new expected checkout."), 
+            //                             indicator: "orange"
+            //                         });
+            //                         return;
+            //                     }
+
+            //                     // convert strings -> Date objects using frappe helper
+            //                     const new_dt = frappe.datetime.str_to_obj(new_checkout);
+            //                     const current_dt = frappe.datetime.str_to_obj(frm.doc.expected_check_out_datetime);
+            //                     const checkin_dt = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
+
+            //                     // VALIDATION 1: must be earlier than current expected checkout
+            //                     if (!(new_dt < current_dt)) {
+            //                         frappe.msgprint({
+            //                             title: __("Invalid Date"),
+            //                             indicator: "red",
+            //                             message: __("New checkout must be earlier than the current expected checkout: ") + 
+            //                                      frappe.datetime.global_format(current_dt)
+            //                         });
+            //                         return;
+            //                     }
+
+            //                     // VALIDATION 2: must be after check-in datetime
+            //                     if (new_dt <= checkin_dt) {
+            //                         frappe.msgprint({
+            //                             title: __("Invalid Date"),
+            //                             indicator: "red",
+            //                             message: __("New checkout must be after the check-in date/time: ") + 
+            //                                      frappe.datetime.global_format(checkin_dt)
+            //                         });
+            //                         return;
+            //                     }
+
+            //                     // VALIDATION 3: cannot be in the past (strictly before now)
+            //                     if (new_dt < now_dt) {
+            //                         frappe.msgprint({
+            //                             title: __("Invalid Date"),
+            //                             indicator: "red",
+            //                             message: __("New checkout cannot be in the past. Current time is: ") + 
+            //                                      frappe.datetime.global_format(now_dt)
+            //                         });
+            //                         return;
+            //                     }
+
+            //                     // VALIDATION 4: Minimum notice period (1 hour from now)
+            //                     // Optional: uncomment if you want to enforce advance notice
+            //                     /*
+            //                     const min_notice_hours = 1;
+            //                     const earliest_allowed = frappe.datetime.add_to_date(now_dt, {hours: min_notice_hours});
+            //                     if (new_dt < earliest_allowed) {
+            //                         frappe.msgprint({
+            //                             title: __("Insufficient Notice"),
+            //                             indicator: "red",
+            //                             message: __("Please provide at least {0} hour(s) notice. Earliest allowed checkout: {1}", 
+            //                                        [min_notice_hours, frappe.datetime.global_format(earliest_allowed)])
+            //                         });
+            //                         return;
+            //                     }
+            //                     */
+
+            //                     // VALIDATION 5: Special rule for "reducing to today":
+            //                     // If user picks a date that is today, only allow it when current time has not passed default checkout time.
+            //                     const new_date_str = new_checkout.split(" ")[0];
+            //                     if (new_date_str === today_date) {
+            //                         // If current time has already passed default checkout -> NOT allowed to reduce to today
+            //                         if (now_dt > default_dt) {
+            //                             frappe.msgprint({
+            //                                 title: __("Not Allowed"),
+            //                                 indicator: "red",
+            //                                 message: __("Reducing stay to today is not allowed because the hotel's default checkout time for today ({0}) has already passed.", 
+            //                                            [frappe.datetime.global_format(default_dt)])
+            //                             });
+            //                             return;
+            //                         }
+
+            //                         // If now <= default checkout, ensure the user's picked time is not later than default checkout time.
+            //                         // This preserves the time the user selected; we only compare not overwrite.
+            //                         if (new_dt > default_dt) {
+            //                             frappe.msgprint({
+            //                                 title: __("Invalid Time"),
+            //                                 indicator: "red",
+            //                                 message: __("For today, new checkout must be on or before the hotel's default checkout time: {0}", 
+            //                                            [frappe.datetime.global_format(default_dt)])
+            //                             });
+            //                             return;
+            //                         }
+            //                     }
+
+            //                     // Passed all validations — call backend
+            //                     frappe.call({
+            //                         method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.reduce_stay',
+            //                         args: {
+            //                             check_in_name: frm.doc.name,
+            //                             new_checkout: new_checkout
+            //                         },
+            //                         callback: (r) => {
+            //                             if (!r.exc) {
+            //                                 frappe.msgprint({
+            //                                     title: __("Success"),
+            //                                     message: __("Stay reduction completed successfully."),
+            //                                     indicator: "green"
+            //                                 });
+            //                                 frm.reload_doc();
+            //                                 d.hide();
+            //                             }
+            //                         },
+            //                         error: (r) => {
+            //                             frappe.msgprint({
+            //                                 title: __("Error"),
+            //                                 message: __("Failed to reduce stay. Please try again or contact support."),
+            //                                 indicator: "red"
+            //                             });
+            //                         }
+            //                     });
+            //                 }
+            //             });
+
+            //             // Set default value for new checkout field with default checkout time
+            //             // When user picks a date, the time will default to hotel's checkout time
+            //             d.fields_dict.new_checkout.df.onchange = function() {
+            //                 const selected = d.get_value('new_checkout');
+            //                 if (selected) {
+            //                     // Extract just the date part from user's selection
+            //                     const selected_date = selected.split(" ")[0];
+            //                     // Combine it with default checkout time
+            //                     const new_datetime = selected_date + " " + default_checkout_time;
+            //                     d.set_value('new_checkout', new_datetime);
+            //                 }
+            //             };
+
+            //             d.show();
+            //         },
+            //         error: (r) => {
+            //             frappe.msgprint({
+            //                 title: __("Error"),
+            //                 message: __("Failed to fetch hotel settings. Please try again."),
+            //                 indicator: "red"
+            //             });
+            //         }
+            //     });
+            // });
             frm.add_custom_button(__('Transfer Room'), function () {
                 const dialog = new frappe.ui.Dialog({
                     title: __('Transfer Guest to Another Room'),
@@ -984,19 +767,27 @@ frappe.ui.form.on("Hotel Room Check In", {
         }
 
         // Load route options only when creating a new doc
-        console.log(frappe.route_options);
 
-        if (frm.is_new() && frappe.route_options) {
-            frm.set_value("reservation", frappe.route_options.reservation);
-            frm.set_value("guest", frappe.route_options.guest);
-            frm.set_value("room_number", frappe.route_options.room_number);
-            frm.set_value("rate_amount", frappe.route_options.rate_amount);
-            // frm.set_value("check_in_datetime", frappe.route_options.check_in_datetime);
-            frm.set_value("expected_check_out_datetime", frappe.route_options.expected_check_out_datetime);
+        // if (frm.is_new() && frappe.route_options) {
 
-            // Clear route options after using them
-            frappe.route_options = null;
-        }
+        //     // let nights = frappe.datetime.get_day_diff(
+        //     //     frappe.route_options
+        //     // );
+
+        //     console.log("data from route options", frappe.route_options)
+
+
+
+        //     frm.set_value("reservation", frappe.route_options.reservation);
+        //     frm.set_value("guest", frappe.route_options.guest);
+        //     frm.set_value("room_number", frappe.route_options.room_number);
+        //     frm.set_value("rate_amount", frappe.route_options.rate_amount);
+        //     // frm.set_value("check_in_datetime", frappe.route_options.check_in_datetime);
+        //     //frm.set_value("expected_check_out_datetime", frappe.route_options.to_date);
+
+        //     // Clear route options after using them
+        //     frappe.route_options = null;
+        // }
     },
 
     // get number of nights from two dates
@@ -1044,31 +835,51 @@ frappe.ui.form.on("Hotel Room Check In", {
                     name: frm.doc.reservation
                 },
                 callback: function (r) {
-                    console.log(r);
                     if (r.message) {
-                        //frm.set_value('check_in_datetime', r.message.from_date);
-                        frm.set_value('expected_check_out_datetime', r.message.to_date);
-                        frm.set_value('room_number', r.message.room_number);
-                        frm.set_value('rate_amount', r.message.rate);
-                        frm.set_value('guest', r.message.guest_name);
-                        //frm.set_value('room_type', r.message.room_type);
 
-                        //frm.set_value('number_of_nights', frm.calculate_number_of_nights());
+                        frappe.call({
+                            method: 'rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.get_default_check_out_time',
+                            callback: function (res) {
+                                if (res.message) {
+                                    let time_part = res.message;
 
-                        frm.set_value('discount', r.message.discount);
+                                    let expected_check_out_datetime = r.message.to_date + " " + time_part;
+                                    let formatted_checkout = frappe.datetime.str_to_obj(expected_check_out_datetime);
+                                    // new_checkout = date_str + " " + time_part;
 
-                        let from = frappe.datetime.str_to_obj(r.message.from_date);
-                        let to = frappe.datetime.str_to_obj(r.message.to_date);
-                        let nights = frappe.datetime.get_day_diff(to, from);
-                        frm.set_value('number_of_nights', nights);
+                                    ////////
+                                    let check_in_datetime = r.message.from_date;
 
-                        frm.set_df_property('room_number', 'read_only', 1);
-                        frm.set_df_property('number_of_nights', 'read_only', 1);
-                        frm.set_df_property('discount', 'read_only', 1);
-                        frm.set_df_property('rate_amount', 'read_only', 1);
-                        frm.set_df_property('room_type', 'read_only', 1);
+                                    // If append current time if not time on check_in_datetime
+                                    if (!check_in_datetime.includes(" ")) {
+                                        check_in_datetime += " " + frappe.datetime.now_datetime().split(" ")[1];
+                                    }
 
 
+                                    //frm.set_value('check_in_datetime', check_in_datetime);
+
+
+                                    let from = frappe.datetime.str_to_obj(check_in_datetime);
+                                    let to = frappe.datetime.str_to_obj(formatted_checkout);
+                                    let nights = frappe.datetime.get_day_diff(to, from);
+
+                                    //format expected_check_out_datetime and attach default check out time to the time part
+                                    frm.set_value('expected_check_out_datetime', formatted_checkout);
+                                    frm.set_value('room_number', r.message.room_number);
+                                    frm.set_value('rate_amount', r.message.rate);
+                                    frm.set_value('guest', r.message.guest_name);
+                                    frm.set_value('number_of_nights', nights);
+                                    frm.set_value('discount', r.message.discount);
+
+                                    frm.set_df_property('room_number', 'read_only', 1);
+                                    frm.set_df_property('number_of_nights', 'read_only', 1);
+                                    frm.set_df_property('discount', 'read_only', 1);
+                                    frm.set_df_property('rate_amount', 'read_only', 1);
+                                    frm.set_df_property('room_type', 'read_only', 1);
+
+                                }
+                            }
+                        });
                     }
                 },
             });
@@ -1159,7 +970,7 @@ frappe.ui.form.on("Hotel Room Check In", {
     },
 
     number_of_nights: function (frm) {
-        if (frm.doc.check_in_datetime && frm.doc.number_of_nights) {
+        if (frm.doc.check_in_datetime && frm.doc.number_of_nights && !frm.doc.reservation) {
             let check_in = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
             let new_checkout = frappe.datetime.add_days(check_in, frm.doc.number_of_nights);
 

@@ -1,0 +1,184 @@
+{
+  "actions": [],
+  "allow_copy": 0,
+  "creation": "2025-12-01 12:00:00",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "istable": 1,
+  "field_order": [
+    "room_number",
+    "room_type",
+    "rate_type",
+    "season_type",
+    "column_break_1",
+    "rate_per_night",
+    "number_of_nights",
+    "room_total",
+    "guest_details_section",
+    "guest_name",
+    "guest_gender",
+    "column_break_guest",
+    "guest_id_type",
+    "guest_id_number",
+    "guest_phone",
+    "guest_email",
+    "section_break_links",
+    "guest_customer",
+    "hotel_guest",
+    "hotel_room_reservation",
+    "check_in_reference"
+  ],
+  "fields": [
+    {
+      "fieldname": "room_number",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Room Number",
+      "options": "Hotel Room",
+      "reqd": 1,
+      "description": "Select available room - filtered by check-in/check-out dates"
+    },
+    {
+      "fetch_from": "room_number.room_type",
+      "fieldname": "room_type",
+      "fieldtype": "Link",
+      "label": "Room Type",
+      "options": "Hotel Room Type",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "rate_type",
+      "fieldtype": "Data",
+      "label": "Rate Type",
+      "read_only": 1
+    },
+    {
+      "fieldname": "season_type",
+      "fieldtype": "Data",
+      "label": "Season Type",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "rate_per_night",
+      "fieldtype": "Currency",
+      "label": "Rate per Night",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "number_of_nights",
+      "fieldtype": "Int",
+      "label": "Nights",
+      "read_only": 1
+    },
+    {
+      "fieldname": "room_total",
+      "fieldtype": "Currency",
+      "label": "Room Total",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "guest_details_section",
+      "fieldtype": "Section Break",
+      "label": "Guest Occupying This Room"
+    },
+    {
+      "fieldname": "guest_name",
+      "fieldtype": "Data",
+      "label": "Guest Name",
+      "reqd": 0,
+      "description": "Name of person staying in this room"
+    },
+    {
+      "fieldname": "guest_gender",
+      "fieldtype": "Select",
+      "label": "Gender",
+      "options": "\nMale\nFemale\nOther"
+    },
+    {
+      "fieldname": "column_break_guest",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "guest_id_type",
+      "fieldtype": "Select",
+      "label": "ID Type",
+      "options": "\nPassport\nNational ID\nDriver's License\nOther"
+    },
+    {
+      "fieldname": "guest_id_number",
+      "fieldtype": "Data",
+      "label": "ID Number"
+    },
+    {
+      "fieldname": "guest_phone",
+      "fieldtype": "Data",
+      "label": "Phone Number"
+    },
+    {
+      "fieldname": "guest_email",
+      "fieldtype": "Data",
+      "label": "Email",
+      "options": "Email"
+    },
+    {
+      "collapsible": 1,
+      "collapsible_depends_on": "eval:doc.guest_customer",
+      "fieldname": "section_break_links",
+      "fieldtype": "Section Break",
+      "label": "System Links (Auto-generated)"
+    },
+    {
+      "fieldname": "guest_customer",
+      "fieldtype": "Link",
+      "label": "Guest Customer",
+      "options": "Customer",
+      "read_only": 1,
+      "description": "Auto-created customer for this guest"
+    },
+    {
+      "fieldname": "hotel_guest",
+      "fieldtype": "Link",
+      "label": "Hotel Guest",
+      "options": "Hotel Guest",
+      "read_only": 1,
+      "description": "Auto-created/linked Hotel Guest record"
+    },
+    {
+      "fieldname": "hotel_room_reservation",
+      "fieldtype": "Link",
+      "label": "Room Reservation",
+      "options": "Hotel Room Reservation",
+      "read_only": 1,
+      "description": "Created upon confirmation"
+    },
+    {
+      "fieldname": "check_in_reference",
+      "fieldtype": "Link",
+      "label": "Check In Reference",
+      "options": "Hotel Room Check In",
+      "read_only": 1,
+      "description": "Created when guest checks in"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "istable": 1,
+  "links": [],
+  "modified": "2025-12-01 12:00:00",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Front Desk Reservation Room",
+  "owner": "Administrator",
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

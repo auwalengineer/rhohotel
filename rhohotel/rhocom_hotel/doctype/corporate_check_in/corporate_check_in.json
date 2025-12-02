@@ -1,0 +1,212 @@
+{
+  "actions": [],
+  "creation": "2025-12-01 12:00:00",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "corporate_details_section",
+    "corporate_guest",
+    "customer",
+    "corporate_contact_person",
+    "corporate_email",
+    "column_break_1",
+    "check_in_datetime",
+    "expected_check_out_datetime",
+    "number_of_nights",
+    "room_filter_section",
+    "filter_by_room_type",
+    "rooms_section",
+    "rooms",
+    "pricing_section",
+    "total_room_charges",
+    "discount_type",
+    "discount",
+    "column_break_pricing",
+    "discount_amount",
+    "total_charges",
+    "section_break_status",
+    "status",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "corporate_details_section",
+      "fieldtype": "Section Break",
+      "label": "Corporate Details"
+    },
+    {
+      "fieldname": "corporate_guest",
+      "fieldtype": "Link",
+      "label": "Corporate Guest",
+      "options": "Hotel Guest",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fetch_from": "corporate_guest.customer",
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "corporate_guest.contact_number",
+      "fieldname": "corporate_contact_person",
+      "fieldtype": "Data",
+      "label": "Contact Person",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "corporate_guest.email",
+      "fieldname": "corporate_email",
+      "fieldtype": "Data",
+      "label": "Email",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "now",
+      "fieldname": "check_in_datetime",
+      "fieldtype": "Datetime",
+      "label": "Check-in Time",
+      "reqd": 1
+    },
+    {
+      "fieldname": "expected_check_out_datetime",
+      "fieldtype": "Datetime",
+      "label": "Expected Check-out Time",
+      "reqd": 1
+    },
+    {
+    "fieldname": "number_of_nights",
+    "fieldtype": "Int",
+    "label": "Number of Nights",
+    "reqd": 1,
+    "read_only": 1
+    },
+    {
+      "fieldname": "room_filter_section",
+      "fieldtype": "Section Break",
+      "label": "Room Filter"
+    },
+    {
+      "fieldname": "filter_by_room_type",
+      "fieldtype": "Link",
+      "label": "Filter by Room Type (Optional)",
+      "options": "Hotel Room Type"
+    },
+    {
+      "fieldname": "rooms_section",
+      "fieldtype": "Section Break",
+      "label": "Rooms and Guests"
+    },
+    {
+      "fieldname": "rooms",
+      "fieldtype": "Table",
+      "label": "Rooms",
+      "options": "Corporate Check In Room",
+      "reqd": 1
+    },
+    {
+      "fieldname": "pricing_section",
+      "fieldtype": "Section Break",
+      "label": "Pricing"
+    },
+    {
+      "fieldname": "total_room_charges",
+      "fieldtype": "Currency",
+      "label": "Total Room Charges",
+      "read_only": 1
+    },
+    {
+      "fieldname": "discount_type",
+      "fieldtype": "Select",
+      "label": "Discount Type",
+      "options": "\nPercentage\nAmount"
+    },
+    {
+      "depends_on": "eval:doc.discount_type",
+      "fieldname": "discount",
+      "fieldtype": "Float",
+      "label": "Discount (%/Amount)"
+    },
+    {
+      "fieldname": "column_break_pricing",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "discount_amount",
+      "fieldtype": "Currency",
+      "label": "Discount Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_charges",
+      "fieldtype": "Currency",
+      "label": "Total Charges (After Discount)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "section_break_status",
+      "fieldtype": "Section Break"
+    },
+    {
+      "default": "Draft",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Draft\nChecked In\nChecked Out\nCancelled",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Text",
+      "label": "Notes"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 1,
+  "links": [],
+  "modified": "2025-12-01 12:00:00",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Corporate Check In",
+  "naming_rule": "Expression (old style)",
+  "autoname": "format:CORP-CHK-{####}",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

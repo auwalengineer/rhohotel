@@ -1080,7 +1080,7 @@ def verify_callback_payment(reference):
             rooms_list = []
             for room in temp_booking.rooms:
                 rooms_list.append({
-                    "room_number": room.room_number,
+                    # "room_number": room.room_number,
                     "room_type": room.room_type,
                     "rate_per_night": room.rate_per_night,
                     "num_nights": room.num_nights,
@@ -1541,6 +1541,8 @@ def process_payment_transaction(booking_number, payment_data, source="webhook"):
                     "temporary_booking_reference": temp_booking.name,
                     "booking_number": booking_number,
                     "room_number": room.room_number,
+                    "rate": room.rate_per_night,
+                    "discount": 0,
                     "from_date": temp_booking.check_in_date,
                     "to_date": temp_booking.check_out_date,
                     "guest_name": temp_booking.guest_name,

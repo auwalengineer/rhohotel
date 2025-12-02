@@ -16,19 +16,144 @@ class HotelRoomReservation(Document):
         self.net_total = (number_of_nights * self.rate) - self.discount
 
     def before_insert(self):
+        
+        # reformat to_date time part to use default checkout time from hotel settings
+        if self.to_date:
+            hotel_settings = frappe.get_single("Hotel Settings")
+            default_time_str = hotel_settings.default_check_out_time  # e.g. "12:00:00"
+
+            if default_time_str:
+                # Convert values
+                to_dt = get_datetime(self.to_date)  # convert str → datetime
+                default_time = datetime.strptime(default_time_str, "%H:%M:%S").time()
+
+                # Replace time part safely
+                self.to_date = datetime.combine(to_dt.date(), default_time)
+
+        
         number_of_nights = frappe.utils.date_diff(self.to_date, self.from_date)
         self.net_total = (number_of_nights * self.rate) - self.discount
         self.create_guest_if_not_exists()
-        
-    def create_guest_if_not_exists(self):
-        """Create Hotel Guest if not exists"""
-        if not frappe.db.exists("Hotel Guest", self.guest_name):
-            guest = frappe.new_doc("Hotel Guest")
-            guest.hotel_guest_name = self.guest_name
-            guest.insert(ignore_permissions=True)
-            guest.submit()
 
         
+    # def create_guest_if_not_exists(self):
+    #     """Create Hotel Guest if not exists"""
+    #     if not frappe.db.exists("Hotel Guest", self.guest_name):
+    #         guest = frappe.new_doc("Hotel Guest")
+    #         guest.hotel_guest_name = self.guest_name
+    #         guest.insert(ignore_permissions=True)
+    #         guest.submit()
+    
+    def create_guest_if_not_exists(self):
+        """Create Hotel Guest if not exists"""
+
+        # If already exists by name, stop
+        if frappe.db.exists("Hotel Guest", self.guest_name):
+            return self.guest_name
+
+        # Try create with phone number first
+        try:
+            guest = frappe.get_doc({
+                "doctype": "Hotel Guest",
+                "hotel_guest_name": self.guest_name,
+                "phone_number": "",
+                "email": "",
+                "gender":  "Male",
+                "id_type": "Passport",
+                "id_number":  "",
+                "customer": self.customer,
+                "guest_type":  "Individual"
+            })
+
+            guest.flags.ignore_permissions = True
+            guest.insert()
+            return guest.name
+
+        except frappe.exceptions.InvalidPhoneNumberError:
+            # Retry WITHOUT phone number
+            guest = frappe.get_doc({
+                "doctype": "Hotel Guest",
+                "hotel_guest_name": self.guest_name,
+                "phone_number": "",
+                "email":  "",
+                "gender":  "Male",
+                "id_type": "Passport",
+                "id_number": self.guest_id_number or "",
+                "customer": self.customer,
+                "guest_type": "Individual"
+            })
+
+            guest.flags.ignore_permissions = True
+            guest.insert()
+
+            # Now update phone manually after bypassing validation
+            if self.guest_phone:
+                frappe.db.set_value(
+                    "Hotel Guest",
+                    guest.name,
+                    "phone_number",
+                    self.guest_phone,
+                    update_modified=False
+                )
+
+            return guest.name
+
+    # def create_guest_if_not_exists(self):
+    #     """Create Hotel Guest if not exists"""
+
+    #     # If already exists by name, stop
+    #     if frappe.db.exists("Hotel Guest", self.guest_name):
+    #         return self.guest_name
+
+    #     # Try create with phone number first
+    #     try:
+    #         guest = frappe.get_doc({
+    #             "doctype": "Hotel Guest",
+    #             "hotel_guest_name": self.guest_name,
+    #             "phone_number": self.guest_phone or "",
+    #             "email": self.guest_email or "",
+    #             "gender": self.guest_gender or "Male",
+    #             "id_type": self.guest_id_type or "Passport",
+    #             "id_number": self.guest_id_number or "",
+    #             "customer": self.customer,
+    #             "guest_type": "Corporate" if self.reservation_type == "Corporate" else "Individual"
+    #         })
+
+    #         guest.flags.ignore_permissions = True
+    #         guest.insert()
+    #         return guest.name
+
+    #     except frappe.exceptions.InvalidPhoneNumberError:
+    #         # Retry WITHOUT phone number
+    #         guest = frappe.get_doc({
+    #             "doctype": "Hotel Guest",
+    #             "hotel_guest_name": self.guest_name,
+    #             "phone_number": "",
+    #             "email": self.guest_email or "",
+    #             "gender": self.guest_gender or "Male",
+    #             "id_type": self.guest_id_type or "Passport",
+    #             "id_number": self.guest_id_number or "",
+    #             "customer": self.customer,
+    #             "guest_type": "Corporate" if self.reservation_type == "Corporate" else "Individual"
+    #         })
+
+    #         guest.flags.ignore_permissions = True
+    #         guest.insert()
+
+    #         # Now update phone manually after bypassing validation
+    #         if self.guest_phone:
+    #             frappe.db.set_value(
+    #                 "Hotel Guest",
+    #                 guest.name,
+    #                 "phone_number",
+    #                 self.guest_phone,
+    #                 update_modified=False
+    #             )
+
+    #         return guest.name
+
+
+
     def validate_room_availability(self):
         """Validate if the room is available for the given period"""
 

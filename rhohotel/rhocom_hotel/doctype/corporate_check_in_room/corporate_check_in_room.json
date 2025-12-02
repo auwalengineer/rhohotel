@@ -1,0 +1,124 @@
+{
+  "actions": [],
+  "creation": "2025-12-01 12:00:00",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "istable": 1,
+  "field_order": [
+    "room_number",
+    "room_type",
+    "rate_amount",
+    "total_amount",
+    "column_break_1",
+    "guest_name",
+    "guest_gender",
+    "guest_id_type",
+    "guest_id_number",
+    "guest_phone",
+    "guest_email",
+    "section_break_2",
+    "guest_customer",
+    "check_in_reference"
+  ],
+  "fields": [
+    {
+      "fieldname": "room_number",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Room",
+      "options": "Hotel Room",
+      "reqd": 1
+    },
+    {
+      "fetch_from": "room_number.room_type",
+      "fieldname": "room_type",
+      "fieldtype": "Link",
+      "label": "Room Type",
+      "options": "Hotel Room Type",
+      "read_only": 1
+    },
+    {
+      "fieldname": "rate_amount",
+      "fieldtype": "Currency",
+      "in_list_view": 1,
+      "label": "Rate per Night",
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_amount",
+      "fieldtype": "Currency",
+      "in_list_view": 1,
+      "label": "Total Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "guest_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Guest Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "guest_gender",
+      "fieldtype": "Select",
+      "label": "Gender",
+      "options": "Male\nFemale"
+    },
+    {
+      "fieldname": "guest_id_type",
+      "fieldtype": "Select",
+      "label": "ID Type",
+      "options": "Passport\nNational ID\nDriver's License"
+    },
+    {
+      "fieldname": "guest_id_number",
+      "fieldtype": "Data",
+      "label": "ID Number"
+    },
+    {
+      "fieldname": "guest_phone",
+      "fieldtype": "Phone",
+      "label": "Phone Number"
+    },
+    {
+      "fieldname": "guest_email",
+      "fieldtype": "Data",
+      "label": "Email"
+    },
+    {
+      "fieldname": "section_break_2",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "guest_customer",
+      "fieldtype": "Link",
+      "label": "Guest Customer",
+      "options": "Customer",
+      "read_only": 1
+    },
+    {
+      "fieldname": "check_in_reference",
+      "fieldtype": "Link",
+      "label": "Check In Reference",
+      "options": "Hotel Room Check In",
+      "read_only": 1
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "istable": 1,
+  "links": [],
+  "modified": "2025-12-01 12:00:00",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Corporate Check In Room",
+  "owner": "Administrator",
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

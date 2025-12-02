@@ -38,6 +38,7 @@
         "late_checkout",
         "hotel_season",
         "stay_extension_tab",
+        "adjustments",
         "extensions",
         "transfer_history_tab",
         "table_wove"
@@ -48,6 +49,23 @@
             "fieldtype": "Link",
             "label": "Reservation",
             "options": "Hotel Room Reservation"
+        },
+        {
+            "fieldname": "corporate_check_in",
+            "fieldtype": "Link",
+            "label": "Corporate Check In",
+            "options": "Corporate Check In",
+            "read_only": 1,
+            "hidden": 1
+        },
+        {
+            "fieldname": "front_desk_reservation",
+            "fieldtype": "Link",
+            "label": "Front Desk Reservation",
+            "options": "Hotel Front Desk Reservation",
+            "description": "Linked front desk multi-room reservation",
+            "read_only": 1,
+            "allow_on_submit": 1
         },
         {
             "fieldname": "rate_type",
@@ -253,14 +271,14 @@
         {
             "fieldname": "stay_extension_tab",
             "fieldtype": "Tab Break",
-            "label": "Stay Extensions"
+            "label": "Stay Adjusments"
         },
         {
             "allow_on_submit": 1,
-            "fieldname": "extensions",
             "fieldtype": "Table",
-            "label": "Extensions",
-            "options": "Check In Extensions",
+            "fieldname": "adjustments",
+            "label": "Adjustments",
+            "options": "Hotel Room Check In Stay Adjustments",
             "read_only": 1
         },
         {

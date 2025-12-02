@@ -10,12 +10,14 @@
   "engine": "InnoDB",
   "field_order": [
     "temporary_booking_reference",
+    "front_desk_reservation",
     "booking_number",
     "guest_name",
     "customer",
     "room_number",
     "from_date",
     "to_date",
+    "number_of_nights",
     "rate",
     "discount",
     "late_checkin",
@@ -42,6 +44,15 @@
       "options": "Temporary Booking",
       "description": "Link to the Temporary Booking document",
       "in_standard_filter": 1
+    },
+    {
+      "fieldname": "front_desk_reservation",
+      "fieldtype": "Link",
+      "label": "Front Desk Reservation",
+      "options": "Hotel Front Desk Reservation",
+      "description": "Linked front desk multi-room reservation",
+      "read_only": 1,
+      "allow_on_submit": 1
     },
     {
       "fieldname": "booking_number",
@@ -147,6 +158,11 @@
       "description": "Actual check-out timestamp"
     },
     {
+      "fieldtype": "Int",
+      "fieldname": "number_of_nights",
+      "label": "Number of Nights"
+    },
+    {
       "fieldname": "section_break_payment",
       "fieldtype": "Section Break",
       "label": "Payment Information"
@@ -178,17 +194,6 @@
       "options": "Hotel Room Reservation Item"
     },
     {
-      "fieldname": "section_break_9",
-      "fieldtype": "Section Break",
-      "label": "Rooms"
-    },
-    {
-      "fieldname": "rooms",
-      "fieldtype": "Table",
-      "label": "Rooms",
-      "options": "Hotel Reservation Room"
-    },
-    {
       "fieldname": "net_total",
       "fieldtype": "Currency",
       "label": "Net Total"
@@ -207,6 +212,19 @@
       "no_copy": 1,
       "options": "Hotel Room Reservation",
       "print_hide": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "stay_extension_tab",
+      "fieldtype": "Tab Break",
+      "label": "Reservation Adjusments"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldtype": "Table",
+      "fieldname": "adjustments",
+      "label": "Adjustments",
+      "options": "Hotel Room Check In Stay Adjustments",
       "read_only": 1
     }
   ],
