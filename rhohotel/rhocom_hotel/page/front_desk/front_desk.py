@@ -524,4 +524,141 @@ def get_default_letterhead():
 	#	return None
 	
 	letterhead = frappe.get_doc('Letter Head', 'Frontdesk 1')
-	return letterhead.content
+	return letterhead.content 
+
+
+
+
+
+
+
+
+
+
+# Add these methods to your rhohotel/rhocom_hotel/page/front_desk/front_desk.py file
+
+@frappe.whitelist()
+def get_corporate_reservations():
+    """
+    Get all corporate reservations with summary information
+    Returns: List of corporate reservations with key details
+    """
+    try:
+        reservations = frappe.db.sql("""
+            SELECT 
+                fdr.name,
+                fdr.reservation_number,
+                fdr.corporate_guest,
+                hg.hotel_guest_name as corporate_guest_name,
+                fdr.customer,
+                fdr.total_rooms,
+                fdr.number_of_nights,
+                fdr.from_date,
+                fdr.to_date,
+                fdr.total_amount,
+                fdr.status,
+                COUNT(DISTINCT hrr.name) as rooms_with_reservations
+            FROM `tabHotel Front Desk Reservation` fdr
+            LEFT JOIN `tabHotel Guest` hg ON fdr.corporate_guest = hg.name
+            LEFT JOIN `tabHotel Room Reservation` hrr ON fdr.name = hrr.front_desk_reservation
+            WHERE fdr.reservation_type = 'Corporate'
+            AND fdr.docstatus = 1
+            GROUP BY fdr.name
+            ORDER BY fdr.creation DESC
+        """, as_dict=True)
+        
+        return reservations
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Get Corporate Reservations Error")
+        return []
+
+
+@frappe.whitelist()
+def get_corporate_reservation_details(reservation_name):
+    """
+    Get comprehensive details for a corporate reservation including:
+    - Room reservations
+    - Check-ins
+    - Invoices
+    - Payments
+    
+    Args:
+        reservation_name: Name of the Hotel Front Desk Reservation
+    
+    Returns:
+        Dictionary with all related information
+    """
+    try:
+        # Get room reservations
+        room_reservations = frappe.get_all(
+            "Hotel Room Reservation",
+            filters={"front_desk_reservation": reservation_name},
+            fields=["name", "room_number", "status", "rate", "from_date", "to_date"]
+        )
+        
+        # Get check-ins
+        check_ins = frappe.db.sql("""
+            SELECT 
+                hrci.name,
+                hrci.room_number,
+                hrci.guest,
+                hrci.check_in_datetime,
+                hrci.expected_check_out_datetime,
+                hrci.status
+            FROM `tabHotel Room Check In` hrci
+            WHERE hrci.front_desk_reservation = %s
+            ORDER BY hrci.check_in_datetime DESC
+        """, (reservation_name,), as_dict=True)
+        
+        # Get invoices
+        invoices = frappe.db.sql("""
+            SELECT 
+                si.name,
+                si.total,
+                si.docstatus,
+                si.outstanding_amount
+            FROM `tabSales Invoice` si
+            WHERE si.reference_no = (
+                SELECT fdr.reservation_number 
+                FROM `tabHotel Front Desk Reservation` fdr 
+                WHERE fdr.name = %s
+            )
+            ORDER BY si.creation DESC
+        """, (reservation_name,), as_dict=True)
+        
+        # Get payments
+        payments = frappe.db.sql("""
+            SELECT 
+                pe.name,
+                pe.paid_amount,
+                pe.posting_date
+            FROM `tabPayment Entry` pe
+            JOIN `tabPayment Entry Detail` ped ON pe.name = ped.parent
+            WHERE ped.reference_doctype = 'Sales Invoice'
+            AND ped.reference_name IN (
+                SELECT si.name FROM `tabSales Invoice` si
+                WHERE si.reference_no = (
+                    SELECT fdr.reservation_number 
+                    FROM `tabHotel Front Desk Reservation` fdr 
+                    WHERE fdr.name = %s
+                )
+            )
+            ORDER BY pe.posting_date DESC
+        """, (reservation_name,), as_dict=True)
+        
+        return {
+            "room_reservations": room_reservations,
+            "checkins": check_ins,
+            "invoices": invoices,
+            "payments": payments
+        }
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Get Corporate Reservation Details Error")
+        return {
+            "room_reservations": [],
+            "checkins": [],
+            "invoices": [],
+            "payments": []
+        }

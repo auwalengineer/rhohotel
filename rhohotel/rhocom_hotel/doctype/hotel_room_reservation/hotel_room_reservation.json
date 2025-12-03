@@ -68,13 +68,15 @@
       "fieldtype": "Data",
       "in_list_view": 1,
       "label": "Guest Name",
-      "reqd": 1
+      "reqd": 1,
+      "allow_on_submit": 1
     },
     {
       "fieldname": "customer",
       "fieldtype": "Link",
       "label": "Customer",
-      "options": "Customer"
+      "options": "Customer",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "room_number",
@@ -230,7 +232,7 @@
   ],
   "is_submittable": 1,
   "links": [],
-  "modified": "2025-11-23 13:00:00.000000",
+  "modified": "2025-12-03 12:00:00.000000",
   "modified_by": "Administrator",
   "module": "Rhocom Hotel",
   "name": "Hotel Room Reservation",

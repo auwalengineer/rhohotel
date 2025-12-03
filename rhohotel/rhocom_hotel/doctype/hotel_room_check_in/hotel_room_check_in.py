@@ -300,35 +300,63 @@ class HotelRoomCheckIn(Document):
 @frappe.whitelist()
 def get_linked_documents(check_in):
 
-	"""get check in doc"""
-	check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
+    """get check in doc"""
+    check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
 
-	# get unconsolidated pos invoice
-	pos_invoice = frappe.get_all("POS Invoice", 
-							  filters={"custom_hotel_room_check_in": check_in_doc.name, "status": "Unpaid"}, 
-							  fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
-	# get sales invoice
-	invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in_doc.name}, fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"])
-	
-	invoices.extend(pos_invoice)
-	
-	payments = frappe.get_all("Payment Entry", filters={"custom_hotel_room_check_in": check_in_doc.name}, fields=["name", "party", "posting_date", "paid_amount"])
-	
-	payment_sessions = frappe.get_all(
-		"Payment Session",
-		filters={"hotel_room_check_in": check_in_doc.name, "status": "Paid"},
-		fields=["name", "posting_date", "total_amount"]
-	)
+    # get unconsolidated pos invoice
+    pos_invoice = frappe.get_all(
+        "POS Invoice",
+        filters={"custom_hotel_room_check_in": check_in_doc.name, "status": "Unpaid"},
+        fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"]
+    )
 
-	total_outstanding_amount = sum(invoice.outstanding_amount for invoice in invoices)
+    # add invoice_type
+    for inv in pos_invoice:
+        inv["invoice_type"] = "POS Invoice"
 
-	total_charges =sum(invoice.grand_total for invoice in invoices)
+    # get sales invoice
+    invoices = frappe.get_all(
+        "Sales Invoice",
+        filters={"custom_hotel_room_check_in": check_in_doc.name},
+        fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"]
+    )
 
-	
-	guest_doc = frappe.get_doc("Hotel Guest", check_in_doc.guest)
-	guest_email = guest_doc.email
+    # add invoice_type
+    for inv in invoices:
+        inv["invoice_type"] = "Sales Invoice"
 
-	return {"invoices": invoices, "payments": payments, "payment_sessions": payment_sessions, "total_outstanding_amount": total_outstanding_amount, "guest_email": guest_email, "total_charges": total_charges}
+    # merge the two
+    invoices.extend(pos_invoice)
+
+    # get payments
+    payments = frappe.get_all(
+        "Payment Entry",
+        filters={"custom_hotel_room_check_in": check_in_doc.name},
+        fields=["name", "party", "posting_date", "paid_amount"]
+    )
+
+    payment_sessions = frappe.get_all(
+        "Payment Session",
+        filters={"hotel_room_check_in": check_in_doc.name, "status": "Paid"},
+        fields=["name", "posting_date", "total_amount"]
+    )
+
+    # totals
+    total_outstanding_amount = sum(inv.outstanding_amount for inv in invoices)
+    total_charges = sum(inv.grand_total for inv in invoices)
+
+    # guest
+    guest_doc = frappe.get_doc("Hotel Guest", check_in_doc.guest)
+    guest_email = guest_doc.email
+
+    return {
+        "invoices": invoices,
+        "payments": payments,
+        "payment_sessions": payment_sessions,
+        "total_outstanding_amount": total_outstanding_amount,
+        "guest_email": guest_email,
+        "total_charges": total_charges,
+    }
 
 @frappe.whitelist()
 def make_check_out(source_name, target_doc=None):

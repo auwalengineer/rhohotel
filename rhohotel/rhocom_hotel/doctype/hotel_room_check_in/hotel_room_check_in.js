@@ -1394,7 +1394,8 @@ function render_invoices(invoices) {
     let html = `<table class="table table-bordered">
         <thead>
             <tr>
-                <th>Sales Invoice</th>
+                <th>Invoice</th>
+                <th>Type</th>
                 <th>Customer</th>
                 <th>Posting Date</th>
                 <th>Grand Total</th>
@@ -1402,14 +1403,23 @@ function render_invoices(invoices) {
             </tr>
         </thead>
         <tbody>`;
+
     let total_grand_total = 0;
     let total_outstanding_amount = 0;
+
     if (invoices.length > 0) {
         invoices.forEach(invoice => {
             total_grand_total += invoice.grand_total || 0;
             total_outstanding_amount += invoice.outstanding_amount || 0;
+
+            // dynamic link based on type
+            const doctype_route = invoice.invoice_type === "POS Invoice"
+                ? "pos-invoice"
+                : "sales-invoice";
+
             html += `<tr>
-                <td><a href="/app/sales-invoice/${invoice.name}">${invoice.name}</a></td>
+                <td><a href="/app/${doctype_route}/${invoice.name}">${invoice.name}</a></td>
+                <td>${invoice.invoice_type}</td>
                 <td>${invoice.customer}</td>
                 <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
                 <td>${format_currency(invoice.grand_total)}</td>
@@ -1417,21 +1427,25 @@ function render_invoices(invoices) {
             </tr>`;
         });
     } else {
-        html += '<tr><td colspan="5" class="text-center">No Invoices Found</td></tr>';
+        html += '<tr><td colspan="6" class="text-center">No Invoices Found</td></tr>';
     }
+
     html += '</tbody>';
+
     if (invoices.length > 0) {
         html += `<tfoot>
             <tr style="font-weight: bold; background-color: #f8f9fa;">
-                <td colspan="3">Total</td>
+                <td colspan="4">Total</td>
                 <td>${format_currency(total_grand_total)}</td>
                 <td>${format_currency(total_outstanding_amount)}</td>
             </tr>
         </tfoot>`;
     }
+
     html += '</table>';
     return html;
 }
+
 
 function render_payments(payments) {
     let html = `<table class="table table-bordered">

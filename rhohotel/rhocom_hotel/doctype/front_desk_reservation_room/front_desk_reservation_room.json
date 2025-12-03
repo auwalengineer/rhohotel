@@ -94,13 +94,15 @@
       "fieldtype": "Data",
       "label": "Guest Name",
       "reqd": 0,
-      "description": "Name of person staying in this room"
+      "description": "Name of person staying in this room",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "guest_gender",
       "fieldtype": "Select",
       "label": "Gender",
-      "options": "\nMale\nFemale\nOther"
+      "options": "\nMale\nFemale\nOther",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "column_break_guest",
@@ -110,23 +112,27 @@
       "fieldname": "guest_id_type",
       "fieldtype": "Select",
       "label": "ID Type",
-      "options": "\nPassport\nNational ID\nDriver's License\nOther"
+      "options": "\nPassport\nNational ID\nDriver's License\nOther",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "guest_id_number",
       "fieldtype": "Data",
-      "label": "ID Number"
+      "label": "ID Number",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "guest_phone",
       "fieldtype": "Data",
-      "label": "Phone Number"
+      "label": "Phone Number",
+      "allow_on_submit": 1
     },
     {
       "fieldname": "guest_email",
       "fieldtype": "Data",
       "label": "Email",
-      "options": "Email"
+      "options": "Email",
+      "allow_on_submit": 1
     },
     {
       "collapsible": 1,
@@ -140,7 +146,8 @@
       "fieldtype": "Link",
       "label": "Guest Customer",
       "options": "Customer",
-      "read_only": 1,
+      "read_only": 0,
+      "allow_on_submit": 1,
       "description": "Auto-created customer for this guest"
     },
     {
@@ -148,7 +155,8 @@
       "fieldtype": "Link",
       "label": "Hotel Guest",
       "options": "Hotel Guest",
-      "read_only": 1,
+      "read_only": 0,
+      "allow_on_submit": 1,
       "description": "Auto-created/linked Hotel Guest record"
     },
     {
@@ -171,7 +179,7 @@
   "index_web_pages_for_search": 1,
   "istable": 1,
   "links": [],
-  "modified": "2025-12-01 12:00:00",
+  "modified": "2025-12-03 12:00:00",
   "modified_by": "Administrator",
   "module": "Rhocom Hotel",
   "name": "Front Desk Reservation Room",
