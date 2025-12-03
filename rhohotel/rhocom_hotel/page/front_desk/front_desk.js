@@ -1455,11 +1455,11 @@ class FrontDesk {
                         </div><div class="frappe-card-body">${table_content}</div></div>`);
 
                     // Bind view buttons
-                    $view.find('.view-corp-res').on('click', function(e) {
+                    $view.find('.view-corp-res').on('click', (e) => {
                         e.preventDefault();
-                        const res_name = $(this).data('name');
+                        const res_name = $(e.currentTarget).data('name');
                         this.show_corporate_reservation_details(res_name);
-                    }.bind(this));
+                    });
 
                     // Bind reservation name links
                     $view.find('.corp-res-link').on('click', function(e) {
@@ -1513,38 +1513,79 @@ class FrontDesk {
         });
     }
 
+    // show_corporate_reservation_details(reservation_name) {
+    //     /**
+    //      * Shows detailed modal for corporate reservation with:
+    //      * - Full reservation details
+    //      * - Room status overview
+    //      * - Invoices and payments
+    //      * - Bulk action buttons
+    //      */
+        
+    //     frappe.call({
+    //         method: 'frappe.client.get',
+    //         args: {
+    //             doctype: 'Hotel Front Desk Reservation',
+    //             name: reservation_name
+    //         },
+    //         callback: (r) => {
+    //             if (!r.message) return;
+                
+    //             const reservation = r.message;
+                
+    //             // Fetch related data
+    //             frappe.call({
+    //                 method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_corporate_reservation_details',
+    //                 args: {
+    //                     reservation_name: reservation_name
+    //                 },
+    //                 callback: (r2) => {
+    //                     const details = r2.message;
+                        
+    //                     this.show_corporate_res_modal(reservation, details);
+    //                 }
+    //             });
+    //         }
+    //     });
+    // }
     show_corporate_reservation_details(reservation_name) {
         /**
-         * Shows detailed modal for corporate reservation with:
-         * - Full reservation details
-         * - Room status overview
-         * - Invoices and payments
-         * - Bulk action buttons
+         * Shows detailed modal for a corporate reservation
          */
         
+        if (!reservation_name) {
+            frappe.msgprint(__('No reservation selected'));
+            return;
+        }
+        
+        frappe.show_alert({
+            message: __('Loading reservation details...'),
+            indicator: 'blue'
+        });
+        
         frappe.call({
-            method: 'frappe.client.get',
+            method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_corporate_reservation_details',
             args: {
-                doctype: 'Hotel Front Desk Reservation',
-                name: reservation_name
+                reservation_name: reservation_name  // ← EXPLICITLY NAME THE ARGUMENT
             },
             callback: (r) => {
-                if (!r.message) return;
-                
-                const reservation = r.message;
-                
-                // Fetch related data
-                frappe.call({
-                    method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_corporate_reservation_details',
-                    args: {
-                        reservation_name: reservation_name
-                    },
-                    callback: (r2) => {
-                        const details = r2.message;
-                        
-                        this.show_corporate_res_modal(reservation, details);
-                    }
-                });
+                if (r.message && r.message.success) {
+                    const reservation = r.message.reservation;
+                    const details = r.message;
+                    this.show_corporate_res_modal(reservation, details);
+                } else if (r.message && r.message.error) {
+                    frappe.msgprint({
+                        title: __('Error'),
+                        indicator: 'red',
+                        message: __('Error: ' + r.message.error)
+                    });
+                } else {
+                    frappe.msgprint(__('No data found'));
+                }
+            },
+            error: (err) => {
+                frappe.msgprint(__('Failed to load reservation details'));
+                console.error(err);
             }
         });
     }

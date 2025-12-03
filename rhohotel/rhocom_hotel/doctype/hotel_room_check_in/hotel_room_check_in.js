@@ -1395,7 +1395,7 @@ function render_invoices(invoices) {
         <thead>
             <tr>
                 <th>Invoice</th>
-                <th>Type</th>
+                <th>Type / Profile</th>
                 <th>Customer</th>
                 <th>Posting Date</th>
                 <th>Grand Total</th>
@@ -1407,44 +1407,36 @@ function render_invoices(invoices) {
     let total_grand_total = 0;
     let total_outstanding_amount = 0;
 
-    if (invoices.length > 0) {
-        invoices.forEach(invoice => {
-            total_grand_total += invoice.grand_total || 0;
-            total_outstanding_amount += invoice.outstanding_amount || 0;
+    invoices.forEach(invoice => {
+        total_grand_total += invoice.grand_total || 0;
+        total_outstanding_amount += invoice.outstanding_amount || 0;
 
-            // dynamic link based on type
-            const doctype_route = invoice.invoice_type === "POS Invoice"
-                ? "pos-invoice"
-                : "sales-invoice";
+        const doctype_route = invoice.invoice_type === "POS Invoice"
+            ? "pos-invoice"
+            : "sales-invoice";
 
-            html += `<tr>
-                <td><a href="/app/${doctype_route}/${invoice.name}">${invoice.name}</a></td>
-                <td>${invoice.invoice_type}</td>
-                <td>${invoice.customer}</td>
-                <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
-                <td>${format_currency(invoice.grand_total)}</td>
-                <td>${format_currency(invoice.outstanding_amount)}</td>
-            </tr>`;
-        });
-    } else {
-        html += '<tr><td colspan="6" class="text-center">No Invoices Found</td></tr>';
-    }
+        // logic:
+        // POS Invoice ➜ show its pos_profile
+        // Sales Invoice ➜ show "Sales Invoice"
+        const type_or_profile =
+            invoice.invoice_type === "POS Invoice"
+                ? (invoice.pos_profile || "POS Invoice")
+                : "Sales Invoice";
 
-    html += '</tbody>';
+        html += `<tr>
+            <td><a href="/app/${doctype_route}/${invoice.name}">${invoice.name}</a></td>
+            <td>${type_or_profile}</td>
+            <td>${invoice.customer}</td>
+            <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
+            <td>${format_currency(invoice.grand_total)}</td>
+            <td>${format_currency(invoice.outstanding_amount)}</td>
+        </tr>`;
+    });
 
-    if (invoices.length > 0) {
-        html += `<tfoot>
-            <tr style="font-weight: bold; background-color: #f8f9fa;">
-                <td colspan="4">Total</td>
-                <td>${format_currency(total_grand_total)}</td>
-                <td>${format_currency(total_outstanding_amount)}</td>
-            </tr>
-        </tfoot>`;
-    }
-
-    html += '</table>';
+    html += `</tbody></table>`;
     return html;
 }
+
 
 
 function render_payments(payments) {

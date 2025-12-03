@@ -307,12 +307,12 @@ def get_linked_documents(check_in):
     pos_invoice = frappe.get_all(
         "POS Invoice",
         filters={"custom_hotel_room_check_in": check_in_doc.name, "status": "Unpaid"},
-        fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"]
+    	fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount", "pos_profile"]
     )
 
     # add invoice_type
     for inv in pos_invoice:
-        inv["invoice_type"] = "POS Invoice"
+        inv["invoice_type"] = " Invoice"
 
     # get sales invoice
     invoices = frappe.get_all(
