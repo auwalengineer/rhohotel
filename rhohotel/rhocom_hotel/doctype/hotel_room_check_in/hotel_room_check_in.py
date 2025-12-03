@@ -720,7 +720,7 @@ def adjust_stay(check_in_name, new_checkout):
                 "posting_date": frappe.utils.today(),
                 "remarks": f"Invoice for stay extension: {diff_nights} additional night(s)"
             })
-            invoice.insert()
+            invoice.insert(ignore_permissions=True)
             invoice.submit()
             adjustment_invoice_name = invoice.name
             
@@ -742,7 +742,7 @@ def adjust_stay(check_in_name, new_checkout):
                 "posting_date": frappe.utils.today(),
                 "remarks": f"Credit note for stay reduction: {diff_nights} night(s) removed"
             })
-            credit_note.insert()
+            credit_note.insert(ignore_permissions=True)
             credit_note.submit()
             adjustment_invoice_name = credit_note.name
         
@@ -762,7 +762,7 @@ def adjust_stay(check_in_name, new_checkout):
         # Update parent doc
         doc.expected_check_out_datetime = new_dt
         doc.number_of_nights = new_nights
-        doc.save()
+        doc.save(ignore_permissions=True)
         
         frappe.db.commit()
         
