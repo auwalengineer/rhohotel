@@ -300,62 +300,96 @@ class HotelRoomCheckIn(Document):
 @frappe.whitelist()
 def get_linked_documents(check_in):
 
-    """get check in doc"""
+    """Get linked invoices, payments, and sessions for a check-in."""
+    
     check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
 
-    # get unconsolidated pos invoice
-    pos_invoice = frappe.get_all(
+    # -----------------------------
+    # Get POS Invoices
+    # -----------------------------
+    pos_invoices = frappe.get_all(
         "POS Invoice",
-        filters={"custom_hotel_room_check_in": check_in_doc.name, "status": "Unpaid"},
-    	fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount", "pos_profile"]
+        filters={
+            "custom_hotel_room_check_in": check_in_doc.name,
+            "status": "Unpaid"
+        },
+        fields=[
+            "name",
+            "customer",
+            "posting_date",
+            "grand_total",
+            "outstanding_amount",
+            "pos_profile"
+        ]
     )
 
-    # add invoice_type
-    for inv in pos_invoice:
-        inv["invoice_type"] = " Invoice"
+    # Add invoice_type for frontend clarity
+    for inv in pos_invoices:
+        inv["invoice_type"] = "POS Invoice"
 
-    # get sales invoice
-    invoices = frappe.get_all(
+    # -----------------------------
+    # Get Sales Invoices
+    # -----------------------------
+    sales_invoices = frappe.get_all(
         "Sales Invoice",
         filters={"custom_hotel_room_check_in": check_in_doc.name},
-        fields=["name", "customer", "posting_date", "grand_total", "outstanding_amount"]
+        fields=[
+            "name",
+            "customer",
+            "posting_date",
+            "grand_total",
+            "outstanding_amount"
+        ]
     )
 
-    # add invoice_type
-    for inv in invoices:
+    # Mark them as Sales Invoice
+    for inv in sales_invoices:
         inv["invoice_type"] = "Sales Invoice"
+        inv["pos_profile"] = None  # keep consistent keys
 
-    # merge the two
-    invoices.extend(pos_invoice)
+    # Merge lists
+    invoices = sales_invoices + pos_invoices
 
-    # get payments
+    # -----------------------------
+    # Get Payment Entries
+    # -----------------------------
     payments = frappe.get_all(
         "Payment Entry",
         filters={"custom_hotel_room_check_in": check_in_doc.name},
         fields=["name", "party", "posting_date", "paid_amount"]
     )
 
+    # -----------------------------
+    # Get Payment Sessions (POS)
+    # -----------------------------
     payment_sessions = frappe.get_all(
         "Payment Session",
         filters={"hotel_room_check_in": check_in_doc.name, "status": "Paid"},
         fields=["name", "posting_date", "total_amount"]
     )
 
-    # totals
-    total_outstanding_amount = sum(inv.outstanding_amount for inv in invoices)
-    total_charges = sum(inv.grand_total for inv in invoices)
+    # -----------------------------
+    # Compute Totals
+    # -----------------------------
+    total_outstanding_amount = sum(inv.outstanding_amount or 0 for inv in invoices)
+    total_charges = sum(inv.grand_total or 0 for inv in invoices)
 
-    # guest
+    # -----------------------------
+    # Guest Email
+    # -----------------------------
     guest_doc = frappe.get_doc("Hotel Guest", check_in_doc.guest)
     guest_email = guest_doc.email
 
+    # -----------------------------
+    # Final Return
+    # -----------------------------
     return {
         "invoices": invoices,
         "payments": payments,
         "payment_sessions": payment_sessions,
         "total_outstanding_amount": total_outstanding_amount,
-        "guest_email": guest_email,
         "total_charges": total_charges,
+        "guest_email": guest_email
     }
 
 @frappe.whitelist()
