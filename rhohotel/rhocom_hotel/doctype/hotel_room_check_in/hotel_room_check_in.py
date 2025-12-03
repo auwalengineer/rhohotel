@@ -140,6 +140,15 @@ class HotelRoomCheckIn(Document):
 			)
 
 		if reservation: 
+			frappe.log_error(
+				title="Room Reservation Conflict Debug",
+				message="Room: {0}\nDate: {1}\nGuest: {2}\nReservations Found:\n{3}".format(
+					self.room_number,
+					start_date,
+					self.guest_name,
+					frappe.as_json(reservation)
+				)
+			)
 			frappe.throw(_("Room {0} is reserved for today").format(self.room_number))
 
 		
@@ -703,7 +712,7 @@ def adjust_stay(check_in_name, new_checkout):
                 "check_in": doc.name,
                 "custom_hotel_room_check_in": doc.name,
                 "items": [{
-                    "item_code": doc.room_type,
+                    "item_code": doc.room_number,
                     "qty": diff_nights,
                     "rate": doc.rate_amount,
                     "amount": amount
@@ -725,7 +734,7 @@ def adjust_stay(check_in_name, new_checkout):
                 "check_in": doc.name,
                 "custom_hotel_room_check_in": doc.name,
                 "items": [{
-                    "item_code": doc.room_type,
+                    "item_code": doc.room_number,
                     "qty": -diff_nights,
                     "rate": doc.rate_amount,
                     "amount": amount

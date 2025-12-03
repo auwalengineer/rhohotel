@@ -1959,7 +1959,6 @@ class FrontDesk {
                                 <th>Invoice</th>
                                 <th class="text-right">Amount</th>
                                 <th>Outstanding</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1968,12 +1967,7 @@ class FrontDesk {
                                     <td><strong><a href="/app/sales-invoice/${inv.name}" target="_blank">${inv.name}</a></strong></td>
                                     <td class="text-right">${frappe.format(inv.total, {fieldtype: 'Currency'})}</td>
                                     <td class="text-right">${frappe.format(inv.outstanding_amount || 0, {fieldtype: 'Currency'})}</td>
-                                    <td>
-                                        ${inv.docstatus === 1 ? 
-                                            '<span class="badge badge-success">Submitted</span>' : 
-                                            '<span class="badge badge-warning">Draft</span>'
-                                        }
-                                    </td>
+                                    
                                 </tr>
                             `).join('') : '<tr><td colspan="4" class="text-muted text-center">No invoices yet</td></tr>'}
                         </tbody>

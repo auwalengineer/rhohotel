@@ -393,6 +393,30 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
         frappe.throw(f"Failed to process stay adjustment: {str(e)}")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # import json
 
 # import frappe

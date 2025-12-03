@@ -22,27 +22,27 @@ frappe.ui.form.on('Hotel Front Desk Reservation', {
             };
         });
         
-        // ✅ Filter room_number dropdown by available rooms based on dates
-        frm.set_query('room_number', 'rooms', function(doc, cdt, cdn) {
-            if (!doc.from_date || !doc.to_date) {
-                frappe.msgprint(__('Please select check-in and check-out dates first'));
-                return;
-            }
+        // // ✅ Filter room_number dropdown by available rooms based on dates
+        // frm.set_query('room_number', 'rooms', function(doc, cdt, cdn) {
+        //     if (!doc.from_date || !doc.to_date) {
+        //         frappe.msgprint(__('Please select check-in and check-out dates first'));
+        //         return;
+        //     }
             
-            return {
-                filters: [
-                    ['Hotel Room', 'status', '=', 'Vacant'],
-                    ['Hotel Room', 'operational_status', '=', 'In Service'],
-                    ['Hotel Room', 'maintenance_flag', '=', 0]
-                ],
-                query: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.get_available_rooms_for_dropdown',
-                args: {
-                    from_date: doc.from_date,
-                    to_date: doc.to_date,
-                    room_type: doc.filter_by_room_type || null
-                }
-            };
-        });
+        //     return {
+        //         filters: [
+        //             ['Hotel Room', 'status', '=', 'Vacant'],
+        //             ['Hotel Room', 'operational_status', '=', 'In Service'],
+        //             ['Hotel Room', 'maintenance_flag', '=', 0]
+        //         ],
+        //         query: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.get_available_rooms_for_dropdown',
+        //         args: {
+        //             from_date: doc.from_date,
+        //             to_date: doc.to_date,
+        //             room_type: doc.filter_by_room_type || null
+        //         }
+        //     };
+        // });
     },
     
     from_date: function(frm) {
