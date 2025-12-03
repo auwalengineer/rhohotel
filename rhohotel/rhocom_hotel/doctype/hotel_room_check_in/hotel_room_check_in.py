@@ -344,7 +344,7 @@ def get_linked_documents(check_in):
 
     # Mark them as Sales Invoice
     for inv in sales_invoices:
-        inv["invoice_type"] = "Sales Invoice"
+        inv["invoice_type"] = "Room Invoice"
         inv["pos_profile"] = None  # keep consistent keys
 
     # Merge lists
