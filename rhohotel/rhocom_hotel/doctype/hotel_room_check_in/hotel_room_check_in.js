@@ -117,11 +117,32 @@ frappe.ui.form.on("Hotel Room Check In", {
 
         // Add custom buttons based on status
         if (frm.doc.docstatus === 1 && frm.doc.status === "Checked In") {
-            frm.add_custom_button(__("Check Out"), () => {
-                frappe.model.open_mapped_doc({
-                    method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
-                    frm: frm
-                });
+
+
+            // Check out button should only be visible only there is no outstanding or user has manager role
+            // Fetch outstanding from backend
+            frappe.call({
+                method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.get_outstanding_for_check_in",
+                args: { check_in: frm.doc.name },
+                callback(r) {
+                    let outstanding = r.message.outstanding || 0;
+
+                    // Check manager role override
+                    let is_manager =
+                        frappe.user_roles.includes("Hotel Manager") ||
+                        frappe.user_roles.includes("System Manager");
+
+                    // Show button if no outstanding OR user is manager
+                    if (outstanding === 0 || is_manager) {
+
+                        frm.add_custom_button(__("Check Out"), () => {
+                            frappe.model.open_mapped_doc({
+                                method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
+                                frm: frm
+                            });
+                        }).addClass("btn-primary");
+                    }
+                }
             });
 
 
@@ -672,6 +693,7 @@ frappe.ui.form.on("Hotel Room Check In", {
             //     });
             // });
             frm.add_custom_button(__('Transfer Room'), function () {
+                const transfer_button = frm.page.add_inner_button(__('Transfer'), function () { }, 'Actions');  // Optional: Loading button
                 const dialog = new frappe.ui.Dialog({
                     title: __('Transfer Guest to Another Room'),
                     fields: [
@@ -693,6 +715,8 @@ frappe.ui.form.on("Hotel Room Check In", {
                     ],
                     primary_action_label: 'Transfer',
                     primary_action(values) {
+                        // Optional: Show loading
+                        frappe.dom.freeze();
                         frappe.call({
                             method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.transfer_room',
                             args: {
@@ -701,13 +725,19 @@ frappe.ui.form.on("Hotel Room Check In", {
                                 note: values.transfer_note
                             },
                             callback: function (r) {
-                                if (!r.exc) {
-                                    frappe.msgprint(__('Guest transferred successfully to Room {0}').format(values.new_room_number));
+                                frappe.dom.unfreeze();
+                                if (!r.exc && r.message) {
+                                    frappe.msgprint(r.message);  // Use Python message (includes rate details if adjusted)
+                                    frm.reload_doc();
+                                } else if (!r.exc) {
+                                    frappe.msgprint(__('Guest transferred successfully to Room {0}').format(values.new_room_number));  // Fallback
                                     frm.reload_doc();
                                 }
                             },
                             error: function (r) {
+                                frappe.dom.unfreeze();
                                 frappe.msgprint(__('Room transfer failed'));
+                                console.log(r);
                             }
                         });
                         dialog.hide();
@@ -1407,35 +1437,54 @@ function render_invoices(invoices) {
     let total_grand_total = 0;
     let total_outstanding_amount = 0;
 
-    invoices.forEach(invoice => {
-        total_grand_total += invoice.grand_total || 0;
-        total_outstanding_amount += invoice.outstanding_amount || 0;
+    if (invoices.length > 0) {
+        invoices.forEach(invoice => {
+            total_grand_total += invoice.grand_total || 0;
+            total_outstanding_amount += invoice.outstanding_amount || 0;
 
-        const doctype_route = invoice.invoice_type === "POS Invoice"
-            ? "pos-invoice"
-            : "sales-invoice";
+            const doctype_route = invoice.invoice_type === "POS Invoice"
+                ? "pos-invoice"
+                : "sales-invoice";
 
-        // logic:
-        // POS Invoice ➜ show its pos_profile
-        // Sales Invoice ➜ show "Sales Invoice"
-        const type_or_profile =
-            invoice.invoice_type === "POS Invoice"
-                ? (invoice.pos_profile || "POS Invoice")
-                : "Sales Invoice";
+            // POS Invoice → show POS Profile
+            // Sales Invoice → show "Sales Invoice"
+            const type_or_profile =
+                invoice.invoice_type === "POS Invoice"
+                    ? (invoice.pos_profile || "POS Invoice")
+                    : "Sales Invoice";
 
+            html += `<tr>
+                <td><a href="/app/${doctype_route}/${invoice.name}">${invoice.name}</a></td>
+                <td>${type_or_profile}</td>
+                <td>${invoice.customer}</td>
+                <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
+                <td>${format_currency(invoice.grand_total)}</td>
+                <td>${format_currency(invoice.outstanding_amount)}</td>
+            </tr>`;
+        });
+    } else {
         html += `<tr>
-            <td><a href="/app/${doctype_route}/${invoice.name}">${invoice.name}</a></td>
-            <td>${type_or_profile}</td>
-            <td>${invoice.customer}</td>
-            <td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
-            <td>${format_currency(invoice.grand_total)}</td>
-            <td>${format_currency(invoice.outstanding_amount)}</td>
+            <td colspan="6" class="text-center">No Invoices Found</td>
         </tr>`;
-    });
+    }
 
-    html += `</tbody></table>`;
+    html += `</tbody>`;
+
+    // ✅ Add total row (same as your original implementation)
+    if (invoices.length > 0) {
+        html += `<tfoot>
+            <tr style="font-weight: bold; background-color: #f8f9fa;">
+                <td colspan="4">Total</td>
+                <td>${format_currency(total_grand_total)}</td>
+                <td>${format_currency(total_outstanding_amount)}</td>
+            </tr>
+        </tfoot>`;
+    }
+
+    html += `</table>`;
     return html;
 }
+
 
 
 
