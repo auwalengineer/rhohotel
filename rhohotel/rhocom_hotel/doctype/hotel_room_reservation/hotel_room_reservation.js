@@ -500,3 +500,48 @@ frappe.ui.form.on("Hotel Reservation Room", {
 		frm.refresh_field("rooms");
 	}
 });
+
+
+
+
+// frappe.ui.form.on("Hotel Room Reservation", {
+//     onload: function(frm) {
+//         set_filtered_room_query(frm);
+//     },
+
+//     refresh: function(frm) {
+//         set_filtered_room_query(frm);
+//     },
+
+//     from_date: function(frm) {
+//         set_filtered_room_query(frm);
+//     },
+
+//     to_date: function(frm) {
+//         set_filtered_room_query(frm);
+//     },
+
+//     room_type: function(frm) {
+//         set_filtered_room_query(frm);
+//     }
+// });
+
+
+// function set_filtered_room_query(frm) {
+//     // Must have dates before filtering
+//     if (!frm.doc.from_date || !frm.doc.to_date) {
+//         return;
+//     }
+
+//     frm.set_query("room_number", function() {
+
+//         return {
+//             query: "rhohotel.api.get_available_rooms",
+//             filters: {
+//                 from_date: frm.doc.from_date,
+//                 to_date: frm.doc.to_date,
+//                 room_type: frm.doc.room_type || ""
+//             }
+//         };
+//     });
+// }

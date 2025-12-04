@@ -12,6 +12,35 @@ frappe.ui.form.on("Bill Transfer", {
                 });
             });
         }
+    },
+    setup(frm)
+    {
+        // filter check from for the selected guest
+        frm.set_query("from_check_in", function(){
+            if(!frm.doc.from_guest) return {};
+
+            return {
+                filters: {guest: frm.doc.from_guest}
+            };
+        });
+
+        // exclude the selected "from_guest" from "to_guest"
+        frm.set_query("to_guest", function() {
+            return {
+                filters: {
+                    name: ["!=", frm.doc.from_guest]
+                }
+            };
+        });
+
+        frm.set_query("to_check_in", function(){
+            if(!frm.doc.to_guest) return {};
+
+            return {
+                filters: {guest: frm.doc.to_guest}
+            };
+        });
+
     }
 });
 
@@ -25,3 +54,5 @@ frappe.ui.form.on("Bill Transfer Item", {
         frm.refresh_field("total_amount");
     }
 });
+
+

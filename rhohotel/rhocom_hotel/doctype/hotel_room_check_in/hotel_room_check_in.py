@@ -145,10 +145,13 @@ class HotelRoomCheckIn(Document):
 				message="Room: {0}\nDate: {1}\nGuest: {2}\nReservations Found:\n{3}".format(
 					self.room_number,
 					start_date,
-					self.guest_name,
+					self.guest,
 					frappe.as_json(reservation)
 				)
 			)
+            
+			
+            
 			frappe.throw(_("Room {0} is reserved for today").format(self.room_number))
 
 		
@@ -156,15 +159,18 @@ class HotelRoomCheckIn(Document):
 		#	frappe.throw(_("Room {0} type does not match any room type in reservation").format(self.room))
 
 		# Check if room is available
-		existing = frappe.get_all("Hotel Room Check In",
-			filters={
-				"room_number": self.room_number,
-				"docstatus": 1,
-				"status": "Checked In",
-				"name": ["!=", self.name]
-			})
-		if existing:
-			frappe.throw(_("Room {0} is currently occupied").format(self.room_number))
+
+        # this line has been commented out because it conflicts with coporate check in
+		# existing = frappe.get_all("Hotel Room Check In",
+		# 	filters={
+		# 		"room_number": self.room_number,
+		# 		"docstatus": 1,
+		# 		"status": "Checked In",
+		# 		"name": ["!=", self.name]
+		# 	})
+		# if existing:
+		# 	frappe.throw(_("Room {0} is currently occupied").format(self.room_number))
+   
 
 	def validate_dates(self):
 		"""Validate check-in/out dates"""
@@ -177,7 +183,7 @@ class HotelRoomCheckIn(Document):
 		self.db_set("status", "Checked In")
 		self.update_room_status("Occupied")
 		self.update_room()
-		self.make_sales_invoice()
+		# self.make_sales_invoice()
   
 		if self.reservation:
 			frappe.db.set_value("Hotel Room Reservation", self.reservation, "status", "Checked-In")
@@ -358,6 +364,40 @@ def get_linked_documents(check_in):
 
     # Merge lists
     invoices = sales_invoices + pos_invoices
+    
+        # -----------------------------
+    # Get Journal Entries
+    # -----------------------------
+    journal_entries = frappe.get_all(
+        "Journal Entry",
+        filters={"custom_hotel_room_check_in": check_in_doc.name},
+        fields=[
+            "name",
+            "voucher_type",
+            "posting_date",
+            "remark as remarks"
+        ]
+    )
+
+    # For totals we need debit/credit → lookup child table
+    for je in journal_entries:
+        accounts = frappe.get_all(
+            "Journal Entry Account",
+            filters={"parent": je["name"]},
+            fields=["debit", "credit", "party"]
+        )
+
+        total_debit = sum(a.debit or 0 for a in accounts)
+        total_credit = sum(a.credit or 0 for a in accounts)
+        party = None
+        for a in accounts:
+            if a.party:
+                party = a.party
+                break
+
+        je["total_debit"] = total_debit
+        je["total_credit"] = total_credit
+        je["party"] = party
 
     # -----------------------------
     # Get Payment Entries
@@ -394,6 +434,7 @@ def get_linked_documents(check_in):
     # -----------------------------
     return {
         "invoices": invoices,
+        "journal_entries": journal_entries,
         "payments": payments,
         "payment_sessions": payment_sessions,
         "total_outstanding_amount": total_outstanding_amount,

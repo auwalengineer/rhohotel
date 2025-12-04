@@ -259,6 +259,7 @@ class FrontDesk {
             { name: 'check_out_view', label: 'Check-outs', icon: 'sign-out' },
             { name: 'reservation_view', label: 'Reservations', icon: 'calendar-check-o' },
             { name: 'corporate_reservations_view', label: 'Corporate Reservations', icon: 'building' },
+            { name: 'available_rooms_view', label: 'Available Rooms', icon: 'bed' },
             { name: 'guest_list_view', label: 'Guests', icon: 'users' },
             { name: 'housekeeping_view', label: 'Housekeeping', icon: 'tasks' },
             { name: 'payments_view', label: 'Payments', icon: 'money' },
@@ -528,17 +529,20 @@ class FrontDesk {
             $filter_area.hide();
             this.refresh_stats();
             this.render_corporate_reservations_view();
-        } else {
+        } else if (this.current_view === 'available_rooms_view') {
             $filter_area.hide();
-            this.refresh_stats(); // Stats are always visible
-            let $view = this.page.main.find(`[data-view-name="${this.current_view}"]`);
-            if (!$view.length) {
-                $view = $(`<div class="view-container" data-view-name="${this.current_view}" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
+            this.render_available_rooms_view();
+        }else {
+                    $filter_area.hide();
+                    this.refresh_stats(); // Stats are always visible
+                    let $view = this.page.main.find(`[data-view-name="${this.current_view}"]`);
+                    if (!$view.length) {
+                        $view = $(`<div class="view-container" data-view-name="${this.current_view}" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
+                    }
+                    $view.show();
+                    this.render_placeholder_view($view);
+                }
             }
-            $view.show();
-            this.render_placeholder_view($view);
-        }
-    }
 
     render_placeholder_view($container) {
         const view_name = $container.data('view-name');
@@ -927,6 +931,229 @@ class FrontDesk {
                     }, 100);
                 }
             }
+        });
+    }
+
+    fetch_and_display_available_rooms(checkInDate, checkOutDate, roomType, $container) {
+        $container.html(`<div class="text-muted text-center" style="padding: 2rem;">Loading available rooms...</div>`);
+
+        frappe.call({
+            method: 'rhohotel.api.get_available_rooms',
+            args: {
+                from_date: checkInDate,
+                to_date: checkOutDate,
+                room_type: roomType || null
+            },
+            callback: (r) => {
+                if (!r.message || r.message.length === 0) {
+                    $container.html(`
+                        <div class="alert alert-info" style="text-align: center; padding: 2rem;">
+                            <i class="fa fa-info-circle"></i>
+                            <p>No rooms available for the selected dates and room type.</p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                const rooms = r.message;
+                const numNights = moment(checkOutDate).diff(moment(checkInDate), 'days');
+
+                // Group rooms by room type for better organization
+                const roomsByType = {};
+                rooms.forEach(room => {
+                    if (!roomsByType[room.room_type]) {
+                        roomsByType[room.room_type] = [];
+                    }
+                    roomsByType[room.room_type].push(room);
+                });
+
+                let html = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">`;
+
+                Object.keys(roomsByType).forEach(roomType => {
+                    roomsByType[roomType].forEach(room => {
+                        html += `
+                            <div class="available-room-card" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;" data-room="${room.name}">
+                                <div style="background:black; color: white; padding: 1rem; color:white;">
+                                    <h4 style="margin: 0; font-size: 1.5rem; font-weight: bold; color:white !important;">${room.name}</h4>
+                                    <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">${room.room_type}</p>
+                                </div>
+                                <div style="padding: 1.5rem;">
+                                   
+
+                                    <div style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
+                                        <div>
+                                            <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.5rem 0;">Floor</p>
+                                            <p style="font-weight: 600; margin: 0;">${room.floor || 'N/A'}</p>
+                                        </div>
+
+                                        <div style="text-align: right;">
+                                            <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.5rem 0;">Capacity</p>
+                                            <p style="font-weight: 600; margin: 0;">${room.capacity || 'N/A'} guests</p>
+                                        </div>
+                                    </div>
+
+
+                                    
+                                    <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
+                                   <div style="display:flex; justify-content: space-between; margin-bottom: 1rem;">
+                                        <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.5rem 0;">Price per night</p>
+                                        <h5 style="margin: 0; font-size: 1.3rem; color: #black; font-weight: bold;">${frappe.format(room.rate_per_night, { fieldtype: 'Currency' })}</h5>
+                                    </div>
+                                    <div style="background-color: #f5f5f5; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
+                                        <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.25rem 0;">Total (${numNights} nights)</p>
+                                        <h5 style="margin: 0; font-size: 1.1rem; font-weight: bold; color: #2c3e50;">${frappe.format(room.total_amount, { fieldtype: 'Currency' })}</h5>
+                                    </div>
+                                    <button class="btn btn-default btn-block view-room-btn" data-room="${room.name}" style="width: 100%; padding: 0.75rem; border-radius: 4px;">
+                                        <i class="fa fa-info-circle"></i> Room Details
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+
+                html += `</div>`;
+
+                // Add summary info at the top
+                const summaryHtml = `
+                    <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                        <p style="margin: 0; color: #1976d2; font-weight: 600;">
+                            <i class="fa fa-check-circle"></i> 
+                            ${rooms.length} room(s) available for ${numNights} night(s) (${moment(checkInDate).format('MMM DD')} - ${moment(checkOutDate).format('MMM DD')})
+                        </p>
+                    </div>
+                `;
+
+                $container.html(summaryHtml + html);
+
+                // Bind book room buttons
+                $container.find('.book-room-btn').on('click', function() {
+                    const roomNumber = $(this).data('room');
+                    const room = rooms.find(r => r.name === roomNumber);
+                    if (room) {
+                        frappe.new_doc('Hotel Room Check In', {
+                            room_number: room.name,
+                            check_in_date: checkInDate
+                        });
+                    }
+                });
+
+                // Bind view room details buttons
+                $container.find('.view-room-btn').on('click', function() {
+                    const roomNumber = $(this).data('room');
+                    frappe.set_route('Form', 'Hotel Room', roomNumber);
+                });
+
+                // Add hover effect
+                $container.find('.available-room-card').on('mouseenter', function() {
+                    $(this).css('box-shadow', '0 8px 16px rgba(0,0,0,0.15)');
+                    $(this).css('transform', 'translateY(-4px)');
+                }).on('mouseleave', function() {
+                    $(this).css('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
+                    $(this).css('transform', 'translateY(0)');
+                });
+            },
+            error: (err) => {
+                $container.html(`
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-circle"></i> Error loading available rooms. Please try again.
+                    </div>
+                `);
+                console.error(err);
+            }
+        });
+    }
+
+
+    render_available_rooms_view() {
+        let $view = this.page.main.find(`[data-view-name="available_rooms_view"]`);
+        if (!$view.length) {
+            $view = $(`<div class="view-container" data-view-name="available_rooms_view" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
+        }
+        $view.show();
+
+        // Get today's date and add 1 day as default
+        const today = frappe.datetime.get_today();
+        const tomorrow = frappe.datetime.add_days(today, 1);
+
+        // Create filter HTML
+        const filterHtml = `
+            <div class="available-rooms-filters" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1.5rem; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Check-in Date</label>
+                    <input type="date" id="available_check_in_date" value="${today}" style="padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 1rem;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Check-out Date</label>
+                    <input type="date" id="available_check_out_date" value="${tomorrow}" style="padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 1rem;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Room Type</label>
+                    <select id="available_room_type_filter" style="padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 1rem;">
+                        <option value="">All Room Types</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end; gap: 0.75rem;">
+                    <button id="available_rooms_search" class="btn btn-primary" style="flex: 1; padding: 0.75rem;">
+                        <i class="fa fa-search"></i> Search Available Rooms
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Set initial HTML with filters and empty results container
+        $view.html(`
+            <div class="frappe-card">
+                <div class="frappe-card-head">
+                    <h4>Available Rooms</h4>
+                </div>
+                <div class="frappe-card-body">
+                    ${filterHtml}
+                    <div id="available_rooms_container"></div>
+                </div>
+            </div>
+        `);
+
+        // Populate room types
+        frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'Hotel Room Type',
+                fields: ['name'],
+                limit_page_length: 0
+            },
+            callback: (r) => {
+                if (r.message) {
+                    const roomTypeSelect = $view.find('#available_room_type_filter');
+                    r.message.forEach(rt => {
+                        roomTypeSelect.append(`<option value="${rt.name}">${rt.name}</option>`);
+                    });
+                }
+            }
+        });
+
+        // Bind search button
+        $view.find('#available_rooms_search').on('click', () => {
+            const checkInDate = $view.find('#available_check_in_date').val();
+            const checkOutDate = $view.find('#available_check_out_date').val();
+            const roomType = $view.find('#available_room_type_filter').val();
+
+            if (!checkInDate || !checkOutDate) {
+                frappe.msgprint(__('Please select both check-in and check-out dates'));
+                return;
+            }
+
+            if (checkOutDate <= checkInDate) {
+                frappe.msgprint(__('Check-out date must be after check-in date'));
+                return;
+            }
+
+            this.fetch_and_display_available_rooms(checkInDate, checkOutDate, roomType, $view.find('#available_rooms_container'));
+        });
+
+        // Auto-search on date/room type change
+        $view.find('#available_check_in_date, #available_check_out_date, #available_room_type_filter').on('change', () => {
+            $view.find('#available_rooms_search').click();
         });
     }
 
@@ -1476,7 +1703,7 @@ class FrontDesk {
                                 table.DataTable({
                                     paging: true,
                                     searching: true,
-                                    ordering: true,
+                                    ordering: false,
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
                                     pageLength: 10,

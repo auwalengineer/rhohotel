@@ -6,6 +6,8 @@ import json
 import uuid
 import requests
 from frappe.utils import flt
+from frappe.utils import getdate, get_datetime, date_diff, nowdate, add_days, now_datetime
+from datetime import datetime, timedelta
 
 
 # Import translation function
@@ -1025,3 +1027,258 @@ def add_cors_headers(response=None):
     frappe.response.headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
     frappe.response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Frappe-CSRF-Token")
     frappe.response.headers.add("Access-Control-Allow-Credentials", "true")
+    
+    
+    
+
+
+# from datetime import datetime
+# import frappe
+# from frappe import _
+# from frappe.utils import getdate, date_diff
+# from rhohotel.api import get_room_rate
+# import frappe
+# from frappe.utils import getdate
+
+
+# @frappe.whitelist()
+# def get_available_rooms(doctype, txt, searchfield, start, page_len, filters):
+#     """
+#     Frappe set_query method: Returns available rooms for the selected date range.
+    
+#     This filters out:
+#     1. Rooms with active reservations (not Cancelled/Completed)
+#     2. Rooms with checked-in guests
+#     3. Rooms with active holds from temporary bookings
+    
+#     Usage in HTML/JS:
+#         frm.set_query("room_number", function() {
+#             return {
+#                 query: "rhohotel.methods.get_available_rooms",
+#                 filters: {
+#                     from_date: frm.doc.from_date,
+#                     to_date: frm.doc.to_date,
+#                     room_type: frm.doc.room_type
+#                 }
+#             };
+#         });
+#     """
+    
+#     # Extract dates from filters passed by set_query
+#     from_date = filters.get("from_date")
+#     to_date = filters.get("to_date")
+#     room_type = filters.get("room_type")
+    
+#     # Must have both dates
+#     if not from_date or not to_date:
+#         return []
+    
+#     # Validate and convert dates
+#     try:
+#         from_date_obj = getdate(from_date)
+#         to_date_obj = getdate(to_date)
+        
+#         if to_date_obj <= from_date_obj:
+#             return []
+        
+#         from_date_str = from_date_obj.strftime("%Y-%m-%d")
+#         to_date_str = to_date_obj.strftime("%Y-%m-%d")
+#     except Exception:
+#         return []
+    
+#     # # Build base filter for operational rooms
+#     # room_filters = {
+#     #     "operational_status": "In Service",
+#     #     "maintenance_flag": 0
+#     # }
+    
+#     # if room_type:
+#     #     room_filters["room_type"] = room_type
+    
+#     # Get all eligible rooms
+#     all_rooms = frappe.get_all(
+#         "Hotel Room",
+#         # filters=room_filters,
+#         fields=["name"],
+#         limit_page_length=None
+#     )
+    
+#     if not all_rooms:
+#         return []
+    
+#     room_names = [r["name"] for r in all_rooms]
+#     blocked_rooms = set()
+    
+#     # ==================================================================
+#     # Check 1: Hotel Room Reservation overlaps
+#     # ==================================================================
+#     try:
+#         reservations = frappe.db.sql("""
+#             SELECT DISTINCT room_number
+#             FROM `tabHotel Room Reservation`
+#             WHERE room_number IN ({})
+#             AND status NOT IN ('Cancelled', 'Completed')
+#             AND from_date < %s
+#             AND to_date > %s
+#         """.format(", ".join(["%s"] * len(room_names))),
+#         tuple(room_names) + (to_date_str, from_date_str),
+#         as_dict=True
+#         )
+        
+#         for res in reservations:
+#             blocked_rooms.add(res["room_number"])
+#     except Exception as e:
+#         frappe.log_error(str(e), "Hotel Room Reservation: Check Overlaps")
+    
+#     # ==================================================================
+#     # Check 2: Hotel Room Check In overlaps
+#     # ==================================================================
+#     try:
+#         checkins = frappe.db.sql("""
+#             SELECT DISTINCT room_number
+#             FROM `tabHotel Room Check In`
+#             WHERE room_number IN ({})
+#             AND status IN ('Draft', 'Checked In')
+#             AND DATE(check_in_datetime) < %s
+#             AND DATE(expected_check_out_datetime) > %s
+#         """.format(", ".join(["%s"] * len(room_names))),
+#         tuple(room_names) + (to_date_str, from_date_str),
+#         as_dict=True
+#         )
+        
+#         for ci in checkins:
+#             blocked_rooms.add(ci["room_number"])
+#     except Exception as e:
+#         frappe.log_error(str(e), "Hotel Room Reservation: Check Ins")
+    
+#     # ==================================================================
+#     # Check 3: Temporary Booking holds (active/not expired)
+#     # ==================================================================
+#     try:
+#         holds = frappe.db.sql("""
+#             SELECT DISTINCT tbr.room_number
+#             FROM `tabTemporary Booking` tb
+#             INNER JOIN `tabTemporary Booking Room` tbr 
+#                 ON tb.name = tbr.parent
+#             WHERE tbr.room_number IN ({})
+#             AND tb.status IN ('Hold', 'Payment Link Generated')
+#             AND tb.payment_status = 'Pending'
+#             AND tb.booking_status = 'Held'
+#             AND tb.hold_expires_at > NOW()
+#         """.format(", ".join(["%s"] * len(room_names))),
+#         tuple(room_names),
+#         as_dict=True
+#         )
+        
+#         for hold in holds:
+#             blocked_rooms.add(hold["room_number"])
+#     except Exception as e:
+#         frappe.log_error(str(e), "Hotel Room Reservation: Temporary Holds")
+    
+#     # Filter and return available rooms in Frappe dropdown format
+#     available_rooms = [r["name"] for r in all_rooms if r["name"] not in blocked_rooms]
+    
+#     # Frappe expects list of lists: [["room1"], ["room2"], ...]
+#     return [[room] for room in available_rooms]
+
+
+
+
+
+
+@frappe.whitelist()
+def get_available_rooms(from_date, to_date, room_type=None):
+    """Get available rooms for selected dates - EXCLUDES HELD ROOMS"""
+    try:
+        from_date_obj = getdate(from_date)
+        to_date_obj = getdate(to_date)
+        
+        if to_date_obj <= from_date_obj:
+            frappe.throw(_("Check-out date must be after check-in date"))
+        
+        # filters = {
+        #     # "status": "Vacant",
+        #     "operational_status": "In Service",
+        #     "maintenance_flag": 0
+        # }
+        
+        if room_type:
+            filters["room_type"] = room_type
+        
+        all_rooms = frappe.get_all(
+            "Hotel Room",
+            # filters=filters,
+            fields=["name", "room_type", "floor", "capacity"]
+        )
+        
+        if not all_rooms:
+            return []
+        
+        room_numbers = [r.name for r in all_rooms]
+        # return all_rooms
+        
+        
+        # ✅ CRITICAL FIX #1: Exclude rooms with active holds from Temporary Booking
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        held_rooms = frappe.db.sql("""
+            SELECT DISTINCT tbr.room_number
+            FROM `tabTemporary Booking` tb
+            INNER JOIN `tabTemporary Booking Room` tbr ON tb.name = tbr.parent
+            WHERE tbr.room_number IN ({rooms})
+            AND tb.status IN ('Hold', 'Payment Link Generated')
+            AND tb.payment_status = 'Pending'
+            AND tb.booking_status = 'Held'
+            AND tb.hold_expires_at > %s
+        """.format(rooms=", ".join(["%s"] * len(room_numbers))),
+        tuple(room_numbers) + (current_time,),
+        as_dict=True)
+        
+        held_room_list = [r.room_number for r in held_rooms]
+        
+        # Exclude overlapping reservations
+        overlapping_reservations = frappe.db.sql("""
+            SELECT DISTINCT room_number
+            FROM `tabHotel Room Reservation`
+            WHERE room_number IN ({rooms})
+            AND status NOT IN ('Cancelled', 'Completed')
+            AND from_date < %s
+            AND to_date > %s
+        """.format(rooms=", ".join(["%s"] * len(room_numbers))),
+        tuple(room_numbers) + (to_date, from_date),
+        as_dict=True)
+        
+        booked_rooms = [r.room_number for r in overlapping_reservations]
+        
+        # Exclude active check-ins
+        active_checkins = frappe.db.sql("""
+            SELECT DISTINCT room_number
+            FROM `tabHotel Room Check In`
+            WHERE room_number IN ({rooms})
+            AND status IN ('Draft', 'Checked In')
+            AND DATE(check_in_datetime) < %s
+            AND DATE(expected_check_out_datetime) > %s
+        """.format(rooms=", ".join(["%s"] * len(room_numbers))),
+        tuple(room_numbers) + (to_date, from_date),
+        as_dict=True)
+        
+        checked_in_rooms = [r.room_number for r in active_checkins]
+        
+        # ✅ CRITICAL FIX #2: Combine all unavailable rooms
+        # Order matters: held_room_list first, then booked, then checked in
+        unavailable = set(held_room_list + booked_rooms + checked_in_rooms)
+        available_rooms = [r for r in all_rooms if r.name not in unavailable]
+        
+        # Calculate pricing for each available room
+        for room in available_rooms:
+            rate = get_room_rate(room.room_type, check_in_date=str(from_date))
+            room["rate_per_night"] = rate
+            num_nights = date_diff(to_date_obj, from_date_obj)
+            room["total_amount"] = rate * num_nights
+        
+        return available_rooms
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Get Available Rooms Error")
+        frappe.throw(_("Error: {0}").format(str(e)))
+        

@@ -31,6 +31,7 @@
         "column_break_hkmf",
         "invoices_section",
         "invoices_html",
+        "journal_entries_html",
         "payments_html",
         "section_break_lpyl",
         "housekeeping_notes",
@@ -247,6 +248,11 @@
             "fieldname": "invoices_html",
             "fieldtype": "HTML",
             "label": "Invoices"
+        },
+        {
+            "fieldname": "journal_entries_html",
+            "fieldtype": "HTML",
+            "label": "Journal Entries"
         },
         {
             "fieldname": "payments_html",

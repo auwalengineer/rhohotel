@@ -13,13 +13,13 @@ class BillTransfer(Document):
         if self.total_amount <= 0:
             frappe.throw("Total amount must be greater than zero.")
 
-    def on_submit(self):
-        # Submit only when already approved
-        if self.status != "Approved":
-            frappe.throw("Bill Transfer must be approved before submission.")
+        def on_submit(self):
+            # Submit only when already approved
+            if self.status != "Approved":
+                frappe.throw("Bill Transfer must be approved before submission.")
 
-        self.create_source_invoice()
-        self.create_destination_invoice()
+            self.create_source_invoice()
+            self.create_destination_invoice()
 
 
     def on_cancel(self):
@@ -34,19 +34,19 @@ class BillTransfer(Document):
         """Creates negative invoice for the source folio."""
         inv = frappe.new_doc("Sales Invoice")
         inv.customer = self.from_guest
-        inv.debit_to = self.get_default_receivable(self.from_guest)
         inv.is_pos = 0
         inv.update_stock = 0
         inv.set_posting_time = 1
         inv.posting_date = frappe.utils.nowdate()
         inv.posting_time = frappe.utils.nowtime()
-
+        inv.flags.ignore_permissions = True
+        inv.flags.ignore_links = True
+        inv.flags.ignore_mandatory = True
         inv.append("items", {
             "item_name": "Bill Transfer",
             "description": f"Bill transferred to {self.to_guest}",
             "qty": -1,
-            "rate": self.total_amount,
-            "income_account": self.get_income_account()
+            "rate": self.total_amount
         })
 
         inv.insert()
@@ -59,19 +59,19 @@ class BillTransfer(Document):
         """Creates positive invoice for the receiving folio."""
         inv = frappe.new_doc("Sales Invoice")
         inv.customer = self.to_guest
-        inv.debit_to = self.get_default_receivable(self.to_guest)
         inv.is_pos = 0
         inv.update_stock = 0
         inv.set_posting_time = 1
         inv.posting_date = frappe.utils.nowdate()
         inv.posting_time = frappe.utils.nowtime()
-
+        inv.flags.ignore_permissions = True
+        inv.flags.ignore_links = True
+        inv.flags.ignore_mandatory = True
         inv.append("items", {
             "item_name": "Bill Transfer",
             "description": f"Bill transferred from {self.from_guest}",
             "qty": 1,
-            "rate": self.total_amount,
-            "income_account": self.get_income_account()
+            "rate": self.total_amount
         })
 
         inv.insert()

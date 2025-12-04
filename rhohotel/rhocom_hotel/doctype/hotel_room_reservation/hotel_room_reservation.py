@@ -613,3 +613,5 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
 # 				and reservation.to_date""".format(exclude_condition=exclude_condition),
 
 # 				(room_type, day))[0][0] or 0
+
+

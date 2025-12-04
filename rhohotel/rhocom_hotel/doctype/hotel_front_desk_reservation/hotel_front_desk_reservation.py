@@ -1228,21 +1228,474 @@ def create_or_get_room_item(room_type):
 
 
 
+# @frappe.whitelist()
+# def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
+#     """
+#     Check in SELECTED rooms using Hotel Room Reservation data
+    
+#     Key fix: rate_type comes from HRR.items (child table), not HRR directly!
+#     """
+#     try:
+#         if isinstance(room_indices, str):
+#             import json
+#             room_indices = json.loads(room_indices)
+        
+#         reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+        
+#         if reservation.docstatus != 1:
+#             frappe.throw(_("Reservation must be submitted"))
+        
+#         checked_in_rooms = []
+        
+#         for idx in room_indices:
+#             if idx >= len(reservation.rooms):
+#                 continue
+            
+#             room = reservation.rooms[idx]
+            
+#             # ✅ Step 1: Get Hotel Room Reservation by (FDR + room_number)
+#             frappe.log_error(
+#                 title=f"Check In Step 1 - Getting HRR - Room {room.room_number}",
+#                 message="Searching: front_desk_reservation={0}, room_number={1}".format(
+#                     reservation.name,
+#                     room.room_number
+#                 )
+#             )
+            
+#             hrr_name = frappe.db.get_value(
+#                 "Hotel Room Reservation",
+#                 {
+#                     "front_desk_reservation": reservation.name,
+#                     "room_number": room.room_number,
+#                     "docstatus": 1
+#                 },
+#                 "name"
+#             )
+            
+#             if not hrr_name:
+#                 # Create HRR if not exists (corporate bookings)
+#                 frappe.log_error(
+#                     title=f"Check In - No HRR Found, Creating - Room {room.room_number}",
+#                     message="Will create HRR for room"
+#                 )
+                
+#                 result = create_room_reservation_for_checkin(reservation_name, idx)
+#                 if not result.get("success"):
+#                     frappe.throw(
+#                         _("Failed to create Hotel Room Reservation for room {0}").format(
+#                             room.room_number
+#                         )
+#                     )
+#                 hrr_name = result.get("reservation_name")
+            
+#             # ✅ Step 2: Get full HRR document
+#             hrr = frappe.get_doc("Hotel Room Reservation", hrr_name)
+            
+#             frappe.log_error(
+#                 title=f"Check In Step 2 - HRR Retrieved - Room {room.room_number}",
+#                 message=frappe.as_json({
+#                     "hrr_name": hrr_name,
+#                     "hrr_guest_name": hrr.guest_name,
+#                     "hrr_rate": hrr.rate,
+#                     "hrr_customer": hrr.customer,
+#                     "hrr_items_count": len(hrr.items) if hasattr(hrr, 'items') else 0,
+#                     "hrr_status": hrr.status,
+#                 }, indent=2)
+#             )
+            
+#             # ✅ Step 3: Get rate_type and other details from HRR.items (child table)
+#             # HRR.items is a child table with fields: room_type, rate_type, season_type, qty, rate, amount
+#             rate_type = None
+#             season_type = None
+            
+#             if hasattr(hrr, 'items') and len(hrr.items) > 0:
+#                 # Get from first item (usually only one per room)
+#                 item = hrr.items[0]
+#                 rate_type = item.rate_type
+#                 season_type = item.season_type
+                
+#                 frappe.log_error(
+#                     title=f"Check In Step 3 - Got Rate Type from HRR.items - Room {room.room_number}",
+#                     message=frappe.as_json({
+#                         "rate_type": rate_type,
+#                         "season_type": season_type,
+#                     }, indent=2)
+#                 )
+#             else:
+#                 frappe.log_error(
+#                     title=f"Check In WARNING - No items in HRR - Room {room.room_number}",
+#                     message="HRR has no items child table"
+#                 )
+            
+#             # ✅ Step 4: Get or create Hotel Guest based on HRR guest_name
+#             guest_name = hrr.guest_name
+            
+#             hotel_guest_id = frappe.db.get_value(
+#                 "Hotel Guest",
+#                 {"hotel_guest_name": guest_name},
+#                 "name"
+#             )
+            
+#             if not hotel_guest_id:
+#                 frappe.log_error(
+#                     title=f"Check In Step 4 - Creating Hotel Guest - Room {room.room_number}",
+#                     message="guest_name = {0}".format(guest_name)
+#                 )
+                
+#                 hotel_guest = frappe.get_doc({
+#                     "doctype": "Hotel Guest",
+#                     "hotel_guest_name": guest_name,
+#                     "customer": hrr.customer,
+#                     "guest_type": "Corporate" if reservation.reservation_type == "Corporate" else "Individual"
+#                 })
+#                 hotel_guest.flags.ignore_permissions = True
+#                 hotel_guest.insert()
+#                 hotel_guest_id = hotel_guest.name
+#             else:
+#                 frappe.log_error(
+#                     title=f"Check In Step 4 - Using Existing Hotel Guest - Room {room.room_number}",
+#                     message="hotel_guest_id = {0}".format(hotel_guest_id)
+#                 )
+            
+#             # ✅ Step 5: Get room_type from Hotel Room document
+#             room_doc = frappe.get_doc("Hotel Room", hrr.room_number)
+#             room_type = room_doc.room_type if hasattr(room_doc, 'room_type') else None
+            
+#             frappe.log_error(
+#                 title=f"Check In Step 5 - Got Room Type - Room {room.room_number}",
+#                 message="room_type = {0}".format(room_type)
+#             )
+            
+#             # ✅ Step 6: Calculate number of nights
+#             number_of_nights = date_diff(
+#                 getdate(hrr.to_date),
+#                 getdate(hrr.from_date)
+#             )
+            
+#             # ✅ Step 7: Build check-in data with ALL required fields
+#             check_in_data = {
+#                 "doctype": "Hotel Room Check In",
+#                 # Guest Details
+#                 "guest": hotel_guest_id,  # ← From HRR guest_name
+#                 # Room Details
+#                 "room_number": hrr.room_number,  # ← From HRR
+#                 "room_type": room_type,  # ← From Hotel Room (REQUIRED for validation)
+#                 # Pricing - CRITICAL: rate_type comes from HRR.items, not HRR!
+#                 "rate_type": rate_type,  # ← From HRR.items[0].rate_type
+#                 "rate_amount": hrr.rate or 0,  # ← From HRR
+#                 # Dates & Times
+#                 "check_in_datetime": now_datetime(),
+#                 "number_of_nights": number_of_nights,  # ← Calculated from HRR dates
+#                 "expected_check_out_datetime": get_datetime(
+#                     f"{hrr.to_date} {reservation.expected_check_out_time or '12:00:00'}"
+#                 ),  # ← From HRR
+#                 # Status
+#                 "status": "Checked In",
+#                 # Linking
+#                 "front_desk_reservation": reservation.name,  # ← Link to FDR
+#                 "reservation": hrr_name  # ← Link to HRR
+#             }
+            
+#             # ✅ Step 8: Log the complete data before creating
+#             frappe.log_error(
+#                 title=f"Check In Step 6 - Creating Document - Room {room.room_number}",
+#                 message=frappe.as_json(check_in_data, indent=2)
+#             )
+            
+#             # ✅ Step 9: Create and submit check-in
+#             try:
+#                 check_in = frappe.get_doc(check_in_data)
+#                 check_in.flags.ignore_permissions = True
+#                 check_in.insert()  # ← Validation runs here
+#                 check_in.submit()
+                
+#                 frappe.log_error(
+#                     title=f"Check In SUCCESS - Room {room.room_number}",
+#                     message="Check In: {0}\nStatus: {1}".format(
+#                         check_in.name,
+#                         check_in.status
+#                     )
+#                 )
+                
+#             except Exception as e:
+#                 frappe.log_error(
+#                     title=f"Check In FAILED - Room {room.room_number}",
+#                     message="Error: {0}\n\nData that caused error:\n{1}".format(
+#                         str(e),
+#                         frappe.as_json(check_in_data, indent=2)
+#                     )
+#                 )
+#                 raise
+            
+#             # ✅ Step 10: Update HRR status
+#             frappe.db.set_value(
+#                 "Hotel Room Reservation",
+#                 hrr_name,
+#                 "status",
+#                 "Checked-In"
+#             )
+            
+#             checked_in_rooms.append(room.room_number)
+        
+#         frappe.db.commit()
+        
+#         return {
+#             "success": True,
+#             "message": _("Checked in {0} room(s)").format(len(checked_in_rooms))
+#         }
+    
+#     except Exception as e:
+#         frappe.log_error(frappe.get_traceback(), "Check In Selected Rooms Error")
+#         frappe.throw(_("Error: {0}").format(str(e)))
+     
+# @frappe.whitelist()
+# def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
+#     """
+#     Check in SELECTED rooms with Sales Invoice creation BEFORE check-in submission
+    
+#     For corporate reservations:
+#     1. Create Sales Invoice for each room BEFORE check-in
+#     2. Link it to the check-in
+#     3. Submit check-in (which will try to create SI but find it already exists)
+    
+#     Key: Create SI before check-in so it won't be duplicated in on_submit()
+#     """
+#     try:
+#         if isinstance(room_indices, str):
+#             import json
+#             room_indices = json.loads(room_indices)
+        
+#         reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+        
+#         if reservation.docstatus != 1:
+#             frappe.throw(_("Reservation must be submitted"))
+        
+#         checked_in_rooms = []
+        
+#         for idx in room_indices:
+#             if idx >= len(reservation.rooms):
+#                 continue
+            
+#             room = reservation.rooms[idx]
+            
+#             # ✅ Step 1: Get Hotel Room Reservation by (FDR + room_number)
+#             frappe.log_error(
+#                 title=f"Check In Step 1 - Getting HRR - Room {room.room_number}",
+#                 message="Searching: front_desk_reservation={0}, room_number={1}".format(
+#                     reservation.name,
+#                     room.room_number
+#                 )
+#             )
+            
+#             hrr_name = frappe.db.get_value(
+#                 "Hotel Room Reservation",
+#                 {
+#                     "front_desk_reservation": reservation.name,
+#                     "room_number": room.room_number,
+#                     "docstatus": 1
+#                 },
+#                 "name"
+#             )
+            
+#             if not hrr_name:
+#                 # Create HRR if not exists (corporate bookings)
+#                 frappe.log_error(
+#                     title=f"Check In - No HRR Found, Creating - Room {room.room_number}",
+#                     message="Will create HRR for room"
+#                 )
+                
+#                 result = create_room_reservation_for_checkin(reservation_name, idx)
+#                 if not result.get("success"):
+#                     frappe.throw(
+#                         _("Failed to create Hotel Room Reservation for room {0}").format(
+#                             room.room_number
+#                         )
+#                     )
+#                 hrr_name = result.get("reservation_name")
+            
+#             # ✅ Step 2: Get full HRR document
+#             hrr = frappe.get_doc("Hotel Room Reservation", hrr_name)
+            
+#             # ✅ Step 3: Get rate_type from HRR.items child table
+#             rate_type = None
+#             if hasattr(hrr, 'items') and len(hrr.items) > 0:
+#                 rate_type = hrr.items[0].rate_type
+            
+#             # ✅ Step 4: Get or create Hotel Guest based on HRR guest_name
+#             guest_name = hrr.guest_name
+            
+#             hotel_guest_id = frappe.db.get_value(
+#                 "Hotel Guest",
+#                 {"hotel_guest_name": guest_name},
+#                 "name"
+#             )
+            
+#             if not hotel_guest_id:
+#                 frappe.log_error(
+#                     title=f"Check In Step 4 - Creating Hotel Guest - Room {room.room_number}",
+#                     message="guest_name = {0}".format(guest_name)
+#                 )
+                
+#                 hotel_guest = frappe.get_doc({
+#                     "doctype": "Hotel Guest",
+#                     "hotel_guest_name": guest_name,
+#                     "customer": hrr.customer,
+#                     "guest_type": "Corporate" if reservation.reservation_type == "Corporate" else "Individual"
+#                 })
+#                 hotel_guest.flags.ignore_permissions = True
+#                 hotel_guest.insert()
+#                 hotel_guest_id = hotel_guest.name
+            
+#             # ✅ Step 5: Get room_type from Hotel Room document
+#             room_doc = frappe.get_doc("Hotel Room", hrr.room_number)
+#             room_type = room_doc.room_type if hasattr(room_doc, 'room_type') else None
+            
+#             # ✅ Step 6: Calculate number of nights
+#             number_of_nights = date_diff(
+#                 getdate(hrr.to_date),
+#                 getdate(hrr.from_date)
+#             )
+            
+#             # ✅ STEP 7: CREATE SALES INVOICE BEFORE CHECK-IN
+#             # This prevents duplicate SI creation in on_submit()
+#             frappe.log_error(
+#                 title=f"Check In Step 7 - Creating Sales Invoice - Room {room.room_number}",
+#                 message="Creating SI for guest: {0}, amount: {1}".format(
+#                     hrr.guest_name,
+#                     hrr.rate * number_of_nights
+#                 )
+#             )
+            
+#             # Get the erpnext_item from Hotel Room
+#             if not room_doc.erpnext_item:
+#                 frappe.throw(
+#                     _("Hotel Room {0} does not have an ERPNext item configured").format(
+#                         hrr.room_number
+#                     )
+#                 )
+            
+#             # Create Sales Invoice
+#             si = frappe.new_doc("Sales Invoice")
+#             si.customer = hrr.customer  # ← Corporate customer
+#             si.posting_date = nowdate()
+#             si.due_date = getdate(hrr.to_date)
+#             si.invoice_period_from_date = hrr.from_date
+#             si.invoice_period_to_date = hrr.to_date
+#             si.reference_no = hrr.booking_number
+#             si.remarks = _("Room {0} - {1} night(s) from {2} to {3}").format(
+#                 hrr.room_number,
+#                 number_of_nights,
+#                 hrr.from_date,
+#                 hrr.to_date
+#             )
+            
+#             # Add item line
+#             si.append("items", {
+#                 "item_code": room_doc.erpnext_item,
+#                 "rate": hrr.rate,
+#                 "qty": number_of_nights,
+#                 "amount": hrr.rate * number_of_nights,
+#                 "description": _("Room charge for {0}").format(hrr.room_number)
+#             })
+            
+#             si.set_taxes()
+            
+#             # Insert and submit SI
+#             si.flags.ignore_permissions = True
+#             si.insert()
+#             si.submit()
+            
+#             frappe.log_error(
+#                 title=f"Check In Step 7 - Sales Invoice Created - Room {room.room_number}",
+#                 message="Sales Invoice: {0}\nAmount: {1}".format(
+#                     si.name,
+#                     si.grand_total
+#                 )
+#             )
+            
+#             # ✅ Step 8: Build check-in data with ALL required fields
+#             check_in_data = {
+#                 "doctype": "Hotel Room Check In",
+#                 # Guest Details
+#                 "guest": hotel_guest_id,  # ← From HRR guest_name
+#                 # Room Details
+#                 "room_number": hrr.room_number,  # ← From HRR
+#                 "room_type": room_type,  # ← From Hotel Room (REQUIRED for validation)
+#                 # Pricing - CRITICAL: rate_type comes from HRR.items, not HRR!
+#                 "rate_type": rate_type,  # ← From HRR.items[0].rate_type
+#                 "rate_amount": hrr.rate or 0,  # ← From HRR
+#                 # Dates & Times
+#                 "check_in_datetime": now_datetime(),
+#                 "number_of_nights": number_of_nights,  # ← Calculated from HRR dates
+#                 "expected_check_out_datetime": get_datetime(
+#                     f"{hrr.to_date} {reservation.expected_check_out_time or '12:00:00'}"
+#                 ),  # ← From HRR
+#                 # Status
+#                 "status": "Checked In",
+#                 # Linking
+#                 "front_desk_reservation": reservation.name,  # ← Link to FDR
+#                 "reservation": hrr_name  # ← Link to HRR
+#             }
+            
+#             # ✅ Step 9: Log the complete data before creating check-in
+#             frappe.log_error(
+#                 title=f"Check In Step 8 - Creating Check In Document - Room {room.room_number}",
+#                 message=frappe.as_json(check_in_data, indent=2)
+#             )
+            
+#             # ✅ Step 10: Create and submit check-in
+#             try:
+#                 check_in = frappe.get_doc(check_in_data)
+#                 check_in.flags.ignore_permissions = True
+#                 check_in.insert()  # ← Validation runs here
+#                 check_in.submit()  # ← on_submit() will try to create SI but find it exists
+                
+#                 frappe.log_error(
+#                     title=f"Check In SUCCESS - Room {room.room_number}",
+#                     message="Check In: {0}\nStatus: {1}\nSales Invoice: {2}".format(
+#                         check_in.name,
+#                         check_in.status,
+#                         si.name
+#                     )
+#                 )
+                
+#             except Exception as e:
+#                 frappe.log_error(
+#                     title=f"Check In FAILED - Room {room.room_number}",
+#                     message="Error: {0}\n\nData that caused error:\n{1}".format(
+#                         str(e),
+#                         frappe.as_json(check_in_data, indent=2)
+#                     )
+#                 )
+#                 raise
+            
+#             # ✅ Step 11: Update HRR status
+#             frappe.db.set_value(
+#                 "Hotel Room Reservation",
+#                 hrr_name,
+#                 "status",
+#                 "Checked-In"
+#             )
+            
+#             checked_in_rooms.append(room.room_number)
+        
+#         frappe.db.commit()
+        
+#         return {
+#             "success": True,
+#             "message": _("Checked in {0} room(s)").format(len(checked_in_rooms))
+#         }
+    
+#     except Exception as e:
+#         frappe.log_error(frappe.get_traceback(), "Check In Selected Rooms Error")
+#         frappe.throw(_("Error: {0}").format(str(e)))
 
-
-# REPLACE THE EXISTING CHECK-IN METHODS with these
-# These now automatically create Hotel Room Reservations when checking in
 
 @frappe.whitelist()
 def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
     """
-    Check in SELECTED rooms and automatically create Hotel Room Reservations
-    For corporate bookings where user selects which rooms to check in
-    
-    Args:
-        reservation_name: Front Desk Reservation name
-        room_indices: List of room indices to check in (0-based)
-        check_in_notes: Optional notes for check-in
+    Check in SELECTED rooms with Sales Invoice creation BEFORE check-in submission
+    WITH ALERTS for user feedback
     """
     try:
         if isinstance(room_indices, str):
@@ -1255,66 +1708,236 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
             frappe.throw(_("Reservation must be submitted"))
         
         checked_in_rooms = []
+        created_sales_invoices = []  # Track all created SIs
         
-        # Process only selected rooms
         for idx in room_indices:
             if idx >= len(reservation.rooms):
                 continue
             
             room = reservation.rooms[idx]
             
-            # Ensure guest has a name
-            if not room.guest_name or room.guest_name.startswith("Guest - Room"):
-                return {
-                    "success": False,
-                    "missing_guest_names": True,
-                    "message": _("Guest names required for rooms: {0}").format(room.room_number)
-                }
+            # Get HRR
+            hrr_name = frappe.db.get_value(
+                "Hotel Room Reservation",
+                {
+                    "front_desk_reservation": reservation.name,
+                    "room_number": room.room_number,
+                    "docstatus": 1
+                },
+                "name"
+            )
             
-            # ✅ Step 3: Create check-in record
-            check_in = frappe.get_doc({
-                "doctype": "Hotel Room Check In",
-                "guest": room.hotel_guest,
-                "room_number": room.room_number,
-                "check_in_datetime": now_datetime(),
-                "number_of_nights": date_diff(getdate(reservation.to_date), getdate(reservation.from_date)),
-                "expected_check_out_datetime": get_datetime(f"{reservation.to_date} {reservation.expected_check_out_time or '12:00:00'}"),
-                "rate_amount": room.rate_per_night or 0,
-                "status": "Checked In",
-                "front_desk_reservation": reservation.name,  # ✅ ADD THIS
-                "front_desk_reservation": reservation.name,  # ✅ ADD THIS
-                "reservation": room.hotel_room_reservation    # ✅ ADD THIS
-
-
+            if not hrr_name:
+                result = create_room_reservation_for_checkin(reservation_name, idx)
+                if not result.get("success"):
+                    frappe.throw(
+                        _("Failed to create Hotel Room Reservation for room {0}").format(
+                            room.room_number
+                        )
+                    )
+                hrr_name = result.get("reservation_name")
+            
+            # Get HRR document
+            hrr = frappe.get_doc("Hotel Room Reservation", hrr_name)
+            
+            # Get rate_type from HRR.items child table
+            rate_type = None
+            if hasattr(hrr, 'items') and len(hrr.items) > 0:
+                rate_type = hrr.items[0].rate_type
+            
+            # Get or create Hotel Guest
+            guest_name = hrr.guest_name
+            
+            hotel_guest_id = frappe.db.get_value(
+                "Hotel Guest",
+                {"hotel_guest_name": guest_name},
+                "name"
+            )
+            
+            if not hotel_guest_id:
+                hotel_guest = frappe.get_doc({
+                    "doctype": "Hotel Guest",
+                    "hotel_guest_name": guest_name,
+                    "customer": hrr.customer,
+                    "guest_type": "Corporate" if reservation.reservation_type == "Corporate" else "Individual"
+                })
+                hotel_guest.flags.ignore_permissions = True
+                hotel_guest.insert()
+                hotel_guest_id = hotel_guest.name
+            
+            # Get room_type from Hotel Room document
+            room_doc = frappe.get_doc("Hotel Room", hrr.room_number)
+            room_type = room_doc.room_type if hasattr(room_doc, 'room_type') else None
+            
+            # Calculate number of nights
+            number_of_nights = date_diff(
+                getdate(hrr.to_date),
+                getdate(hrr.from_date)
+            )
+            
+            # ✅ STEP 7: CREATE SALES INVOICE BEFORE CHECK-IN
+            if not room_doc.erpnext_item:
+                frappe.throw(
+                    _("Hotel Room {0} does not have an ERPNext item configured").format(
+                        hrr.room_number
+                    )
+                )
+            
+            # Create Sales Invoice
+            si = frappe.new_doc("Sales Invoice")
+            si.customer = hrr.customer  # Corporate customer from HRR
+            si.posting_date = nowdate()
+            si.due_date = getdate(hrr.to_date)
+            si.invoice_period_from_date = hrr.from_date
+            si.invoice_period_to_date = hrr.to_date
+            si.reference_no = hrr.booking_number
+            si.remarks = _("Room {0} - {1} night(s) from {2} to {3}").format(
+                hrr.room_number,
+                number_of_nights,
+                hrr.from_date,
+                hrr.to_date
+            )
+            
+            # Add item line
+            si.append("items", {
+                "item_code": room_doc.erpnext_item,
+                "rate": hrr.rate,
+                "qty": number_of_nights,
+                "amount": hrr.rate * number_of_nights,
+                "description": _("Room charge for {0}").format(hrr.room_number)
             })
             
-            check_in.flags.ignore_permissions = True
-            check_in.insert()
-            check_in.submit()
+            si.set_taxes()
+            
+            # Insert and submit SI
+            si.flags.ignore_permissions = True
+            si.insert()
+            si.submit()
+            
+            # ✅ ALERT 1: Sales Invoice Created Successfully
+            frappe.msgprint({
+                'title': _('Sales Invoice Created'),
+                'message': _('Sales Invoice <b>{0}</b> created for Room <b>{1}</b><br/>Amount: <b>{2}</b>').format(
+                    si.name,
+                    hrr.room_number,
+                    frappe.format_value(si.grand_total, df={"fieldtype": "Currency"})
+                ),
+                'indicator': 'green',
+                'alert': False  # Use alert=False to show as notification, not modal
+            })
+            
+            created_sales_invoices.append({
+                "invoice": si.name,
+                "room": hrr.room_number,
+                "amount": si.grand_total
+            })
+            
+            # Log for debugging
+            frappe.log_error(
+                title=f"Sales Invoice Created - Room {room.room_number}",
+                message="Sales Invoice: {0}\nAmount: {1}".format(
+                    si.name,
+                    si.grand_total
+                )
+            )
+            
+            # Build check-in data
+            check_in_data = {
+                "doctype": "Hotel Room Check In",
+                "guest": hotel_guest_id,
+                "room_number": hrr.room_number,
+                "room_type": room_type,
+                "rate_type": rate_type,
+                "rate_amount": hrr.rate or 0,
+                "check_in_datetime": now_datetime(),
+                "number_of_nights": number_of_nights,
+                "expected_check_out_datetime": get_datetime(
+                    f"{hrr.to_date} {reservation.expected_check_out_time or '12:00:00'}"
+                ),
+                "status": "Checked In",
+                "front_desk_reservation": reservation.name,
+                "reservation": hrr_name
+            }
+            
+            # Create and submit check-in
+            try:
+                check_in = frappe.get_doc(check_in_data)
+                check_in.flags.ignore_permissions = True
+                check_in.insert()
+                check_in.submit()
+                
+                # ✅ ALERT 2: Check-In Created Successfully
+                frappe.msgprint({
+                    'title': _('Check-In Confirmed'),
+                    'message': _('Room <b>{0}</b> checked in successfully<br/>Guest: <b>{1}</b><br/>Check-In: <b>{2}</b>').format(
+                        hrr.room_number,
+                        guest_name,
+                        check_in.name
+                    ),
+                    'indicator': 'green',
+                    'alert': False
+                })
+                
+            except Exception as e:
+                frappe.log_error(
+                    title=f"Check In FAILED - Room {room.room_number}",
+                    message="Error: {0}\n\nData that caused error:\n{1}".format(
+                        str(e),
+                        frappe.as_json(check_in_data, indent=2)
+                    )
+                )
+                raise
+            
+            # Update HRR status
+            frappe.db.set_value(
+                "Hotel Room Reservation",
+                hrr_name,
+                "status",
+                "Checked-In"
+            )
             
             checked_in_rooms.append(room.room_number)
         
         frappe.db.commit()
         
+        # ✅ FINAL ALERT: Summary of all checked-in rooms
+        summary_message = _("Successfully checked in {0} room(s)<br/><br/>").format(len(checked_in_rooms))
+        
+        if created_sales_invoices:
+            summary_message += _("<b>Sales Invoices Created:</b><br/>")
+            for si_data in created_sales_invoices:
+                summary_message += _(
+                    "• Room {0}: Invoice {1} (₦{2:,.2f})<br/>"
+                ).format(
+                    si_data["room"],
+                    si_data["invoice"],
+                    si_data["amount"]
+                )
+        
+        frappe.msgprint({
+            'title': _('Check-In Complete'),
+            'message': summary_message,
+            'indicator': 'green',
+            'alert': True  # This is the final alert, make it modal
+        })
+        
         return {
             "success": True,
-            "message": _("Checked in {0} room(s) and created reservations: {1}").format(len(checked_in_rooms), ", ".join(checked_in_rooms))
+            "message": _("Checked in {0} room(s)").format(len(checked_in_rooms)),
+            "rooms": checked_in_rooms,
+            "sales_invoices": created_sales_invoices
         }
     
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Check In Selected Rooms Error")
-        frappe.throw(_("Error: {0}").format(str(e)))
-
+        frappe.throw(_("Error: {0}").format(str(e)))  
 
 @frappe.whitelist()
 def check_in_all_rooms(reservation_name, check_in_notes=""):
     """
-    Check in ALL rooms and automatically create Hotel Room Reservations
-    For corporate bookings where user wants to check in everyone
+    Check in ALL rooms using Hotel Room Reservations
     
-    Args:
-        reservation_name: Front Desk Reservation name
-        check_in_notes: Optional notes for check-in
+    Same workflow as check_in_selected_rooms but for all rooms
     """
     try:
         reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
@@ -1324,35 +1947,103 @@ def check_in_all_rooms(reservation_name, check_in_notes=""):
         
         checked_in_rooms = []
         
-        # Check all rooms have names
-        for room in reservation.rooms:
-            if not room.guest_name or room.guest_name.startswith("Guest - Room"):
-                return {
-                    "success": False,
-                    "missing_guest_names": True,
-                    "message": _("Guest names required for rooms: {0}").format(room.room_number)
-                }
-        
-        # Check in ALL rooms
-        for room in reservation.rooms:
+        # Check in all rooms
+        for idx, room in enumerate(reservation.rooms):
             
-            # ✅ Step 3: Create check-in record
+            # ✅ Get Hotel Room Reservation
+            hrr_name = frappe.db.get_value(
+                "Hotel Room Reservation",
+                {
+                    "front_desk_reservation": reservation.name,
+                    "room_number": room.room_number,
+                    "docstatus": 1
+                },
+                "name"
+            )
+            
+            if not hrr_name:
+                # Create if not exists
+                result = create_room_reservation_for_checkin(reservation_name, idx)
+                if not result.get("success"):
+                    frappe.throw(
+                        _("Failed to create Hotel Room Reservation for room {0}").format(
+                            room.room_number
+                        )
+                    )
+                hrr_name = result.get("reservation_name")
+            
+            # ✅ Get HRR document - get ALL data from here
+            hrr = frappe.get_doc("Hotel Room Reservation", hrr_name)
+            
+            # ✅ Get rate_type from HRR.items (child table) - KEY FIX!
+            rate_type = None
+            if hasattr(hrr, 'items') and len(hrr.items) > 0:
+                rate_type = hrr.items[0].rate_type
+            
+            # ✅ Get or create Hotel Guest
+            guest_name = hrr.guest_name
+            hotel_guest_id = frappe.db.get_value(
+                "Hotel Guest",
+                {"hotel_guest_name": guest_name},
+                "name"
+            )
+            
+            if not hotel_guest_id:
+                hotel_guest = frappe.get_doc({
+                    "doctype": "Hotel Guest",
+                    "hotel_guest_name": guest_name,
+                    "customer": hrr.customer,
+                    "guest_type": "Corporate" if reservation.reservation_type == "Corporate" else "Individual"
+                })
+                hotel_guest.flags.ignore_permissions = True
+                hotel_guest.insert()
+                hotel_guest_id = hotel_guest.name
+            
+            # ✅ Get room_type from Hotel Room
+            room_doc = frappe.get_doc("Hotel Room", hrr.room_number)
+            room_type = room_doc.room_type if hasattr(room_doc, 'room_type') else None
+            
+            # ✅ Calculate number of nights
+            number_of_nights = date_diff(
+                getdate(hrr.to_date),
+                getdate(hrr.from_date)
+            )
+            
+            # ✅ Create check-in using ALL required fields from HRR
             check_in = frappe.get_doc({
                 "doctype": "Hotel Room Check In",
-                "guest": room.hotel_guest,
-                "room_number": room.room_number,
+                # Guest Details
+                "guest": hotel_guest_id,  # ← From HRR
+                # Room Details
+                "room_number": hrr.room_number,  # ← From HRR
+                "room_type": room_type,  # ← From Hotel Room (REQUIRED)
+                # Pricing - rate_type from HRR.items!
+                "rate_type": rate_type,  # ← From HRR.items[0].rate_type
+                "rate_amount": hrr.rate or 0,  # ← From HRR (REQUIRED)
+                # Dates & Times
                 "check_in_datetime": now_datetime(),
-                "number_of_nights": date_diff(getdate(reservation.to_date), getdate(reservation.from_date)),
-                "expected_check_out_datetime": get_datetime(f"{reservation.to_date} {reservation.expected_check_out_time or '12:00:00'}"),
-                "rate_amount": room.rate_per_night or 0,
+                "number_of_nights": number_of_nights,  # ← Calculated from HRR dates
+                "expected_check_out_datetime": get_datetime(
+                    f"{hrr.to_date} {reservation.expected_check_out_time or '12:00:00'}"
+                ),
+                # Status
                 "status": "Checked In",
-                "front_desk_reservation": reservation.name,  # ✅ ADD THIS
-                "reservation": room.hotel_room_reservation    # ✅ ADD THIS
+                # Linking
+                "front_desk_reservation": reservation.name,
+                "reservation": hrr_name  # ← Link to HRR
             })
             
             check_in.flags.ignore_permissions = True
             check_in.insert()
             check_in.submit()
+            
+            # ✅ Update HRR status
+            frappe.db.set_value(
+                "Hotel Room Reservation",
+                hrr_name,
+                "status",
+                "Checked-In"
+            )
             
             checked_in_rooms.append(room.room_number)
         
@@ -1360,11 +2051,10 @@ def check_in_all_rooms(reservation_name, check_in_notes=""):
         
         return {
             "success": True,
-            "message": _("Checked in all {0} room(s) and created reservations").format(len(checked_in_rooms))
+            "message": _("Checked in all {0} room(s)").format(len(checked_in_rooms))
         }
     
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Check In All Rooms Error")
         frappe.throw(_("Error: {0}").format(str(e)))
-
 

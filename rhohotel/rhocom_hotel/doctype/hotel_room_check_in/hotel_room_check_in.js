@@ -27,6 +27,25 @@ frappe.ui.form.on("Hotel Room Check In", {
         }
 
         if (frm.doc.docstatus === 1) {
+            frm.add_custom_button(__('Transfer Bill In'), () => {
+                frappe.route_options = {
+                    to_guest: frm.doc.guest,
+                    to_check_in: frm.doc.name
+                };
+
+                frappe.new_doc("Bill Transfer");
+            }, __("Bill Transfer"));
+
+            frm.add_custom_button(__('Transfer Bill Out'), () => {
+                frappe.route_options = {
+                    from_guest: frm.doc.guest,
+                    from_check_in: frm.doc.name
+                };
+                frappe.new_doc("Bill Transfer");
+            }, __("Bill Transfer"))
+        }
+
+        if (frm.doc.docstatus === 1) {
             frappe.call({
                 method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.get_linked_documents',
                 args: {
@@ -35,6 +54,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                 callback: function (r) {
                     if (r.message) {
                         frm.fields_dict.invoices_html.html(render_invoices(r.message.invoices));
+                        frm.fields_dict.journal_entries_html.html(render_journal_entries(r.message.journal_entries));
                         frm.fields_dict.payments_html.html(render_payments(r.message.payments));
 
                         if (r.message.total_outstanding_amount > 0) {
@@ -1484,6 +1504,66 @@ function render_invoices(invoices) {
     html += `</table>`;
     return html;
 }
+
+function render_journal_entries(entries) {
+    let html = `<table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Journal Entry</th>
+                <th>Type</th>
+                <th>Posting Date</th>
+                <th>Party</th>
+                <th>Total Debit</th>
+                <th>Total Credit</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    let total_debit = 0;
+    let total_credit = 0;
+
+    if (entries && entries.length > 0) {
+        entries.forEach(je => {
+            total_debit += je.total_debit || 0;
+            total_credit += je.total_credit || 0;
+
+            html += `<tr>
+                <td><a href="/app/journal-entry/${je.name}">${je.name}</a></td>
+                <td>${je.voucher_type || ""}</td>
+                <td>${frappe.datetime.str_to_user(je.posting_date)}</td>
+                <td>${je.party || ""}</td>
+                <td>${format_currency(je.total_debit)}</td>
+                <td>${format_currency(je.total_credit)}</td>
+                <td>${je.remarks || ""}</td>
+            </tr>`;
+        });
+    } else {
+        html += `<tr>
+            <td colspan="7" class="text-center">No Journal Entries Found</td>
+        </tr>`;
+    }
+
+    html += `</tbody>`;
+
+    // Add totals row if there are entries
+    if (entries && entries.length > 0) {
+        html += `
+        <tfoot>
+            <tr style="font-weight:bold; background-color:#f8f9fa;">
+                <td colspan="4">Total</td>
+                <td>${format_currency(total_debit)}</td>
+                <td>${format_currency(total_credit)}</td>
+                <td></td>
+            </tr>
+        </tfoot>`;
+    }
+
+    html += `</table>`;
+
+    return html;
+}
+
 
 
 
