@@ -1,111 +1,105 @@
-# Copyright (c) 2025, Rhocom Technology Ltd and contributors
-# For license information, please see license.txt
+# Copyright (c) 2025
+# Rhocom Technology Ltd
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import nowdate
+
 
 class BillTransfer(Document):
 
+    # --------------------------------------
+    # VALIDATION
+    # --------------------------------------
     def validate(self):
         if self.from_guest == self.to_guest:
-            frappe.throw("You cannot transfer bill to the same guest.")
+            frappe.throw("You cannot transfer a bill to the same guest.")
 
         if self.total_amount <= 0:
             frappe.throw("Total amount must be greater than zero.")
 
-        def on_submit(self):
-            # Submit only when already approved
-            if self.status != "Approved":
-                frappe.throw("Bill Transfer must be approved before submission.")
+        if not self.source_invoice:
+            frappe.throw("Source Invoice is required to process bill transfer.")
 
-            self.create_source_invoice()
-            self.create_destination_invoice()
+    # --------------------------------------
+    # SUBMISSION LOGIC
+    # --------------------------------------
+    def on_submit(self):
+        if self.status != "Approved":
+            frappe.throw("Bill Transfer must be approved before submission.")
 
+        self.create_journal_entry()
 
     def on_cancel(self):
-        frappe.throw("Cancelling Bill Transfer is not allowed automatically. Reverse both invoices manually.")
+        frappe.throw("Cancelling Bill Transfer is not allowed. Reverse journal entry manually.")
 
+    # --------------------------------------
+    #   CREATE ONE JOURNAL ENTRY
+    # --------------------------------------
+    def create_journal_entry(self):
 
-    # --------------------
-    #   CORE OPERATIONS
-    # --------------------
+        # Get the company from the source invoice
+        company = frappe.db.get_value("Sales Invoice", self.source_invoice, "company")
 
-    def create_source_invoice(self):
-        """Creates negative invoice for the source folio."""
-        inv = frappe.new_doc("Sales Invoice")
-        inv.customer = self.from_guest
-        inv.is_pos = 0
-        inv.update_stock = 0
-        inv.set_posting_time = 1
-        inv.posting_date = frappe.utils.nowdate()
-        inv.posting_time = frappe.utils.nowtime()
-        inv.flags.ignore_permissions = True
-        inv.flags.ignore_links = True
-        inv.flags.ignore_mandatory = True
-        inv.append("items", {
-            "item_name": "Bill Transfer",
-            "description": f"Bill transferred to {self.to_guest}",
-            "qty": -1,
-            "rate": self.total_amount
+        # Fetch the receivable account
+        receivable_account = frappe.db.get_value(
+            "Company",
+            company,
+            "default_receivable_account"
+        )
+
+        if not receivable_account:
+            frappe.throw("Default Receivable Account is not set in Company master.")
+
+        # ---------------------------------
+        # Create JE document
+        # ---------------------------------
+        je = frappe.new_doc("Journal Entry")
+        je.voucher_type = "Journal Entry"
+        je.posting_date = nowdate()
+        je.company = company
+        je.user_remark = f"Bill Transfer from {self.from_guest} to {self.to_guest} ({self.name})"
+
+        # ----------------------------
+        # Line 1 — CREDIT Guest A
+        # ----------------------------
+        je.append("accounts", {
+            "account": receivable_account,
+            "party_type": "Customer",
+            "party": self.from_guest,
+            "credit_in_account_currency": self.total_amount,
+            "debit_in_account_currency": 0,
+            "reference_type": "Sales Invoice",
+            "reference_name": self.source_invoice
         })
 
-        inv.insert()
-        inv.submit()
-
-        self.db_set("source_invoice", inv.name)
-
-
-    def create_destination_invoice(self):
-        """Creates positive invoice for the receiving folio."""
-        inv = frappe.new_doc("Sales Invoice")
-        inv.customer = self.to_guest
-        inv.is_pos = 0
-        inv.update_stock = 0
-        inv.set_posting_time = 1
-        inv.posting_date = frappe.utils.nowdate()
-        inv.posting_time = frappe.utils.nowtime()
-        inv.flags.ignore_permissions = True
-        inv.flags.ignore_links = True
-        inv.flags.ignore_mandatory = True
-        inv.append("items", {
-            "item_name": "Bill Transfer",
-            "description": f"Bill transferred from {self.from_guest}",
-            "qty": 1,
-            "rate": self.total_amount
+        # ----------------------------
+        # Line 2 — DEBIT Guest B
+        # ----------------------------
+        je.append("accounts", {
+            "account": receivable_account,
+            "party_type": "Customer",
+            "party": self.to_guest,
+            "debit_in_account_currency": self.total_amount,
+            "credit_in_account_currency": 0,
+            "reference_type": "Bill Transfer",
+            "reference_name": self.name
         })
 
-        inv.insert()
-        inv.submit()
+        # Save & Submit JE
+        je.insert(ignore_permissions=True)
+        je.submit()
 
-        self.db_set("destination_invoice", inv.name)
+        # Store link
+        self.journal_entry = je.name
+        self.db_set("journal_entry", je.name)
 
-
-    # --------------------
-    #  Utility Functions
-    # --------------------
-
-    def get_default_receivable(self, customer):
-        """Fetches default company receivable account."""
-        company = frappe.db.get_value("Customer", customer, "default_company")
-        acc = frappe.db.get_value("Company", company, "default_receivable_account")
-        if not acc:
-            frappe.throw("Default Receivable Account not set in Company.")
-        return acc
-
-
-    def get_income_account(self):
-        """Get default income account from Company."""
-        company = frappe.defaults.get_user_default("Company")
-        acc = frappe.db.get_value("Company", company, "default_income_account")
-        if not acc:
-            frappe.throw("Default Income Account not set in Company.")
-        return acc
+        frappe.msgprint(f"Journal Entry <b>{je.name}</b> created successfully.")
 
 
 # --------------------
 #   APPROVAL METHOD
 # --------------------
-
 @frappe.whitelist()
 def approve_transfer(docname):
     doc = frappe.get_doc("Bill Transfer", docname)

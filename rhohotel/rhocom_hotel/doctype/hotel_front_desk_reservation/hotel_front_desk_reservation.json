@@ -61,7 +61,7 @@
    "label": "Reservation Information"
   },
   {
-   "default": "Walk-In",
+   "default": "Corporate",
    "fieldname": "reservation_type",
    "fieldtype": "Select",
    "label": "Reservation Type",
@@ -326,6 +326,19 @@
    "fieldname": "internal_notes",
    "fieldtype": "Text",
    "label": "Internal Notes (Staff Only)"
+  },
+  {
+    "fieldname": "invoices_section",
+    "fieldtype": "Section Break",
+    "label": "Invoices"
+  },
+  {
+    "fieldname": "sales_invoices",
+    "fieldtype": "Table",
+    "label": "Sales Invoices",
+    "options": "Hotel Front Desk Reservation Invoice",
+    "read_only": 1,
+    "description": "All Sales Invoices created for this reservation (one per room)"
   },
   {
    "fieldname": "amended_from",

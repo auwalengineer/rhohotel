@@ -217,6 +217,18 @@
       "read_only": 1
     },
     {
+      "fieldname": "reservation_type",
+      "fieldtype": "Select",
+      "label": "Reservation Type",
+      "options": "Individual\nCorporate",
+      "default": "Individual",
+      "read_only": 1,
+      "reqd": 1,
+      "no_copy": 0,
+      "in_list_view": 1,
+      "description": "Determines if Sales Invoice should be created. Corporate reservations handle invoicing separately."
+    },
+    {
       "fieldname": "stay_extension_tab",
       "fieldtype": "Tab Break",
       "label": "Reservation Adjusments"
