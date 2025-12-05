@@ -11,11 +11,11 @@
         "section_break_8nzo",
         "from_guest",
         "from_check_in",
+        "source_invoice",
         "column_break_qgmu",
         "to_guest",
         "to_check_in",
         "journal_entry",
-        "source_invoice",
         "reason",
         "section_break_rtex",
         "total_amount",
@@ -149,6 +149,27 @@
             "role": "System Manager",
             "share": 1,
             "submit": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "email": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Receptionist",
+            "share": 1,
             "write": 1
         }
     ],

@@ -317,9 +317,8 @@ class HotelRoomCheckIn(Document):
 
 @frappe.whitelist()
 def get_linked_documents(check_in):
+    """Get linked invoices, payments, sessions, and journal entries for a check-in."""
 
-    """Get linked invoices, payments, and sessions for a check-in."""
-    
     check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
 
     # -----------------------------
@@ -341,7 +340,6 @@ def get_linked_documents(check_in):
         ]
     )
 
-    # Add invoice_type for frontend clarity
     for inv in pos_invoices:
         inv["invoice_type"] = "POS Invoice"
 
@@ -360,13 +358,46 @@ def get_linked_documents(check_in):
         ]
     )
 
-    # Mark them as Sales Invoice
     for inv in sales_invoices:
         inv["invoice_type"] = "Room Invoice"
-        inv["pos_profile"] = None  # keep consistent keys
+        inv["pos_profile"] = None  # keep consistent structure
 
-    # Merge lists
+    # Merge invoices
     invoices = sales_invoices + pos_invoices
+
+    # -----------------------------
+    # Get Journal Entries
+    # -----------------------------
+    journal_entries = frappe.get_all(
+        "Journal Entry",
+        filters={"custom_hotel_room_check_in": check_in_doc.name},
+        fields=[
+            "name",
+            "voucher_type",
+            "posting_date",
+            "remark as remarks"
+        ]
+    )
+
+    # For totals we need debit/credit → lookup child table
+    for je in journal_entries:
+        accounts = frappe.get_all(
+            "Journal Entry Account",
+            filters={"parent": je["name"]},
+            fields=["debit", "credit", "party"]
+        )
+
+        total_debit = sum(a.debit or 0 for a in accounts)
+        total_credit = sum(a.credit or 0 for a in accounts)
+        party = None
+        for a in accounts:
+            if a.party:
+                party = a.party
+                break
+
+        je["total_debit"] = total_debit
+        je["total_credit"] = total_credit
+        je["party"] = party
 
     # -----------------------------
     # Get Payment Entries
@@ -378,7 +409,7 @@ def get_linked_documents(check_in):
     )
 
     # -----------------------------
-    # Get Payment Sessions (POS)
+    # Get Payment Sessions
     # -----------------------------
     payment_sessions = frappe.get_all(
         "Payment Session",
@@ -387,7 +418,7 @@ def get_linked_documents(check_in):
     )
 
     # -----------------------------
-    # Compute Totals
+    # Totals
     # -----------------------------
     total_outstanding_amount = sum(inv.outstanding_amount or 0 for inv in invoices)
     total_charges = sum(inv.grand_total or 0 for inv in invoices)
@@ -403,6 +434,7 @@ def get_linked_documents(check_in):
     # -----------------------------
     return {
         "invoices": invoices,
+        "journal_entries": journal_entries,
         "payments": payments,
         "payment_sessions": payment_sessions,
         "total_outstanding_amount": total_outstanding_amount,

@@ -40,6 +40,15 @@ class BillTransfer(Document):
 
         # Get the company from the source invoice
         company = frappe.db.get_value("Sales Invoice", self.source_invoice, "company")
+        
+         # Load the source invoice
+        inv = frappe.get_doc("Sales Invoice", self.source_invoice)
+
+        # The customer on the invoice
+        invoice_customer = inv.customer
+
+        # The receivable account used on invoice
+        receivable_account = inv.debit_to
 
         # Fetch the receivable account
         receivable_account = frappe.db.get_value(
@@ -58,6 +67,7 @@ class BillTransfer(Document):
         je.voucher_type = "Journal Entry"
         je.posting_date = nowdate()
         je.company = company
+        je.custom_hotel_room_check_in = self.to_check_in
         je.user_remark = f"Bill Transfer from {self.from_guest} to {self.to_guest} ({self.name})"
 
         # ----------------------------
@@ -66,7 +76,7 @@ class BillTransfer(Document):
         je.append("accounts", {
             "account": receivable_account,
             "party_type": "Customer",
-            "party": self.from_guest,
+            "party": invoice_customer,
             "credit_in_account_currency": self.total_amount,
             "debit_in_account_currency": 0,
             "reference_type": "Sales Invoice",
@@ -81,9 +91,7 @@ class BillTransfer(Document):
             "party_type": "Customer",
             "party": self.to_guest,
             "debit_in_account_currency": self.total_amount,
-            "credit_in_account_currency": 0,
-            "reference_type": "Bill Transfer",
-            "reference_name": self.name
+            "credit_in_account_currency": 0
         })
 
         # Save & Submit JE

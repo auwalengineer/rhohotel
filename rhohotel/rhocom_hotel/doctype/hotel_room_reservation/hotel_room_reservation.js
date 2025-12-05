@@ -361,7 +361,26 @@ frappe.ui.form.on('Hotel Room Reservation', {
 	},
 
 	to_date: function (frm) {
+
+		// get number of nights 
+		if (frm.doc.from_date && frm.doc.to_date) {
+			calculate_nights(frm);
+		}
+
+
 		//frm.trigger("recalculate_rates");
+	},
+	number_of_nights: function (frm) {
+
+		// make sure to_date is correct
+		// if (frm.doc.from_date) {
+		// 	actual_to_date = frm.doc.from_date + frm.doc.number_of_nights;
+
+		// 	if (actual_to_date != frm.doc.to_date) {
+		// 		frm.set_value("to_date", actual_to_date);
+		// 	}
+		// }
+
 	},
 	recalculate_rates: function (frm) {
 		if (!frm.doc.from_date || !frm.doc.to_date
@@ -404,6 +423,11 @@ frappe.ui.form.on('Hotel Room Reservation', {
 	},
 
 	from_date: function (frm) {
+
+		if (frm.doc.from_date && frm.doc.to_date) {
+			calculate_nights(frm);
+		}
+
 		frm.trigger("recalculate_rates");
 		// Step 1: Get room type from selected room
 		frappe.db.get_value("Hotel Room", frm.doc.room_number, "room_type")

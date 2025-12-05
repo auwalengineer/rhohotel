@@ -162,7 +162,9 @@
     {
       "fieldtype": "Int",
       "fieldname": "number_of_nights",
-      "label": "Number of Nights"
+      "label": "Number of Nights",
+      "read_only": 1,
+      "reqd":1
     },
     {
       "fieldname": "section_break_payment",
