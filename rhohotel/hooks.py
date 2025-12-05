@@ -59,6 +59,16 @@ doctype_js = {
 	"Sales Invoice" : "public/js/sales_invoice.js"
 }
 
+fixtures = [{
+                "doctype": "Workflow"
+        },
+			{
+				"doctype": "Workflow State"
+			},
+			{
+				"doctype": "Workflow Action"
+			}
+	]
 # Svg Icons
 # ------------------
 # include app icons in desk

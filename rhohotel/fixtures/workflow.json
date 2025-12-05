@@ -1,0 +1,122 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Workflow",
+  "document_type": "Bill Transfer",
+  "is_active": 1,
+  "modified": "2025-12-05 16:15:10.367180",
+  "name": "Bill Transfer Workflow",
+  "override_status": 0,
+  "send_email_alert": 1,
+  "states": [
+   {
+    "allow_edit": "All",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Draft",
+    "update_field": "status",
+    "update_value": null,
+    "workflow_builder_id": "2"
+   },
+   {
+    "allow_edit": "All",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": "Hello,\n\nA new Bill Transfer {{ doc.name }} has been submitted for approval.\n\nFrom Guest: {{ doc.from_guest }}\nTo Guest: {{ doc.to_guest }}\nTotal Amount: {{ doc.total_amount }}\n\nPlease review and take action.\n\nThank you.",
+    "next_action_email_template": null,
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Pending Approval",
+    "update_field": "status",
+    "update_value": "Pending Approval",
+    "workflow_builder_id": "3"
+   },
+   {
+    "allow_edit": "Hotel Manager",
+    "avoid_status_override": 0,
+    "doc_status": "1",
+    "is_optional_state": 0,
+    "message": "Hello,\n\nYour Bill Transfer {{ doc.name }} has been approved.\n\nFrom Guest: {{ doc.from_guest }}\nTo Guest: {{ doc.to_guest }}\nTotal Amount: {{ doc.total_amount }}\n\nYou may now submit the document to post the transfer.\n\nRegards.",
+    "next_action_email_template": null,
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Approved",
+    "update_field": "status",
+    "update_value": "Approved",
+    "workflow_builder_id": "4"
+   },
+   {
+    "allow_edit": "Hotel Manager",
+    "avoid_status_override": 0,
+    "doc_status": "1",
+    "is_optional_state": 0,
+    "message": "Hello,\n\nYour Bill Transfer {{ doc.name }} has been rejected.\n\nFrom Guest: {{ doc.from_guest }}\nTo Guest: {{ doc.to_guest }}\nTotal Amount: {{ doc.total_amount }}\n\nPlease review and resubmit if necessary.\n\nRegards.",
+    "next_action_email_template": null,
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Rejected",
+    "update_field": "status",
+    "update_value": "Rejected",
+    "workflow_builder_id": "5"
+   }
+  ],
+  "transitions": [
+   {
+    "action": "Send for approval",
+    "allow_self_approval": 1,
+    "allowed": "All",
+    "condition": null,
+    "next_state": "Pending Approval",
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "send_email_to_creator": 0,
+    "state": "Draft",
+    "workflow_builder_id": "action-1"
+   },
+   {
+    "action": "Approve",
+    "allow_self_approval": 1,
+    "allowed": "Hotel Manager",
+    "condition": null,
+    "next_state": "Approved",
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "send_email_to_creator": 0,
+    "state": "Pending Approval",
+    "workflow_builder_id": "action-2"
+   },
+   {
+    "action": "Reject",
+    "allow_self_approval": 1,
+    "allowed": "Hotel Manager",
+    "condition": null,
+    "next_state": "Rejected",
+    "parent": "Bill Transfer Workflow",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "send_email_to_creator": 0,
+    "state": "Pending Approval",
+    "workflow_builder_id": "action-3"
+   }
+  ],
+  "workflow_data": "[{\"type\":\"state\",\"dimensions\":{\"width\":85,\"height\":53},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":38.96875,\"y\":-11,\"width\":7,\"height\":7},{\"id\":\"right\",\"position\":\"right\",\"x\":88.9375,\"y\":23,\"width\":7,\"height\":7},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":38.96875,\"y\":57,\"width\":7,\"height\":7},{\"id\":\"left\",\"position\":\"left\",\"x\":-11,\"y\":23,\"width\":7,\"height\":7}]},\"computedPosition\":{\"x\":104.55590349075982,\"y\":-111.11704312114985,\"z\":0},\"id\":\"2\",\"position\":{\"x\":104.55590349075982,\"y\":-111.11704312114985}},{\"type\":\"state\",\"dimensions\":{\"width\":162,\"height\":74},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":77.5,\"y\":-11,\"width\":7,\"height\":7},{\"id\":\"right\",\"position\":\"right\",\"x\":166,\"y\":33.5,\"width\":7,\"height\":7},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":77.5,\"y\":78,\"width\":7,\"height\":7},{\"id\":\"left\",\"position\":\"left\",\"x\":-11,\"y\":33.5,\"width\":7,\"height\":7}]},\"computedPosition\":{\"x\":391.8628336755646,\"y\":-79.53264887063655,\"z\":0},\"id\":\"3\",\"position\":{\"x\":391.8628336755646,\"y\":-79.53264887063655}},{\"type\":\"state\",\"dimensions\":{\"width\":117,\"height\":53},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":54.921875,\"y\":-11,\"width\":7,\"height\":7},{\"id\":\"right\",\"position\":\"right\",\"x\":120.859375,\"y\":23,\"width\":7,\"height\":7},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":54.921875,\"y\":57,\"width\":7,\"height\":7},{\"id\":\"left\",\"position\":\"left\",\"x\":-11,\"y\":23,\"width\":7,\"height\":7}]},\"computedPosition\":{\"x\":250.6055270362765,\"y\":192.3211755646817,\"z\":0},\"id\":\"4\",\"position\":{\"x\":250.6055270362765,\"y\":192.3211755646817}},{\"type\":\"state\",\"dimensions\":{\"width\":111,\"height\":53},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":51.78125,\"y\":-11,\"width\":7,\"height\":7},{\"id\":\"right\",\"position\":\"right\",\"x\":114.5625,\"y\":23,\"width\":7,\"height\":7},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":51.78125,\"y\":57,\"width\":7,\"height\":7},{\"id\":\"left\",\"position\":\"left\",\"x\":-11,\"y\":23,\"width\":7,\"height\":7}]},\"computedPosition\":{\"x\":586.6265400410678,\"y\":194.05324264202602,\"z\":0},\"id\":\"5\",\"position\":{\"x\":586.6265400410678,\"y\":194.05324264202602}},{\"type\":\"action\",\"dimensions\":{\"width\":140,\"height\":33},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":67.109375,\"y\":-2,\"width\":6,\"height\":6},{\"id\":\"right\",\"position\":\"right\",\"x\":136.234375,\"y\":13.5,\"width\":6,\"height\":6},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":67.109375,\"y\":29,\"width\":6,\"height\":6},{\"id\":\"left\",\"position\":\"left\",\"x\":-2,\"y\":13.5,\"width\":6,\"height\":6}]},\"computedPosition\":{\"x\":199.74366872005479,\"y\":-101.11704312114985,\"z\":0},\"id\":\"action-1\",\"position\":{\"x\":199.74366872005479,\"y\":-101.11704312114985},\"data\":{\"from_id\":\"2\",\"to_id\":\"3\"}},{\"type\":\"action\",\"dimensions\":{\"width\":78,\"height\":33},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":36.125,\"y\":-2,\"width\":6,\"height\":6},{\"id\":\"right\",\"position\":\"right\",\"x\":74.25,\"y\":13.5,\"width\":6,\"height\":6},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":36.125,\"y\":29,\"width\":6,\"height\":6},{\"id\":\"left\",\"position\":\"left\",\"x\":-2,\"y\":13.5,\"width\":6,\"height\":6}]},\"computedPosition\":{\"x\":162.55490246406555,\"y\":85.59495208761115,\"z\":0},\"id\":\"action-2\",\"position\":{\"x\":162.55490246406555,\"y\":85.59495208761115},\"data\":{\"from_id\":\"3\",\"to_id\":\"4\"}},{\"type\":\"action\",\"dimensions\":{\"width\":64,\"height\":33},\"handleBounds\":{\"source\":[{\"id\":\"top\",\"position\":\"top\",\"x\":28.953125,\"y\":-2,\"width\":6,\"height\":6},{\"id\":\"right\",\"position\":\"right\",\"x\":59.90625,\"y\":13.5,\"width\":6,\"height\":6},{\"id\":\"bottom\",\"position\":\"bottom\",\"x\":28.953125,\"y\":29,\"width\":6,\"height\":6},{\"id\":\"left\",\"position\":\"left\",\"x\":-2,\"y\":13.5,\"width\":6,\"height\":6}]},\"computedPosition\":{\"x\":653.8279859685146,\"y\":60.47997946611906,\"z\":0},\"id\":\"action-3\",\"position\":{\"x\":653.8279859685146,\"y\":60.47997946611906},\"data\":{\"from_id\":\"3\",\"to_id\":\"5\"}},{\"sourceHandle\":\"right\",\"targetHandle\":\"left\",\"type\":\"transition\",\"source\":\"2\",\"target\":\"action-1\",\"updatable\":true,\"animated\":true,\"id\":\"vueflow__edge-2right-action-1left\",\"sourceX\":200.49340349075982,\"sourceY\":-84.61704312114985,\"targetX\":197.74366872005479,\"targetY\":-84.61704312114985},{\"sourceHandle\":\"right\",\"targetHandle\":\"left\",\"type\":\"transition\",\"source\":\"action-1\",\"target\":\"3\",\"updatable\":true,\"animated\":true,\"id\":\"vueflow__edge-action-1right-3left\",\"sourceX\":341.97804372005476,\"sourceY\":-84.61704312114985,\"targetX\":380.8628336755646,\"targetY\":-42.53264887063655,\"markerEnd\":{\"type\":\"arrow\",\"width\":15,\"height\":15,\"strokeWidth\":1.5,\"color\":\"#687178\"}},{\"sourceHandle\":\"bottom\",\"targetHandle\":\"left\",\"type\":\"transition\",\"source\":\"3\",\"target\":\"action-2\",\"updatable\":true,\"animated\":true,\"id\":\"vueflow__edge-3bottom-action-2left\",\"sourceX\":472.8628336755646,\"sourceY\":5.4673511293634505,\"targetX\":160.55490246406555,\"targetY\":102.09495208761115},{\"sourceHandle\":\"right\",\"targetHandle\":\"top\",\"type\":\"transition\",\"source\":\"action-2\",\"target\":\"4\",\"updatable\":true,\"animated\":true,\"id\":\"vueflow__edge-action-2right-4top\",\"sourceX\":242.80490246406555,\"sourceY\":102.09495208761115,\"targetX\":309.0274020362765,\"targetY\":181.3211755646817,\"markerEnd\":{\"type\":\"arrow\",\"width\":15,\"height\":15,\"strokeWidth\":1.5,\"color\":\"#687178\"}},{\"sourceHandle\":\"right\",\"targetHandle\":\"left\",\"type\":\"transition\",\"source\":\"3\",\"target\":\"action-3\",\"updatable\":true,\"animated\":true,\"id\":\"vueflow__edge-3right-action-3left\",\"sourceX\":564.8628336755646,\"sourceY\":-42.53264887063655,\"targetX\":651.8279859685146,\"targetY\":76.97997946611906},{\"sourceHandle\":\"right\",\"targetHandle\":\"top\",\"type\":\"transition\",\"source\":\"action-3\",\"target\":\"5\",\"updatable\":true,\"animated\":true,\"id\":\"vueflow__edge-action-3right-5top\",\"sourceX\":719.7342359685146,\"sourceY\":76.97997946611906,\"targetX\":641.9077900410678,\"targetY\":183.05324264202602,\"markerEnd\":{\"type\":\"arrow\",\"width\":15,\"height\":15,\"strokeWidth\":1.5,\"color\":\"#687178\"}}]",
+  "workflow_name": "Bill Transfer Workflow",
+  "workflow_state_field": "workflow_state"
+ }
+]
