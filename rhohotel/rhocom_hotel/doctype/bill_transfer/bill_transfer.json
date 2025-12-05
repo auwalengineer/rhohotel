@@ -57,7 +57,9 @@
             "fieldname": "to_guest",
             "fieldtype": "Link",
             "label": "To Guest",
-            "options": "Hotel Guest"
+            "options": "Hotel Guest",
+            "reqd": 1,
+            "in_list_view": 1
         },
         {
             "fieldname": "to_check_in",
@@ -159,6 +161,7 @@
             "read": 1,
             "report": 1,
             "role": "Hotel Manager",
+            "submit": 1,
             "share": 1,
             "write": 1
         },

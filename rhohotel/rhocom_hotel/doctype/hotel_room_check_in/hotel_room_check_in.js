@@ -1514,7 +1514,6 @@ function render_journal_entries(entries) {
                 <th>Posting Date</th>
                 <th>Party</th>
                 <th>Total Debit</th>
-                <th>Total Credit</th>
                 <th>Remarks</th>
             </tr>
         </thead>
@@ -1526,7 +1525,6 @@ function render_journal_entries(entries) {
     if (entries && entries.length > 0) {
         entries.forEach(je => {
             total_debit += je.total_debit || 0;
-            total_credit += je.total_credit || 0;
 
             html += `<tr>
                 <td><a href="/app/journal-entry/${je.name}">${je.name}</a></td>
@@ -1534,7 +1532,6 @@ function render_journal_entries(entries) {
                 <td>${frappe.datetime.str_to_user(je.posting_date)}</td>
                 <td>${je.party || ""}</td>
                 <td>${format_currency(je.total_debit)}</td>
-                <td>${format_currency(je.total_credit)}</td>
                 <td>${je.remarks || ""}</td>
             </tr>`;
         });

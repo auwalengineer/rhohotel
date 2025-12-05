@@ -52,7 +52,9 @@
   "column_break_status",
   "notes",
   "internal_notes",
-  "amended_from"
+  "amended_from",
+  "invoices_section",
+  "sales_invoices"
  ],
  "fields": [
   {
@@ -131,13 +133,13 @@
   {
    "fieldname": "primary_guest_email",
    "fieldtype": "Data",
-   "label": "Email",
-   "options": "Email"
+   "label": "Testing"
   },
   {
    "fieldname": "primary_guest_phone",
    "fieldtype": "Data",
-   "label": "Phone Number"
+   "label": "Phone Number",
+   "reqd": 1
   },
   {
    "fieldname": "dates_section",
@@ -328,17 +330,17 @@
    "label": "Internal Notes (Staff Only)"
   },
   {
-    "fieldname": "invoices_section",
-    "fieldtype": "Section Break",
-    "label": "Invoices"
+   "fieldname": "invoices_section",
+   "fieldtype": "Section Break",
+   "label": "Invoices"
   },
   {
-    "fieldname": "sales_invoices",
-    "fieldtype": "Table",
-    "label": "Sales Invoices",
-    "options": "Hotel Front Desk Reservation Invoice",
-    "read_only": 1,
-    "description": "All Sales Invoices created for this reservation (one per room)"
+   "description": "All Sales Invoices created for this reservation (one per room)",
+   "fieldname": "sales_invoices",
+   "fieldtype": "Table",
+   "label": "Sales Invoices",
+   "options": "Hotel Front Desk Reservation Invoice",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -363,7 +365,7 @@
    "link_fieldname": "front_desk_reservation"
   }
  ],
- "modified": "2025-12-02 11:35:46.749334",
+ "modified": "2025-12-05 16:02:22.751469",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Front Desk Reservation",

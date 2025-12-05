@@ -3,15 +3,15 @@
 
 frappe.ui.form.on("Bill Transfer", {
     refresh(frm) {
-        if (frm.doc.docstatus === 0 && frm.doc.status === "Pending Approval") {
-            frm.add_custom_button("Approve", () => {
-                frappe.call({
-                    method: "frappe.hotel.doctype.bill_transfer.bill_transfer.approve_transfer",
-                    args: { docname: frm.doc.name },
-                    callback: () => frm.reload_doc()
-                });
-            });
-        }
+        // if (frm.doc.docstatus === 0 && frm.doc.status === "Pending Approval") {
+        //     frm.add_custom_button("Approve", () => {
+        //         frappe.call({
+        //             method: "frappe.hotel.doctype.bill_transfer.bill_transfer.approve_transfer",
+        //             args: { docname: frm.doc.name },
+        //             callback: () => frm.reload_doc()
+        //         });
+        //     });
+        // }
     },
     setup(frm) {
         // filter check from for the selected guest
