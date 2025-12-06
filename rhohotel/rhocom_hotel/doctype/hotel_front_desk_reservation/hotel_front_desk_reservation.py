@@ -1308,3 +1308,232 @@ def check_in_all_rooms(reservation_name, check_in_notes=""):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Check In All Guests Error")
         frappe.throw(_("Error: {0}").format(str(e)))
+        
+        
+        
+        
+        
+        
+        
+        
+        
+@frappe.whitelist()
+def edit_guest_details(reservation_name, room_idx, guest_name, guest_email, guest_phone, room_number):
+    """
+    Edit guest details for a specific room in a reservation
+    
+    ✅ FLOW:
+    1. Get or create Customer account with guest_name/email/phone
+    2. Get or create Hotel Guest record
+    3. Update room in FDR with new guest details
+    4. Update linked Hotel Room Reservation with new guest_name
+    
+    Args:
+        reservation_name: Name of Hotel Front Desk Reservation
+        room_idx: Index of room in FDR.rooms child table
+        guest_name: Guest name (required)
+        guest_email: Guest email (optional)
+        guest_phone: Guest phone (optional)
+        room_number: Room number being edited
+    """
+    try:
+        # Convert room_idx to integer
+        room_idx = int(room_idx)
+        
+        # Get the reservation
+        reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+        
+        if reservation.docstatus != 1:
+            frappe.throw(_("Reservation must be submitted before editing guest details"))
+        
+        # Get the room from child table
+        if room_idx >= len(reservation.rooms):
+            frappe.throw(_("Invalid room index"))
+        
+        room = reservation.rooms[room_idx]
+        
+        # ✅ STEP 1: Get or create customer account
+        customer_id = get_or_create_customer_for_guest(
+            guest_name,
+            guest_email,
+            guest_phone
+        )
+        
+        # ✅ STEP 2: Get or create Hotel Guest record
+        hotel_guest_id = get_or_create_hotel_guest_for_edit(
+            guest_name,
+            guest_email,
+            guest_phone,
+            customer_id,
+            reservation.reservation_type
+        )
+        
+        # ✅ STEP 3: Update room in FDR using db.set_value
+        frappe.db.set_value(
+            "Front Desk Reservation Room",
+            room.name,
+            {
+                "guest_name": guest_name,
+                "guest_email": guest_email,
+                "guest_phone": guest_phone,
+                "hotel_guest": hotel_guest_id,
+                "guest_customer": customer_id
+            },
+            update_modified=False
+        )
+        
+        # ✅ STEP 4: Find and update linked Hotel Room Reservation
+        hrr_name = frappe.db.get_value(
+            "Hotel Room Reservation",
+            {
+                "front_desk_reservation": reservation_name,
+                "room_number": room_number,
+                "docstatus": 1
+            },
+            "name"
+        )
+        
+        if hrr_name:
+            frappe.db.set_value(
+                "Hotel Room Reservation",
+                hrr_name,
+                {
+                    "guest_name": guest_name,
+                    "customer": customer_id
+                },
+                update_modified=False
+            )
+            
+            frappe.log_error(
+                title=f"Guest Details Updated - Room {room_number}",
+                message="HRR: {0}\nGuest: {1}\nEmail: {2}\nPhone: {3}".format(
+                    hrr_name, guest_name, guest_email, guest_phone
+                )
+            )
+        
+        frappe.db.commit()
+        
+        return {
+            "success": True,
+            "message": _("Guest details updated successfully for Room {0}").format(room_number),
+            "room_number": room_number,
+            "guest_name": guest_name,
+            "customer_id": customer_id,
+            "hotel_guest_id": hotel_guest_id
+        }
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Edit Guest Details Error")
+        frappe.throw(_("Error: {0}").format(str(e)))
+
+
+def get_or_create_customer_for_guest(name, email, phone):
+    """
+    Get or create customer account for guest
+    Searches by email first, then phone, then creates new
+    """
+    
+    # Try to find by email
+    if email:
+        existing = frappe.db.get_value("Customer", {"email_id": email}, "name")
+        if existing:
+            return existing
+    
+    # Try to find by phone
+    if phone:
+        clean_phone = phone.replace(" ", "").replace("-", "").replace("+", "")
+        existing = frappe.db.get_value("Customer", {"mobile_no": clean_phone}, "name")
+        if existing:
+            return existing
+    
+    # Create new customer
+    customer = frappe.get_doc({
+        "doctype": "Customer",
+        "customer_name": name or "Guest",
+        "customer_type": "Individual",
+        "email_id": email or "",
+        "mobile_no": phone or "",
+        "territory": frappe.db.get_default("territory") or "Nigeria",
+        "customer_group": frappe.db.get_default("customer_group") or "Individual"
+    })
+    customer.flags.ignore_permissions = True
+    customer.insert()
+    
+    return customer.name
+
+
+def get_or_create_hotel_guest_for_edit(guest_name, guest_email, guest_phone, customer_id, reservation_type):
+    """
+    Get or create Hotel Guest record for edited guest
+    """
+    
+    # Try to find by email
+    if guest_email:
+        existing = frappe.db.get_value(
+            "Hotel Guest",
+            {"email": guest_email},
+            "name"
+        )
+        if existing:
+            return existing
+    
+    # Try to find by phone
+    if guest_phone:
+        clean_phone = guest_phone.replace(" ", "").replace("-", "").replace("+", "")
+        existing = frappe.db.get_value(
+            "Hotel Guest",
+            {"phone_number": clean_phone},
+            "name"
+        )
+        if existing:
+            return existing
+    
+    # Create new Hotel Guest
+    try:
+        guest = frappe.get_doc({
+            "doctype": "Hotel Guest",
+            "hotel_guest_name": guest_name,
+            "phone_number": guest_phone or "",
+            "email": guest_email or "",
+            "gender": "Male",  # Default
+            "id_type": "Passport",  # Default
+            "id_number": "",
+            "customer": customer_id,
+            "guest_type": "Corporate" if reservation_type == "Corporate" else "Individual"
+        })
+        guest.flags.ignore_permissions = True
+        guest.insert()
+        
+        return guest.name
+    
+    except frappe.exceptions.InvalidPhoneNumberError:
+        # Retry without phone if invalid
+        guest = frappe.get_doc({
+            "doctype": "Hotel Guest",
+            "hotel_guest_name": guest_name,
+            "phone_number": "",
+            "email": guest_email or "",
+            "gender": "Male",
+            "id_type": "Passport",
+            "id_number": "",
+            "customer": customer_id,
+            "guest_type": "Corporate" if reservation_type == "Corporate" else "Individual"
+        })
+        guest.flags.ignore_permissions = True
+        guest.insert()
+        
+        # Update phone after creation if provided
+        if guest_phone:
+            frappe.db.set_value(
+                "Hotel Guest",
+                guest.name,
+                "phone_number",
+                guest_phone,
+                update_modified=False
+            )
+        
+        return guest.name
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Create Hotel Guest for Edit Error")
+        raise

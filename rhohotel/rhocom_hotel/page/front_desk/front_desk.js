@@ -525,24 +525,24 @@ class FrontDesk {
         } else if (this.current_view === 'night_audit_view') {
             $filter_area.hide();
             this.render_night_audit_view();
-        }  else if (this.current_view === 'corporate_reservations_view') {
+        } else if (this.current_view === 'corporate_reservations_view') {
             $filter_area.hide();
             this.refresh_stats();
             this.render_corporate_reservations_view();
         } else if (this.current_view === 'available_rooms_view') {
             $filter_area.hide();
             this.render_available_rooms_view();
-        }else {
-                    $filter_area.hide();
-                    this.refresh_stats(); // Stats are always visible
-                    let $view = this.page.main.find(`[data-view-name="${this.current_view}"]`);
-                    if (!$view.length) {
-                        $view = $(`<div class="view-container" data-view-name="${this.current_view}" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
-                    }
-                    $view.show();
-                    this.render_placeholder_view($view);
-                }
+        } else {
+            $filter_area.hide();
+            this.refresh_stats(); // Stats are always visible
+            let $view = this.page.main.find(`[data-view-name="${this.current_view}"]`);
+            if (!$view.length) {
+                $view = $(`<div class="view-container" data-view-name="${this.current_view}" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
             }
+            $view.show();
+            this.render_placeholder_view($view);
+        }
+    }
 
     render_placeholder_view($container) {
         const view_name = $container.data('view-name');
@@ -906,6 +906,7 @@ class FrontDesk {
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
                                     pageLength: 10,
                                     dom: 'Bfrtip',
+                                    order: [[3, 'asc']],
                                     buttons: [
                                         'excel',
                                         {
@@ -1027,7 +1028,7 @@ class FrontDesk {
                 $container.html(summaryHtml + html);
 
                 // Bind book room buttons
-                $container.find('.book-room-btn').on('click', function() {
+                $container.find('.book-room-btn').on('click', function () {
                     const roomNumber = $(this).data('room');
                     const room = rooms.find(r => r.name === roomNumber);
                     if (room) {
@@ -1039,16 +1040,16 @@ class FrontDesk {
                 });
 
                 // Bind view room details buttons
-                $container.find('.view-room-btn').on('click', function() {
+                $container.find('.view-room-btn').on('click', function () {
                     const roomNumber = $(this).data('room');
                     frappe.set_route('Form', 'Hotel Room', roomNumber);
                 });
 
                 // Add hover effect
-                $container.find('.available-room-card').on('mouseenter', function() {
+                $container.find('.available-room-card').on('mouseenter', function () {
                     $(this).css('box-shadow', '0 8px 16px rgba(0,0,0,0.15)');
                     $(this).css('transform', 'translateY(-4px)');
-                }).on('mouseleave', function() {
+                }).on('mouseleave', function () {
                     $(this).css('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
                     $(this).css('transform', 'translateY(0)');
                 });
@@ -1247,108 +1248,6 @@ class FrontDesk {
             }
         });
     }
-
-    // show_room_actions(room) {
-    //     const actions = [];
-
-    //     if (room.status === 'Vacant' && room.housekeeping_status === 'Clean') {
-    //         actions.push({
-    //             label: `New Check-in`,
-    //             action: () => frappe.new_doc('Hotel Room Check In', { room_number: room.room_number })
-    //         });
-    //     }
-
-    //     if (room.status === 'Occupied') {
-    //         actions.push({
-    //             label: 'Check-out',
-    //             action: () => {
-    //                 frappe.call({
-    //                     method: 'rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out',
-    //                     args: {
-    //                         source_name: room.current_check_in
-    //                     },
-    //                     callback: (r) => {
-    //                         if (r.message) {
-    //                             frappe.set_route('Form', 'Hotel Room Check Out', r.message.name);
-    //                         }
-    //                     }
-    //                 });
-    //             }
-    //         });
-    //         if (room.current_check_in) {
-    //             actions.push({
-    //                 label: 'Open Check-in',
-    //                 action: () => frappe.set_route('Form', 'Hotel Room Check In', room.current_check_in)
-    //             });
-    //         }
-    //     }
-
-    //     if (room.status === 'Reserved') {
-    //         // Action to create check-in from reservation
-    //     }
-
-    //     actions.push({
-    //         label: 'Maintenance Request',
-    //         action: () => frappe.new_doc('Maintenance Request', { room: room.name })
-    //     });
-
-    //     actions.push({
-    //         label: 'Room Details',
-    //         action: () => frappe.set_route('Form', 'Hotel Room', room.name)
-    //     });
-
-    //     const dialog_fields = [];
-
-    //     if (room.status === 'Occupied') {
-    //         dialog_fields.push({ fieldtype: 'Section Break', label: 'Current Check-in Details' });
-    //         dialog_fields.push({
-    //             fieldtype: 'Data', label: 'Guest', default: room.current_guest, read_only: 1
-    //         });
-    //         dialog_fields.push({
-    //             fieldtype: 'Data', label: 'Check-in Time', default: room.check_in_datetime ? frappe.datetime.str_to_user(room.check_in_datetime) : 'N/A', read_only: 1,
-    //             wrapper_class: 'col-md-6'
-    //         });
-    //         dialog_fields.push({
-    //             fieldtype: 'Data', label: 'Expected Check-out', default: room.expected_check_out_datetime ? frappe.datetime.str_to_user(room.expected_check_out_datetime) : 'N/A', read_only: 1,
-    //             wrapper_class: 'col-md-6'
-    //         });
-    //     }
-    //     dialog_fields.push(
-
-    //         { fieldtype: 'Section Break', label: 'Room Details' },
-    //         {
-    //             fieldtype: 'Data', label: 'Room Type', default: room.room_type, read_only: 1,
-    //             wrapper_class: 'col-md-6'
-    //         },
-    //         {
-    //             fieldtype: 'Data', label: 'Floor', default: room.floor, read_only: 1,
-    //             wrapper_class: 'col-md-6'
-    //         },
-    //         {
-    //             fieldtype: 'Data', label: 'Status', default: room.status, read_only: 1,
-    //             wrapper_class: 'col-md-6'
-    //         },
-    //         {
-    //             fieldtype: 'Data', label: 'Housekeeping', default: room.housekeeping_status, read_only: 1,
-    //             wrapper_class: 'col-md-6'
-    //         }
-
-    //     );
-
-    //     const dialog = new frappe.ui.Dialog({
-    //         title: `Room ${room.room_number}`,
-    //         fields: dialog_fields,
-    //         // Set primary action only if actions are available, otherwise it will be 'Close'
-    //         primary_action_label: actions.length > 0 ? actions[0].label : 'Close',
-    //         primary_action: actions[0].action
-    //     });
-
-    //     actions.slice(1).forEach(act => {
-    //         dialog.add_custom_action(act.label, act.action);
-    //     });
-
-    //     dialog.show();
-    // }
 
 
 
@@ -1618,7 +1517,7 @@ class FrontDesk {
     }
 
 
-        render_corporate_reservations_view() {
+    render_corporate_reservations_view() {
         let $view = this.page.main.find(`[data-view-name="corporate_reservations_view"]`);
         if (!$view.length) {
             $view = $(`<div class="view-container" data-view-name="corporate_reservations_view" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
@@ -1689,7 +1588,7 @@ class FrontDesk {
                     });
 
                     // Bind reservation name links
-                    $view.find('.corp-res-link').on('click', function(e) {
+                    $view.find('.corp-res-link').on('click', function (e) {
                         e.preventDefault();
                         const res_name = $(this).data('name');
                         this.show_corporate_reservation_details(res_name);
@@ -1748,7 +1647,7 @@ class FrontDesk {
     //      * - Invoices and payments
     //      * - Bulk action buttons
     //      */
-        
+
     //     frappe.call({
     //         method: 'frappe.client.get',
     //         args: {
@@ -1757,9 +1656,9 @@ class FrontDesk {
     //         },
     //         callback: (r) => {
     //             if (!r.message) return;
-                
+
     //             const reservation = r.message;
-                
+
     //             // Fetch related data
     //             frappe.call({
     //                 method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_corporate_reservation_details',
@@ -1768,7 +1667,7 @@ class FrontDesk {
     //                 },
     //                 callback: (r2) => {
     //                     const details = r2.message;
-                        
+
     //                     this.show_corporate_res_modal(reservation, details);
     //                 }
     //             });
@@ -1779,21 +1678,21 @@ class FrontDesk {
         /**
          * Shows detailed modal for a corporate reservation
          */
-        
+
         if (!reservation_name) {
             frappe.msgprint(__('No reservation selected'));
             return;
         }
-        
+
         frappe.show_alert({
             message: __('Loading reservation details...'),
             indicator: 'blue'
         });
-        
+
         frappe.call({
             method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_corporate_reservation_details',
             args: {
-                reservation_name: reservation_name 
+                reservation_name: reservation_name
             },
             callback: (r) => {
                 if (r.message && r.message.success) {
@@ -1817,261 +1716,26 @@ class FrontDesk {
         });
     }
 
-    // show_corporate_res_modal(reservation, details) {
-    //     /**
-    //      * Display comprehensive corporate reservation modal
-    //      * with all details and bulk action buttons
-    //      */
-        
-    //     const rooms_html = (reservation.rooms || []).map((room, idx) => {
-    //         const room_res = details.room_reservations.find(r => r.room_number === room.room_number);
-    //         const checkin = details.checkins.find(c => c.room_number === room.room_number);
-            
-    //         let status_badge = '';
-    //         if (checkin && checkin.status === 'Checked In') {
-    //             status_badge = '<span class="badge badge-success">✓ Checked In</span>';
-    //         } else if (room_res) {
-    //             status_badge = '<span class="badge badge-info">Booked</span>';
-    //         } else {
-    //             status_badge = '<span class="badge badge-secondary">Pending</span>';
-    //         }
-            
-    //         return `
-    //             <tr>
-    //                 <td><strong>${room.room_number}</strong></td>
-    //                 <td>${room.room_type}</td>
-    //                 <td>${room.guest_name || '—'}</td>
-    //                 <td class="text-right">${frappe.format(room.rate_per_night, { fieldtype: 'Currency' })}</td>
-    //                 <td class="text-right">${frappe.format(room.room_total, { fieldtype: 'Currency' })}</td>
-    //                 <td class="text-center">${status_badge}</td>
-    //             </tr>
-    //         `;
-    //     }).join('');
 
-    //     const invoices_html = details.invoices.length > 0 
-    //         ? details.invoices.map(inv => `
-    //             <tr>
-    //                 <td><a href="/app/sales-invoice/${inv.name}" target="_blank">${inv.name}</a></td>
-    //                 <td class="text-right">${frappe.format(inv.total, { fieldtype: 'Currency' })}</td>
-    //                 <td><span class="badge badge-${inv.docstatus === 1 ? 'success' : 'warning'}">${inv.docstatus === 1 ? 'Submitted' : 'Draft'}</span></td>
-    //                 <td class="text-right">${frappe.format(inv.outstanding_amount || 0, { fieldtype: 'Currency' })}</td>
-    //             </tr>
-    //           `).join('')
-    //         : '<tr><td colspan="4" class="text-muted">No invoices yet</td></tr>';
-
-    //     const payments_html = details.payments.length > 0
-    //         ? details.payments.map(pay => `
-    //             <tr>
-    //                 <td><a href="/app/payment-entry/${pay.name}" target="_blank">${pay.name}</a></td>
-    //                 <td class="text-right">${frappe.format(pay.paid_amount, { fieldtype: 'Currency' })}</td>
-    //                 <td>${frappe.datetime.str_to_user(pay.posting_date)}</td>
-    //             </tr>
-    //           `).join('')
-    //         : '<tr><td colspan="3" class="text-muted">No payments yet</td></tr>';
-
-    //     const modal_content = `
-    //         <div style="padding: 0;">
-    //             <!-- Header Summary -->
-    //             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 4px 4px 0 0; margin-bottom: 1.5rem;">
-    //                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2rem;">
-    //                     <div>
-    //                         <div style="font-size: 0.9rem; opacity: 0.9;">Reservation ID</div>
-    //                         <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">${reservation.name}</div>
-    //                     </div>
-    //                     <div>
-    //                         <div style="font-size: 0.9rem; opacity: 0.9;">Total Amount</div>
-    //                         <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">${frappe.format(reservation.total_amount, { fieldtype: 'Currency' })}</div>
-    //                     </div>
-    //                     <div>
-    //                         <div style="font-size: 0.9rem; opacity: 0.9;">Rooms</div>
-    //                         <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">${reservation.total_rooms} rooms</div>
-    //                     </div>
-    //                     <div>
-    //                         <div style="font-size: 0.9rem; opacity: 0.9;">Status</div>
-    //                         <div style="font-size: 1rem; font-weight: bold; margin-top: 0.5rem;">
-    //                             <span class="badge badge-${reservation.status === 'Checked In' ? 'success' : reservation.status === 'Booked' ? 'info' : 'secondary'}">${reservation.status}</span>
-    //                         </div>
-    //                     </div>
-    //                 </div>
-    //             </div>
-
-    //             <!-- Guest Information -->
-    //             <div style="margin-bottom: 1.5rem;">
-    //                 <h5 style="font-weight: bold; margin-bottom: 1rem;">Guest Information</h5>
-    //                 <div style="background: #f9f9f9; padding: 1rem; border-radius: 4px; border-left: 3px solid #667eea;">
-    //                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-    //                         <div>
-    //                             <div style="font-size: 0.85rem; color: #666;">Corporate Guest</div>
-    //                             <div style="font-weight: 500; margin-top: 0.25rem;">${reservation.primary_guest_name}</div>
-    //                         </div>
-    //                         <div>
-    //                             <div style="font-size: 0.85rem; color: #666;">Customer</div>
-    //                             <div style="font-weight: 500; margin-top: 0.25rem;">${reservation.customer || 'N/A'}</div>
-    //                         </div>
-    //                         <div>
-    //                             <div style="font-size: 0.85rem; color: #666;">Check-in</div>
-    //                             <div style="font-weight: 500; margin-top: 0.25rem;">${frappe.datetime.str_to_user(reservation.from_date)}</div>
-    //                         </div>
-    //                         <div>
-    //                             <div style="font-size: 0.85rem; color: #666;">Check-out</div>
-    //                             <div style="font-weight: 500; margin-top: 0.25rem;">${frappe.datetime.str_to_user(reservation.to_date)}</div>
-    //                         </div>
-    //                     </div>
-    //                 </div>
-    //             </div>
-
-    //             <!-- Rooms Overview -->
-    //             <div style="margin-bottom: 1.5rem;">
-    //                 <h5 style="font-weight: bold; margin-bottom: 1rem;">Rooms</h5>
-    //                 <table class="table table-bordered table-sm">
-    //                     <thead class="table-light">
-    //                         <tr>
-    //                             <th>Room</th>
-    //                             <th>Type</th>
-    //                             <th>Guest Name</th>
-    //                             <th class="text-right">Rate/Night</th>
-    //                             <th class="text-right">Total</th>
-    //                             <th>Status</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         ${rooms_html}
-    //                     </tbody>
-    //                 </table>
-    //             </div>
-
-    //             <!-- Invoices -->
-    //             <div style="margin-bottom: 1.5rem;">
-    //                 <h5 style="font-weight: bold; margin-bottom: 1rem;">Invoices</h5>
-    //                 <table class="table table-bordered table-sm">
-    //                     <thead class="table-light">
-    //                         <tr>
-    //                             <th>Invoice</th>
-    //                             <th class="text-right">Amount</th>
-    //                             <th>Status</th>
-    //                             <th class="text-right">Outstanding</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         ${invoices_html}
-    //                     </tbody>
-    //                 </table>
-    //             </div>
-
-    //             <!-- Payments -->
-    //             <div style="margin-bottom: 1.5rem;">
-    //                 <h5 style="font-weight: bold; margin-bottom: 1rem;">Payments</h5>
-    //                 <table class="table table-bordered table-sm">
-    //                     <thead class="table-light">
-    //                         <tr>
-    //                             <th>Payment Entry</th>
-    //                             <th class="text-right">Amount</th>
-    //                             <th>Date</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         ${payments_html}
-    //                     </tbody>
-    //                 </table>
-    //             </div>
-    //         </div>
-    //     `;
-
-    //     const d = new frappe.ui.Dialog({
-    //         title: `Corporate Reservation: ${reservation.name}`,
-    //         fields: [
-    //             {
-    //                 fieldtype: 'HTML',
-    //                 fieldname: 'details_html',
-    //                 options: modal_content
-    //             }
-    //         ],
-    //         size: 'full',
-    //         primary_action_label: __('Open Reservation'),
-    //         primary_action: () => {
-    //             frappe.set_route('Form', 'Hotel Front Desk Reservation', reservation.name);
-    //             d.hide();
-    //         }
-    //     });
-
-    //     // Add bulk action buttons
-    //     d.add_custom_action(__('Check In All Rooms'), () => {
-    //         frappe.confirm(
-    //             __('Check in all {0} rooms?', [reservation.total_rooms]),
-    //             () => {
-    //                 frappe.call({
-    //                     method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.check_in_all_rooms',
-    //                     args: {
-    //                         reservation_name: reservation.name,
-    //                         check_in_notes: 'Bulk check-in from Corporate Reservations view'
-    //                     },
-    //                     callback: (r) => {
-    //                         if (r.message && r.message.success) {
-    //                             frappe.msgprint({
-    //                                 title: __('Success'),
-    //                                 message: r.message.message,
-    //                                 indicator: 'green'
-    //                             });
-    //                             d.hide();
-    //                             this.render_corporate_reservations_view();
-    //                         }
-    //                     }
-    //                 });
-    //             }
-    //         );
-    //     }).css({'background-color': '#4caf50', 'color': 'white'});
-
-    //     d.add_custom_action(__('Create Invoice'), () => {
-    //         if (reservation.sales_invoice) {
-    //             frappe.msgprint(__('Invoice already exists: {0}', [reservation.sales_invoice]));
-    //             return;
-    //         }
-            
-    //         frappe.call({
-    //             method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.create_sales_invoice_for_reservation',
-    //             args: {
-    //                 reservation_name: reservation.name
-    //             },
-    //             callback: (r) => {
-    //                 if (r.message && r.message.success) {
-    //                     frappe.msgprint({
-    //                         title: __('Success'),
-    //                         message: r.message.message,
-    //                         indicator: 'green'
-    //                     });
-    //                     d.hide();
-    //                     this.render_corporate_reservations_view();
-    //                 }
-    //             }
-    //         });
-    //     }).css({'background-color': '#2196f3', 'color': 'white'});
-
-    //     d.add_custom_action(__('Edit Reservation'), () => {
-    //         frappe.set_route('Form', 'Hotel Front Desk Reservation', reservation.name);
-    //         d.hide();
-    //     });
-
-    //     d.show();
-    // }
 
     show_corporate_res_modal(reservation, details) {
-    /**
-     * Display comprehensive corporate reservation modal
-     * with all details and bulk action buttons
-     */
-    
-    if (!reservation || !reservation.name) {
-        frappe.msgprint(__('Invalid reservation data'));
-        return;
-    }
-    
-    // Extract data
-    const room_reservations = details.room_reservations || [];
-    const invoices = details.invoices || [];
-    const payments = details.payments || [];
-    
-    // Build the modal content
-    let modal_content = `
+        /**
+         * Display comprehensive corporate reservation modal
+         * with all details and bulk action buttons
+         */
+
+        if (!reservation || !reservation.name) {
+            frappe.msgprint(__('Invalid reservation data'));
+            return;
+        }
+
+        // Extract data
+        const room_reservations = details.room_reservations || [];
+        const invoices = details.invoices || [];
+        const payments = details.payments || [];
+
+        // Build the modal content
+        let modal_content = `
         <div style="padding: 0;">
             
             <!-- HEADER CARD -->
@@ -2088,7 +1752,7 @@ class FrontDesk {
                         <p style="font-size: 12px; opacity: 0.9;">Reservation ID</p>
                     </div>
                     <div class="col-md-6">
-                        <h5>${frappe.format(reservation.total_amount, {fieldtype: 'Currency'})}</h5>
+                        <h5>${frappe.format(reservation.total_amount, { fieldtype: 'Currency' })}</h5>
                         <p style="font-size: 12px; opacity: 0.9;">Total Amount</p>
                     </div>
                 </div>
@@ -2127,6 +1791,7 @@ class FrontDesk {
                 </div>
             </div>
             
+
             <!-- ROOMS TABLE -->
             <div class="rooms-section" style="margin-bottom: 25px;">
                 <h6 style="border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 15px;">
@@ -2142,64 +1807,150 @@ class FrontDesk {
                                 <th class="text-right">Rate</th>
                                 <th class="text-right">Total</th>
                                 <th>Status</th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${(reservation.rooms || []).map(room => {
-                                const checkin = details.checkins.find(c => c.room_number === room.room_number);
-                                
-                                let status_badge = '';
-                                if (checkin && checkin.status === 'Checked In') {
-                                    status_badge = '<span class="badge badge-success">✓ Checked In</span>';
-                                } else if (checkin && checkin.status === 'Checked Out') {
-                                    status_badge = '<span class="badge badge-secondary">Checked Out</span>';
-                                } else {
-                                    status_badge = '<span class="badge badge-info">Booked</span>';
-                                }
-                                
-                                return `
+                            ${(reservation.rooms || []).map((room, idx) => {
+            const checkin = details.checkins.find(c => c.room_number === room.room_number);
+
+            let status_badge = '';
+            let action_button = '';
+
+            if (checkin && checkin.status === 'Checked In') {
+                status_badge = '<span class="badge badge-success">✓ Checked In</span>';
+                action_button = '—'; // No action button for already checked in
+            } else if (checkin && checkin.status === 'Checked Out') {
+                status_badge = '<span class="badge badge-secondary">Checked Out</span>';
+                action_button = '—'; // No action button for checked out
+            } else {
+                status_badge = '<span class="badge badge-info">Booked</span>';
+                // ✅ Show check-in button only for booked rooms
+                action_button = `
+                                        <button class="btn btn-xs btn-primary check-in-room-btn" 
+                                                data-room-idx="${idx}" 
+                                                data-room-number="${room.room_number}"
+                                                title="Check in this room">
+                                            <i class="fa fa-sign-in"></i> Check In
+                                        </button>
+                                    `;
+            }
+
+            return `
                                     <tr>
                                         <td><strong>${room.room_number || '-'}</strong></td>
                                         <td>${room.room_type || '-'}</td>
                                         <td>${room.guest_name || '—'}</td>
-                                        <td class="text-right">${frappe.format(room.rate_per_night || 0, {fieldtype: 'Currency'})}</td>
-                                        <td class="text-right">${frappe.format(room.room_total || 0, {fieldtype: 'Currency'})}</td>
+                                        <td class="text-right">${frappe.format(room.rate_per_night || 0, { fieldtype: 'Currency' })}</td>
+                                        <td class="text-right">${frappe.format(room.room_total || 0, { fieldtype: 'Currency' })}</td>
                                         <td class="text-center">${status_badge}</td>
+                                        <td class="text-center">${action_button}</td>
                                     </tr>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </tbody>
                     </table>
                 </div>
                 ${(reservation.rooms || []).length === 0 ? '<p style="color: #999;">No rooms assigned</p>' : ''}
             </div>
-            
+
+
+        
             <!-- INVOICES -->
             <div class="invoices-section" style="margin-bottom: 25px;">
                 <h6 style="border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 15px;">
                     📄 Invoices (${invoices.length})
                 </h6>
+                
+                <!-- Summary if multiple invoices exist -->
+                ${invoices.length > 1 ? `
+                    <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <strong style="color: #1976d2;">
+                            ${invoices.filter(inv => inv.is_room_invoice).length} room invoice(s) + ${invoices.filter(inv => !inv.is_room_invoice).length} bulk invoice(s)
+                        </strong>
+                    </div>
+                ` : ''}
+                
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
                         <thead>
                             <tr style="background-color: #f8f9fa;">
-                                <th>Invoice</th>
+                                <th>Invoice ID</th>
+                                <th>Type</th>
                                 <th class="text-right">Amount</th>
                                 <th>Outstanding</th>
+                                <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${invoices.length > 0 ? invoices.map(inv => `
-                                <tr>
-                                    <td><strong><a href="/app/sales-invoice/${inv.name}" target="_blank">${inv.name}</a></strong></td>
-                                    <td class="text-right">${frappe.format(inv.total, {fieldtype: 'Currency'})}</td>
-                                    <td class="text-right">${frappe.format(inv.outstanding_amount || 0, {fieldtype: 'Currency'})}</td>
-                                    
-                                </tr>
-                            `).join('') : '<tr><td colspan="4" class="text-muted text-center">No invoices yet</td></tr>'}
+                            ${invoices.length > 0 ? invoices.map(inv => {
+            // Determine invoice type
+            let invoice_type = 'Bulk';
+            let room_badge = '';
+
+            if (inv.is_room_invoice) {
+                invoice_type = 'Room';
+                room_badge = `<br/><small style="color: #666;">Room: <strong>${inv.room_number}</strong></small>`;
+            }
+
+            // Determine status badge color
+            let status_color = 'badge-secondary';
+            if (inv.docstatus === 1) {
+                status_color = 'badge-success';
+            } else if (inv.docstatus === 2) {
+                status_color = 'badge-danger';
+            }
+
+            return `
+                                    <tr>
+                                        <td>
+                                            <strong><a href="/app/sales-invoice/${inv.name}" target="_blank">${inv.name}</a></strong>
+                                            ${room_badge}
+                                        </td>
+                                        <td>
+                                            <span class="badge ${invoice_type === 'Room' ? 'badge-info' : 'badge-primary'}">
+                                                ${invoice_type}
+                                            </span>
+                                        </td>
+                                        <td class="text-right">${frappe.format(inv.total || inv.amount || 0, { fieldtype: 'Currency' })}</td>
+                                        <td class="text-right">${frappe.format(inv.outstanding_amount || 0, { fieldtype: 'Currency' })}</td>
+                                        <td>
+                                            <span class="badge ${status_color}">
+                                                ${inv.docstatus === 1 ? 'Submitted' : inv.docstatus === 2 ? 'Cancelled' : 'Draft'}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="/app/sales-invoice/${inv.name}" class="btn btn-xs btn-default" target="_blank">
+                                                <i class="fa fa-external-link"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                `;
+        }).join('') : '<tr><td colspan="6" class="text-muted text-center">No invoices created yet</td></tr>'}
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Summary footer -->
+                ${invoices.length > 0 ? `
+                    <div style="background-color: #f5f5f5; padding: 10px 15px; border-radius: 4px; margin-top: 10px; display: flex; justify-content: space-between;">
+                        <div>
+                            <strong>Total Invoiced:</strong>
+                            ${frappe.format(
+            invoices.reduce((sum, inv) => sum + (inv.total || inv.amount || 0), 0),
+            { fieldtype: 'Currency' }
+        )}
+                        </div>
+                        <div>
+                            <strong>Total Outstanding:</strong>
+                            ${frappe.format(
+            invoices.reduce((sum, inv) => sum + (inv.outstanding_amount || 0), 0),
+            { fieldtype: 'Currency' }
+        )}
+                        </div>
+                    </div>
+                ` : ''}
             </div>
             
             <!-- PAYMENTS -->
@@ -2221,7 +1972,7 @@ class FrontDesk {
                             ${payments.length > 0 ? payments.map(payment => `
                                 <tr>
                                     <td><strong><a href="/app/payment-entry/${payment.name}" target="_blank">${payment.name}</a></strong></td>
-                                    <td class="text-right">${frappe.format(payment.paid_amount, {fieldtype: 'Currency'})}</td>
+                                    <td class="text-right">${frappe.format(payment.paid_amount, { fieldtype: 'Currency' })}</td>
                                     <td>${frappe.datetime.str_to_user(payment.posting_date)}</td>
                                     <td><span class="badge badge-info">${payment.status}</span></td>
                                 </tr>
@@ -2232,93 +1983,132 @@ class FrontDesk {
             </div>
         </div>
     `;
-    
-    // Create and show modal
-    let dialog = new frappe.ui.Dialog({
-        title: __('Corporate Reservation: {0}', [reservation.name]),
-        fields: [
-            {
-                fieldtype: 'HTML',
-                fieldname: 'modal_content',
-                options: modal_content
-            }
-        ],
-        size: 'large',
-        primary_action_label: __('Close'),
-        primary_action: function() {
-            dialog.hide();
-        }
-    });
 
-    // Add action buttons
-    
-    // Button 1: Check In All Rooms
-    dialog.add_custom_action(__('Check In All Rooms'), () => {
-        frappe.confirm(
-            __('Check in all {0} rooms?', [reservation.total_rooms]),
-            () => {
-                frappe.call({
-                    method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.check_in_all_rooms',
-                    args: {
-                        reservation_name: reservation.name,
-                        check_in_notes: 'Bulk check-in from Corporate Reservations view'
-                    },
-                    callback: (r) => {
-                        if (r.message && r.message.success) {
-                            frappe.msgprint({
-                                title: __('Success'),
-                                message: r.message.message,
-                                indicator: 'green'
-                            });
-                            dialog.hide();
-                            // Refresh the view
-                            if (this.render_corporate_reservations_view) {
-                                this.render_corporate_reservations_view();
-                            }
-                        }
-                    }
-                });
-            }
-        );
-    });
-    
-    // Button 2: Create Invoice
-    dialog.add_custom_action(__('Create Invoice'), () => {
-        if (reservation.sales_invoice) {
-            frappe.msgprint(__('Invoice already exists: {0}', [reservation.sales_invoice]));
-            return;
-        }
-        
-        frappe.call({
-            method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.create_sales_invoice_for_reservation',
-            args: {
-                reservation_name: reservation.name
-            },
-            callback: (r) => {
-                if (r.message && r.message.success) {
-                    frappe.msgprint({
-                        title: __('Success'),
-                        message: r.message.message,
-                        indicator: 'green'
-                    });
-                    dialog.hide();
-                    // Refresh the view
-                    if (this.render_corporate_reservations_view) {
-                        this.render_corporate_reservations_view();
-                    }
+        // Create and show modal
+        let dialog = new frappe.ui.Dialog({
+            title: __('Corporate Reservation: {0}', [reservation.name]),
+            fields: [
+                {
+                    fieldtype: 'HTML',
+                    fieldname: 'modal_content',
+                    options: modal_content
                 }
+            ],
+            size: 'large',
+            primary_action_label: __('Close'),
+            primary_action: function () {
+                dialog.hide();
             }
         });
-    });
-    
-    // Button 3: Edit Reservation
-    dialog.add_custom_action(__('Edit Reservation'), () => {
-        frappe.set_route('Form', 'Hotel Front Desk Reservation', reservation.name);
-        dialog.hide();
-    });
 
-    dialog.show();
-}
+        // Add action buttons
+
+        // Button 1: Check In All Rooms
+        dialog.add_custom_action(__('Check In All Rooms'), () => {
+            frappe.confirm(
+                __('Check in all {0} rooms?', [reservation.total_rooms]),
+                () => {
+                    frappe.call({
+                        method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.check_in_all_rooms',
+                        args: {
+                            reservation_name: reservation.name,
+                            check_in_notes: 'Bulk check-in from Corporate Reservations view'
+                        },
+                        callback: (r) => {
+                            if (r.message && r.message.success) {
+                                frappe.msgprint({
+                                    title: __('Success'),
+                                    message: r.message.message,
+                                    indicator: 'green'
+                                });
+                                dialog.hide();
+                                // Refresh the view
+                                if (this.render_corporate_reservations_view) {
+                                    this.render_corporate_reservations_view();
+                                }
+                            }
+                        }
+                    });
+                }
+            );
+        });
+
+        // Button 2: Create Invoice
+        dialog.add_custom_action(__('Create Invoice'), () => {
+            if (reservation.sales_invoice) {
+                frappe.msgprint(__('Invoice already exists: {0}', [reservation.sales_invoice]));
+                return;
+            }
+
+            frappe.call({
+                method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.create_sales_invoice_for_reservation',
+                args: {
+                    reservation_name: reservation.name
+                },
+                callback: (r) => {
+                    if (r.message && r.message.success) {
+                        frappe.msgprint({
+                            title: __('Success'),
+                            message: r.message.message,
+                            indicator: 'green'
+                        });
+                        dialog.hide();
+                        // Refresh the view
+                        if (this.render_corporate_reservations_view) {
+                            this.render_corporate_reservations_view();
+                        }
+                    }
+                }
+            });
+        });
+
+        // Button 3: Edit Reservation
+        dialog.add_custom_action(__('Edit Reservation'), () => {
+            frappe.set_route('Form', 'Hotel Front Desk Reservation', reservation.name);
+            dialog.hide();
+        });
+
+        dialog.show();
+
+        // ✅ NEW: Bind check-in button events
+        dialog.$wrapper.find('.check-in-room-btn').on('click', function (e) {
+            e.preventDefault();
+
+            const room_idx = $(this).data('room-idx');
+            const room_number = $(this).data('room-number');
+
+            frappe.confirm(
+                __('Check in room <strong>{0}</strong>?', [room_number]),
+                function () {
+                    // Call backend to check in this single room
+                    frappe.call({
+                        method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.check_in_selected_rooms',
+                        args: {
+                            reservation_name: reservation.name,
+                            room_indices: [parseInt(room_idx)],  // Single room as array
+                            check_in_notes: ''
+                        },
+                        callback: function (r) {
+                            if (r.message && r.message.success) {
+                                frappe.msgprint({
+                                    title: __('Success'),
+                                    message: __('Room {0} checked in successfully', [room_number]),
+                                    indicator: 'green'
+                                });
+                                // Refresh the modal by reloading details
+                                setTimeout(() => {
+                                    dialog.hide();
+                                    // Re-open to show updated status
+                                    // Call the parent function to refresh
+                                }, 500);
+                            }
+                        }
+                    });
+                }
+            );
+        });
+
+    }
 
     render_payments_view() {
         let $view = this.page.main.find(`[data-view-name="payments_view"]`);

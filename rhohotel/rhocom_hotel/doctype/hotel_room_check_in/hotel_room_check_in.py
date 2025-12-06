@@ -452,19 +452,30 @@ def get_outstanding_for_check_in(check_in):
     
 @frappe.whitelist()
 def make_check_out(source_name, target_doc=None):
-	def get_mapped_doc():
-		check_in = frappe.get_doc("Hotel Room Check In", source_name)
-		check_out = frappe.new_doc("Hotel Room Check Out")
-		check_out.check_in = check_in.name
-		check_out.guest = check_in.guest
-		check_out.room_number = check_in.room_number
-		check_out.check_in_datetime = check_in.check_in_datetime
-		check_out.check_out_datetime = now_datetime()
-		check_out.insert(ignore_permissions=True)
-		return check_out
+    
+    # Block check-out for non-managers if outstanding invoices exist
+    if "Hotel Manager" not in frappe.get_roles(frappe.session.user):
+        data = get_linked_documents(source_name)
+        outstanding = data.get("total_outstanding_amount", 0)
 
-	doc = get_mapped_doc()
-	return doc
+        if outstanding > 0:
+            frappe.throw(
+                _("Cannot check out because there are outstanding invoices totaling {0}. Please settle them first.")
+                .format(frappe.format_value(outstanding))
+            )
+    def get_mapped_doc():
+        check_in = frappe.get_doc("Hotel Room Check In", source_name)
+        check_out = frappe.new_doc("Hotel Room Check Out")
+        check_out.check_in = check_in.name
+        check_out.guest = check_in.guest
+        check_out.room_number = check_in.room_number
+        check_out.check_in_datetime = check_in.check_in_datetime
+        check_out.check_out_datetime = now_datetime()
+        check_out.insert(ignore_permissions=True)
+        return check_out
+
+    doc = get_mapped_doc()
+    return doc
 
 @frappe.whitelist()
 def make_refund(source_name, target_doc=None):

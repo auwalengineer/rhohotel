@@ -100,7 +100,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 											return; // onchange will trigger again with correct value
 										}
 
-										let current_checkout = frm.doc.expected_check_out_datetime;
+										let current_checkout = frm.doc.to_date;
 										let current_dt = frappe.datetime.str_to_obj(current_checkout);
 										let selected_dt = frappe.datetime.str_to_obj(new_datetime_with_default_time);
 										let checkin_dt = frappe.datetime.str_to_obj(frm.doc.from_date);

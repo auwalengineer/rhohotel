@@ -99,12 +99,14 @@
       "default": 0
     },
     {
+      "allow_on_submit": 1,
       "fieldname": "from_date",
       "fieldtype": "Date",
       "label": "From Date",
       "reqd": 1
     },
     {
+      "allow_on_submit": 1,
       "fieldname": "to_date",
       "fieldtype": "Date",
       "label": "To Date",
@@ -160,6 +162,8 @@
       "description": "Actual check-out timestamp"
     },
     {
+      "allow_on_submit": 1,
+      "default": "0",
       "fieldtype": "Int",
       "fieldname": "number_of_nights",
       "label": "Number of Nights",
