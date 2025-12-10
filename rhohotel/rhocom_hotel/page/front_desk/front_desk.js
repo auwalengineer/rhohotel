@@ -2402,7 +2402,10 @@ class FrontDesk {
                 </div>
             </div>`;
 
-        $view.html(`<div class="frappe-card"><div class="frappe-card-head"><h4>Room Stay Report</h4></div><div class="frappe-card-body">${filterHtml}<div id="report_container"></div></div></div>`);
+        $view.html(`<div class="frappe-card"><div class="frappe-card-head"><h4>Room Stay Report <br/> 
+            <br/>
+            <a href="/app/query-report/Room Stay Report" target="_blank"  class="btn btn-primary btn-sm">Open in Report View</a>
+            </h4></div><div class="frappe-card-body">${filterHtml}<div id="report_container"></div></div></div>`);
 
         // Populate room types
         frappe.call({
