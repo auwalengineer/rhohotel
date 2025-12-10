@@ -54,7 +54,9 @@
   "internal_notes",
   "amended_from",
   "invoices_section",
-  "sales_invoices"
+  "sales_invoices",
+  "adjustment_invoices_section",
+  "adjustment_invoices"
  ],
  "fields": [
   {
@@ -133,7 +135,7 @@
   {
    "fieldname": "primary_guest_email",
    "fieldtype": "Data",
-   "label": "Testing"
+   "label": "Email"
   },
   {
    "fieldname": "primary_guest_phone",
@@ -343,6 +345,18 @@
    "read_only": 1
   },
   {
+   "fieldname": "adjustment_invoices_section",
+   "fieldtype": "Section Break",
+   "label": "Extension & Reduction Invoices"
+  },
+{
+  "fieldname": "adjustment_invoices",
+  "fieldtype": "Table",
+  "label": "Extension & Reduction Invoices",
+  "options": "Hotel Room Check In Stay Adjustments", 
+  "read_only": 1
+},
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -365,7 +379,7 @@
    "link_fieldname": "front_desk_reservation"
   }
  ],
- "modified": "2025-12-05 16:02:22.751469",
+ "modified": "2025-12-10 01:19:46.992333",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Front Desk Reservation",

@@ -141,7 +141,17 @@
    "role": "Hotel Manager",
    "share": 1,
    "write": 1
-  }
+  },
+{
+  "role": "All",
+  "read": 1,
+  "print": 0,
+  "email": 0,
+  "share": 0,
+  "create": 0,
+  "delete": 0,
+  "write": 0
+}
  ],
  "row_format": "Dynamic",
  "sort_field": "modified",

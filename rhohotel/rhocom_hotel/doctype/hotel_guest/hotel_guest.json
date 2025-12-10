@@ -1,146 +1,168 @@
 {
-  "actions": [],
-  "creation": "2025-10-31 10:00:00",
-  "doctype": "DocType",
-  "engine": "InnoDB",
-  "field_order": [
-    "guest_type",
-    "title",
-    "hotel_guest_name",
-    "gender",
-    "id_type",
-    "id_number",
-    "contact_number",
-    "customer",
-    "market_place",
-    "phone_number",
-    "address",
-    "email",
-    "notes",
-    "passport_photo",
-    "nationality",
-    "date_of_birth"
-  ],
-  "fields": [
-    {
-      "fieldname": "guest_type",
-      "fieldtype": "Select",
-      "label": "Guest Type",
-      "options": "Individual\nCorporate",
-      "default": "Individual",
-      "reqd": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "title",
-      "fieldtype": "Select",
-      "label": "Title",
-      "options": "Mr\nMrs\nMiss\nDr\nProf\nCorporate"
-    },
-    {
-      "fieldname": "hotel_guest_name",
-      "fieldtype": "Data",
-      "in_list_view": 1,
-      "label": "Hotel Guest Name",
-      "reqd": 1
-    },
-    {
-      "default": "Walk In",
-      "fieldname": "market_place",
-      "fieldtype": "Link",
-      "label": "Market Place",
-      "options": "Market Place"
-    },
-    {
-      "fieldname": "gender",
-      "fieldtype": "Select",
-      "label": "Gender",
-      "options": "Male\nFemale"
-    },
-    {
-      "fieldname": "id_type",
-      "fieldtype": "Select",
-      "label": "ID Type",
-      "options": "Passport\nNational ID\nDriver's License"
-    },
-    {
-      "fieldname": "id_number",
-      "fieldtype": "Data",
-      "label": "ID Number"
-    },
-    {
-      "fieldname": "phone_number",
-      "fieldtype": "Phone",
-      "label": "Phone Number"
-    },
-    {
-      "fieldname": "contact_number",
-      "fieldtype": "Phone",
-      "label": "Contact Person Number"
-    },
-    {
-      "fieldname": "customer",
-      "fieldtype": "Link",
-      "label": "Customer",
-      "options": "Customer",
-      "read_only": 1
-    },
-    {
-      "fieldname": "address",
-      "fieldtype": "Text",
-      "label": "Address"
-    },
-    {
-      "fieldname": "email",
-      "fieldtype": "Data",
-      "label": "Email"
-    },
-    {
-      "fieldname": "notes",
-      "fieldtype": "Text",
-      "label": "Notes"
-    },
-    {
-      "fieldname": "passport_photo",
-      "fieldtype": "Attach Image",
-      "label": "Passport Photo"
-    },
-    {
-      "fieldname": "nationality",
-      "fieldtype": "Data",
-      "label": "Nationality"
-    },
-    {
-      "fieldname": "date_of_birth",
-      "fieldtype": "Date",
-      "label": "Date of Birth"
-    }
-  ],
-  "index_web_pages_for_search": 1,
-  "links": [],
-  "modified": "2025-11-23 13:18:21.744609",
-  "modified_by": "Administrator",
-  "module": "Rhocom Hotel",
-  "name": "Hotel Guest",
-  "owner": "Administrator",
-  "permissions": [
-    {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "System Manager",
-      "share": 1,
-      "write": 1
-    }
-  ],
-  "row_format": "Dynamic",
-  "sort_field": "modified",
-  "sort_order": "DESC",
-  "states": [],
-  "title_field": "hotel_guest_name",
-  "track_changes": 1
+ "actions": [],
+ "creation": "2025-10-31 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "guest_type",
+  "title",
+  "hotel_guest_name",
+  "gender",
+  "id_type",
+  "id_number",
+  "contact_number",
+  "customer",
+  "market_place",
+  "phone_number",
+  "address",
+  "email",
+  "notes",
+  "passport_photo",
+  "nationality",
+  "date_of_birth"
+ ],
+ "fields": [
+  {
+   "default": "Individual",
+   "fieldname": "guest_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Guest Type",
+   "options": "Individual\nCorporate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Select",
+   "label": "Title",
+   "options": "Mr\nMrs\nMiss\nDr\nProf\nCorporate"
+  },
+  {
+   "fieldname": "hotel_guest_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Hotel Guest Name",
+   "reqd": 1
+  },
+  {
+   "default": "Walk In",
+   "fieldname": "market_place",
+   "fieldtype": "Link",
+   "label": "Market Place",
+   "options": "Market Place"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "Male\nFemale"
+  },
+  {
+   "fieldname": "id_type",
+   "fieldtype": "Select",
+   "label": "ID Type",
+   "options": "Passport\nNational ID\nDriver's License"
+  },
+  {
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "label": "ID Number"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  },
+  {
+   "fieldname": "contact_number",
+   "fieldtype": "Phone",
+   "label": "Contact Person Number"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "passport_photo",
+   "fieldtype": "Attach Image",
+   "label": "Passport Photo"
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-10 01:19:05.781151",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hotel Guest",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Receptionist",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "hotel_guest_name",
+ "track_changes": 1
 }

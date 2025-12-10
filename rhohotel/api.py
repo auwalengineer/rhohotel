@@ -1282,3 +1282,78 @@ def get_available_rooms(from_date, to_date, room_type=None):
         frappe.log_error(frappe.get_traceback(), "Get Available Rooms Error")
         frappe.throw(_("Error: {0}").format(str(e)))
         
+
+# Updated rhohotel/api.py method - consolidates only the current invoice
+
+import frappe
+from frappe import _
+from frappe.utils import flt, getdate, nowdate, get_time, nowtime
+
+@frappe.whitelist()
+def create_and_submit_merge_log_for_bill_to_room(pos_invoice_name):
+	"""
+	Creates and submits a merge log for the Bill to Room invoice that was just saved.
+	
+	This method consolidates only the current invoice into a Sales Invoice.
+	"""
+	try:
+		pos_invoice = frappe.get_doc("POS Invoice", pos_invoice_name)
+		
+		# Check if this invoice has "Bill to Room" payment
+		has_bill_to_room = any(
+			p.mode_of_payment and p.mode_of_payment.lower().strip() == "bill to room"
+			for p in pos_invoice.payments
+		)
+		
+		if not has_bill_to_room:
+			return None
+		
+		# Validate required fields
+		if not pos_invoice.customer:
+			frappe.throw(_("Customer is required for Bill to Room invoices"))
+		
+		if not pos_invoice.custom_hotel_room_check_in:
+			return None
+		
+		# Check if this invoice is already consolidated
+		if pos_invoice.consolidated_invoice:
+			return None
+		
+		# Create merge log document for ONLY this invoice
+		merge_log = frappe.new_doc("POS Invoice Merge Log")
+		merge_log.posting_date = getdate(nowdate())
+		merge_log.posting_time = get_time(nowtime())
+		merge_log.customer = pos_invoice.customer
+		merge_log.merge_invoices_based_on = "Customer"
+		merge_log.company = pos_invoice.company
+		
+		# Add ONLY the current invoice to the merge log
+		merge_log.append("pos_invoices", {
+			"pos_invoice": pos_invoice.name,
+			"customer": pos_invoice.customer,
+			"posting_date": pos_invoice.posting_date,
+			"grand_total": pos_invoice.grand_total
+		})
+		
+		# Save the merge log
+		merge_log.insert(ignore_permissions=True)
+		frappe.db.commit()
+		
+		# Submit the merge log (this triggers on_submit which creates Sales Invoice)
+		merge_log.submit()
+		frappe.db.commit()
+		
+		return {
+			"success": True,
+			"merge_log": merge_log.name,
+			"consolidated_invoice": merge_log.consolidated_invoice,
+			"invoice_count": 1
+		}
+		
+	except Exception as e:
+		frappe.db.rollback()
+		frappe.log_error(
+			message=str(e),
+			title=f"Error creating merge log for {pos_invoice_name}"
+		)
+		raise

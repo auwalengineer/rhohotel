@@ -168,7 +168,7 @@
       "fieldname": "number_of_nights",
       "label": "Number of Nights",
       "read_only": 1,
-      "reqd":1
+      "reqd": 1
     },
     {
       "fieldname": "section_break_payment",
@@ -279,6 +279,36 @@
       "read": 1,
       "report": 1,
       "role": "Hotel Reservation User",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Receptionist",
       "share": 1,
       "submit": 1,
       "write": 1

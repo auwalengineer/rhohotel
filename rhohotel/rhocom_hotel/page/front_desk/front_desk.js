@@ -580,6 +580,7 @@ class FrontDesk {
                 } else {
                     const rows = check_ins.map(ci => `
                         <tr>
+                            <td><a href="/app/hotel-room-check-in/${ci.check_in_id}">${ci.check_in_id}</a></td>
                             <td><a href="/app/hotel-guest/${ci.guest}">${ci.guest}</a></td>
                             <td>${ci.room_number}</td>
                             <td>${frappe.datetime.str_to_user(ci.check_in_datetime)}</td>
@@ -598,6 +599,7 @@ class FrontDesk {
                         <table id="check_in_table" class="table table-bordered table-hover table-striped">
                             <thead class="table-light">
                                 <tr>
+                                    <th>Check-in ID</th>
                                     <th>Guest</th>
                                     <th>Room</th>
                                     <th>Check-in</th>
@@ -625,6 +627,7 @@ class FrontDesk {
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
                                     pageLength: 10,
+                                    order: [[3, 'asc']], // Order by Check-in datetime ascending
                                     language: {
                                         search: "Filter:",
                                         lengthMenu: "Show _MENU_ entries",

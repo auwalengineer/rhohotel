@@ -32,6 +32,7 @@ app_license = "mit"
 app_include_js = [
     "/assets/rhohotel/js/pos_room_extension.js",
     "/assets/rhohotel/js/pos_payment.js",
+    "/assets/rhohotel/js/pos_print_invoice_extension.js",
 ]
 # include js, css files in header of web template
 # web_include_css = "/assets/rhohotel/css/rhohotel.css"
