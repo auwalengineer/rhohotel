@@ -5,18 +5,55 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_pqy4"
+  "hall_name",
+  "capacity",
+  "column_break_qfkp",
+  "hall_type",
+  "default_rate",
+  "section_break_wmth",
+  "table_tdts"
  ],
  "fields": [
   {
-   "fieldname": "section_break_pqy4",
+   "fieldname": "hall_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "label": "Capacity",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_qfkp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hall_type",
+   "fieldtype": "Select",
+   "label": "Hall Type",
+   "options": "Conference\nWedding\nMeeting"
+  },
+  {
+   "fieldname": "default_rate",
+   "fieldtype": "Currency",
+   "label": "Default Rate"
+  },
+  {
+   "fieldname": "section_break_wmth",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "table_tdts",
+   "fieldtype": "Table",
+   "options": "Hall Amenity"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-10 12:05:16.822180",
+ "modified": "2025-12-10 12:55:39.433620",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hall",

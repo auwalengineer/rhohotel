@@ -1,0 +1,31 @@
+{
+    "add_total_row": 0,
+    "creation": "2025-12-10 10:00:00.000000",
+    "disabled": 0,
+    "docstatus": 0,
+    "doctype": "Report",
+    "filters": [],
+    "idx": 0,
+    "is_standard": "Yes",
+    "modified": "2025-12-10 10:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Room Stay Report",
+    "owner": "Administrator",
+    "prepared_report": 0,
+    "query": "rhohotel.rhocom_hotel.report.room_stay_report.room_stay_report.execute",
+    "ref_doctype": "Hotel Room Check In",
+    "report_name": "Room Stay Report",
+    "report_type": "Script Report",
+    "roles": [
+        {
+            "role": "System Manager"
+        },
+        {
+            "role": "Hotel Manager"
+        },
+        {
+            "role": "Hotel Receptionist"
+        }
+    ]
+}
