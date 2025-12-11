@@ -50,7 +50,7 @@ def get_data(filters):
 	if filters.get("from_date") and filters.get("to_date"):
 		conditions += """
 			AND ci.check_in_datetime <= %(to_date)s
-			AND COALESCE(ci.actual_check_out_datetime, ci.expected_check_out_datetime) >= %(from_date)s
+			AND ci.expected_check_out_datetime >= %(from_date)s
 		"""
 
 	return frappe.db.sql(

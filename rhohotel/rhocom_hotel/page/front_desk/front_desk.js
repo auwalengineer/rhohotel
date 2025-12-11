@@ -466,7 +466,12 @@ class FrontDesk {
 
         if (route_options) {
             $card.on('click', () => {
-                frappe.set_route('List', 'Hotel Room', route_options);
+                if (label === 'Reserved Today') {
+                    frappe.set_route('List', 'Hotel Room Reservation', { from_date: frappe.datetime.get_today() });
+                } else {
+                    frappe.set_route('List', 'Hotel Room', route_options);
+                }
+
             });
             $card.css('cursor', 'pointer');
         }
