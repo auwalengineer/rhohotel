@@ -818,6 +818,7 @@ class FrontDesk {
                                     info: true,
                                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
                                     pageLength: 10,
+                                    order: [[3, 'asc']],
                                     dom: 'Bfrtip',
                                     buttons: [
                                         'excel',
@@ -2141,12 +2142,12 @@ class FrontDesk {
                         return `
                         <tr style="background-color: ${balance_color};">
                             <td><strong>${room.room_number}</strong></td>
-                            <td><a href="/app/hotel-guest/${room.guest}">${room.current_guest}</a></td>
+                            <td><a href="/app/hotel-guest/${room.guest}">${room.guest}</a></td>
                             <td class="text-right">${frappe.format(room.total_invoice, { fieldtype: 'Currency' })}</td>
                             <td class="text-right">${frappe.format(room.total_paid, { fieldtype: 'Currency' })}</td>
                             <td class="text-right"><strong>${frappe.format(room.balance, { fieldtype: 'Currency' })}</strong></td>
                             <td class="text-right">
-                                <a href="/app/payment-entry/new?custom_hotel_room_check_in=${room.current_check_in}" class="btn btn-xs btn-primary">Settle</a>
+                                <a href="/app/payment-entry/new?custom_hotel_room_check_in=${room.check_in_id}" class="btn btn-xs btn-primary">Settle</a>
                             </td>
                         </tr>
                     `}).join('');

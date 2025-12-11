@@ -424,21 +424,24 @@ def get_rooms_with_payment_status(filters=None):
 		filters = {}
 	
 	rooms = frappe.db.sql("""
-		SELECT
-			hr.name, hr.room_number, hr.room_type, hr.floor,
-			hr.status, hr.housekeeping_status, hr.current_check_in,
-			hr.current_guest, ci.guest,
-			COALESCE(SUM(si.grand_total), 0) as total_invoice,
-			COALESCE(SUM(si.outstanding_amount), 0) as balance,
-			COALESCE(SUM(per.paid_amount), 0) as total_paid
-		FROM `tabHotel Room` hr
-		LEFT JOIN `tabHotel Room Check In` ci ON hr.current_check_in = ci.name
-		LEFT JOIN `tabSales Invoice` si ON ci.name = si.custom_hotel_room_check_in
-		LEFT JOIN `tabPayment Entry` per ON ci.name = per.custom_hotel_room_check_in
-		WHERE hr.status = 'Occupied'
-		GROUP BY hr.name
-		ORDER BY hr.room_number
-	""", as_dict=1)
+        SELECT
+            ci.name AS check_in_id,
+            ci.room_number,
+            ci.guest,
+            COALESCE(SUM(si.grand_total), 0) AS total_invoice,
+            COALESCE(SUM(si.outstanding_amount), 0) AS balance,
+            COALESCE(SUM(per.paid_amount), 0) AS total_paid
+        FROM `tabHotel Room Check In` ci
+        LEFT JOIN `tabSales Invoice` si 
+            ON ci.name = si.custom_hotel_room_check_in
+        LEFT JOIN `tabPayment Entry` per 
+            ON ci.name = per.custom_hotel_room_check_in
+        WHERE ci.status = 'Checked In'
+            AND ci.docstatus = 1
+        GROUP BY ci.name
+        ORDER BY ci.room_number
+    """, as_dict=1)
+
 	
 	return rooms
 
