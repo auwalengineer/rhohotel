@@ -1,102 +1,226 @@
 {
- "actions": [],
- "allow_rename": 1,
- "creation": "2025-12-10 12:57:04.048690",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "hall",
-  "column_break_ctgu",
-  "event_type",
-  "section_break_zite",
-  "start_datetime",
-  "column_break_agsl",
-  "end_datetime",
-  "section_break_0y7x",
-  "amended_from"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_0y7x",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Hall Booking",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "hall",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Hall",
-   "options": "Hall",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_ctgu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "event_type",
-   "fieldtype": "Select",
-   "label": "Event Type",
-   "options": "Wedding\nMeeting\nSeminar\nBirthday\nOthers"
-  },
-  {
-   "fieldname": "section_break_zite",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "start_datetime",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "Start Date time",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_agsl",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "end_datetime",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "End Datetime",
-   "reqd": 1
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [],
- "modified": "2025-12-10 13:10:09.786698",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Hall Booking",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2025-12-10 12:57:04.048690",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "section_break_2k5l",
+        "amended_from",
+        "customer_name",
+        "section_break_0t",
+        "hall",
+        "column_break_ctgu",
+        "event_type",
+        "section_break_zite",
+        "start_datetime",
+        "column_break_agsl",
+        "end_datetime",
+        "section_break_5h3m",
+        "rate",
+        "column_break_1h2k",
+        "total_hours",
+        "column_break_1j4k",
+        "total_amount",
+        "section_break_hezf",
+        "section_break_discount",
+        "discount_type",
+        "column_break_wufg",
+        "discount_amount",
+        "section_break_thkm",
+        "net_total",
+        "section_break_invoice",
+        "sales_invoice"
+    ],
+    "fields": [
+        {
+            "fieldname": "customer_name",
+            "fieldtype": "Link",
+            "label": "Customer",
+            "options": "Customer",
+            "reqd": 1
+        },
+        {
+            "fieldname": "section_break_0t",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Hall Booking",
+            "print_hide": 1,
+            "read_only": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "hall",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Hall",
+            "options": "Hall",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_ctgu",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "event_type",
+            "fieldtype": "Select",
+            "label": "Event Type",
+            "options": "Wedding\nMeeting\nSeminar\nBirthday\nOthers"
+        },
+        {
+            "fieldname": "section_break_zite",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "start_datetime",
+            "fieldtype": "Datetime",
+            "in_list_view": 1,
+            "label": "Start Date time",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_agsl",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "end_datetime",
+            "fieldtype": "Datetime",
+            "in_list_view": 1,
+            "label": "End Datetime",
+            "reqd": 1
+        },
+        {
+            "fieldname": "section_break_5h3m",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "rate",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Rate Per Hour",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_1h2k",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "total_hours",
+            "fieldtype": "Float",
+            "in_list_view": 1,
+            "label": "Total Hours",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_1j4k",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "total_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Total Amount",
+            "read_only": 1
+        },
+        {
+            "fieldname": "section_break_2k5l",
+            "fieldtype": "Section Break"
+        },
+        {
+            "default": "Fixed Amount",
+            "fieldname": "discount_type",
+            "fieldtype": "Select",
+            "label": "Discount Type",
+            "options": "Percentage\nFixed Amount"
+        },
+        {
+            "default": "0",
+            "fieldname": "discount_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Discount Amount"
+        },
+        {
+            "fieldname": "section_break_2k5l",
+            "fieldtype": "Section Break"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "sales_invoice",
+            "fieldtype": "Link",
+            "label": "Invoice",
+            "options": "Sales Invoice",
+            "read_only": 1
+        },
+        {
+            "fieldname": "section_break_invoice",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "section_break_hezf",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "section_break_discount",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "column_break_wufg",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "section_break_thkm",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "net_total",
+            "fieldtype": "Currency",
+            "label": "Net Total",
+            "read_only": 1
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2025-12-12 17:00:52.649510",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hall Booking",
+    "owner": "Administrator",
+    "calendar_view": [
+        {
+            "label": "Hall Calendar",
+            "field_map": {
+                "start": "start_datetime",
+                "end": "end_datetime",
+                "title": "hall",
+                "id": "name"
+            }
+        }
+    ],
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
 }
