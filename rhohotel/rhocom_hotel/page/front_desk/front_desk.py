@@ -46,34 +46,47 @@ def get_check_in_list():
 	"""
 	check_ins = frappe.db.sql("""
 			SELECT
-				ci.name AS check_in_id,
-				ci.guest,
-				ci.room_number,
-				ci.check_in_datetime,
-				ci.expected_check_out_datetime,
-				COALESCE(SUM(si.grand_total), 0) AS total_invoice_amount,
-				COALESCE(SUM(si.outstanding_amount), 0) AS balance,
-				COALESCE(SUM(per.paid_amount), 0) AS total_payment_amount,
-				g.market_place,
-				g.email,
-				g.phone_number
-			FROM `tabHotel Room Check In` ci
-			LEFT JOIN `tabHotel Guest` g 
-				ON ci.guest = g.name
-			LEFT JOIN `tabSales Invoice` si 
-				ON ci.name = si.custom_hotel_room_check_in
-			LEFT JOIN `tabPayment Entry` per 
-				ON ci.name = per.custom_hotel_room_check_in
-			WHERE ci.status = 'Checked In'
-			GROUP BY
-				ci.name,
-				ci.guest,
-				ci.room_number,
-				ci.check_in_datetime,
-				ci.expected_check_out_datetime,
-				g.market_place,
-				g.email,
-				g.phone_number
+                ci.name AS check_in_id,
+                ci.guest,
+                ci.room_number,
+                ci.check_in_datetime,
+                ci.expected_check_out_datetime,
+                COALESCE(inv.total_invoice_amount, 0) AS total_invoice_amount,
+                COALESCE(inv.balance, 0) AS balance,
+                COALESCE(pay.total_payment_amount, 0) AS total_payment_amount,
+                g.email,
+                g.phone_number
+            FROM `tabHotel Room Check In` ci
+
+            LEFT JOIN `tabHotel Guest` g
+                ON ci.guest = g.name
+
+            -- Pre-aggregate invoices
+            LEFT JOIN (
+                SELECT
+                    custom_hotel_room_check_in,
+                    SUM(grand_total) AS total_invoice_amount,
+                    SUM(outstanding_amount) AS balance
+                FROM `tabSales Invoice`
+                WHERE docstatus = 1
+                GROUP BY custom_hotel_room_check_in
+            ) inv ON inv.custom_hotel_room_check_in = ci.name
+
+            -- Pre-aggregate payments
+            LEFT JOIN (
+                SELECT
+                    custom_hotel_room_check_in,
+                    SUM(paid_amount) AS total_payment_amount
+                FROM `tabPayment Entry`
+                WHERE docstatus = 1
+                GROUP BY custom_hotel_room_check_in
+            ) pay ON pay.custom_hotel_room_check_in = ci.name
+
+            WHERE ci.status = 'Checked In'
+            AND ci.docstatus = 1
+
+            ORDER BY ci.room_number;
+
 		""", as_dict=1)
 
 	return check_ins
@@ -424,25 +437,43 @@ def get_rooms_with_payment_status(filters=None):
 		filters = {}
 	
 	rooms = frappe.db.sql("""
-        SELECT
+       SELECT
             ci.name AS check_in_id,
             ci.room_number,
             ci.guest,
-            COALESCE(SUM(si.grand_total), 0) AS total_invoice,
-            COALESCE(SUM(si.outstanding_amount), 0) AS balance,
-            COALESCE(SUM(per.paid_amount), 0) AS total_paid
+            COALESCE(inv.total_invoice, 0) AS total_invoice,
+            COALESCE(inv.balance, 0) AS balance,
+            COALESCE(pay.total_paid, 0) AS total_paid
         FROM `tabHotel Room Check In` ci
-        LEFT JOIN `tabSales Invoice` si 
-            ON ci.name = si.custom_hotel_room_check_in
-        LEFT JOIN `tabPayment Entry` per 
-            ON ci.name = per.custom_hotel_room_check_in
+
+        -- Aggregate Sales Invoices per check-in
+        LEFT JOIN (
+            SELECT
+                custom_hotel_room_check_in,
+                SUM(grand_total) AS total_invoice,
+                SUM(outstanding_amount) AS balance
+            FROM `tabSales Invoice`
+            WHERE docstatus = 1
+            GROUP BY custom_hotel_room_check_in
+        ) inv ON inv.custom_hotel_room_check_in = ci.name
+
+        -- Aggregate Payments per check-in
+        LEFT JOIN (
+            SELECT
+                custom_hotel_room_check_in,
+                SUM(paid_amount) AS total_paid
+            FROM `tabPayment Entry`
+            WHERE docstatus = 1
+            GROUP BY custom_hotel_room_check_in
+        ) pay ON pay.custom_hotel_room_check_in = ci.name
+
         WHERE ci.status = 'Checked In'
-            AND ci.docstatus = 1
-        GROUP BY ci.name
-        ORDER BY ci.room_number
+        AND ci.docstatus = 1
+
+        ORDER BY ci.room_number;
+
     """, as_dict=1)
 
-	
 	return rooms
 
 @frappe.whitelist()
