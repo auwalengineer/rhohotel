@@ -360,6 +360,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		// }
 	},
 
+	guest_name: function (frm) {
+
+	},
+
 	to_date: function (frm) {
 
 		// get number of nights 
@@ -456,6 +460,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 					}
 				});
 			});
+	},
+
+	onload: function (frm) {
+		set_default_nigeria_country(frm);
 	}
 });
 
@@ -526,6 +534,25 @@ frappe.ui.form.on("Hotel Reservation Room", {
 });
 
 
+function set_default_nigeria_country(frm) {
+	const field = frm.get_field('guest_phone');
+
+	// Field not ready yet
+	if (!field || !field.$input) return;
+
+	// Do not override if user already entered a phone
+	if (frm.doc.guest_phone) return;
+
+	// intl-tel-input initializes after render, so delay a bit
+	setTimeout(() => {
+		const input = field.$input[0];
+
+		// ERPNext attaches intl-tel-input instance here
+		if (input && input.iti) {
+			input.iti.setCountry('ng'); // Nigeria 🇳🇬
+		}
+	}, 300);
+}
 
 
 // frappe.ui.form.on("Hotel Room Reservation", {

@@ -13,6 +13,8 @@
     "front_desk_reservation",
     "booking_number",
     "guest_name",
+    "guest_phone",
+    "guest_email",
     "customer",
     "room_number",
     "from_date",
@@ -72,11 +74,23 @@
       "allow_on_submit": 1
     },
     {
+      "fieldname": "guest_phone",
+      "fieldtype": "Phone",
+      "label": "Guest Phone",
+      "in_list_view": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "guest_email",
+      "fieldtype": "Data",
+      "label": "Guest Email"
+    },
+    {
       "fieldname": "customer",
       "fieldtype": "Link",
+      "in_list_view": 1,
       "label": "Customer",
-      "options": "Customer",
-      "allow_on_submit": 1
+      "options": "Customer"
     },
     {
       "fieldname": "room_number",
