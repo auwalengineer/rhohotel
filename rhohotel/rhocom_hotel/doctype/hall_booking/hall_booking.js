@@ -5,11 +5,23 @@ frappe.ui.form.on("Hall Booking", {
     refresh(frm) {
         // Show only when document is submitted
         if (frm.doc.docstatus === 1) {
+
+            // set fields as read-only
+            frm.set_df_property("hall", "read_only", 1);
+            frm.set_df_property("start_datetime", "read_only", 1);
+            frm.set_df_property("end_datetime", "read_only", 1);
+            frm.set_df_property("rate", "read_only", 1);
+            frm.set_df_property("total_hours", "read_only", 1);
+            frm.set_df_property("total_amount", "read_only", 1);
+            frm.set_df_property("net_total", "read_only", 1);
+
             frm.add_custom_button(
                 __("Booking Adjustment"),
                 () => open_datetime_adjustment_dialog(frm)
             );
         }
+
+
     },
 
     start_datetime: function (frm) {

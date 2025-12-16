@@ -4,6 +4,20 @@
 frappe.ui.form.on("Hotel Room Check In", {
     refresh(frm) {
 
+        if (frm.doc.docstatus === 1) {
+            // set fields as read-only
+            frm.set_df_property("guest", "read_only", 1);
+            frm.set_df_property("room", "read_only", 1);
+            frm.set_df_property("check_in_datetime", "read_only", 1);
+            frm.set_df_property("expected_check_out_datetime", "read_only", 1);
+            frm.set_df_property("number_of_nights", "read_only", 1);
+            frm.set_df_property("rate_amount", "read_only", 1);
+            frm.set_df_property("total_amount", "read_only", 1);
+            frm.set_df_property("discount", "read_only", 1);
+            frm.set_df_property("net_total", "read_only", 1);
+            frm.set_df_property("status", "read_only", 1);
+        }
+
         if (!frm.is_new()) {
             frm.add_custom_button(__('Payment'), () => {
 

@@ -131,7 +131,6 @@ def get_hall_rate(hall_name):
 
 
 @frappe.whitelist()
-@frappe.whitelist()
 def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=None):
 	import math
 
@@ -152,15 +151,35 @@ def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=N
 	new_total_hours = math.ceil(
 		(end_dt - start_dt).total_seconds() / 3600
 	)
+
 	previous_total_hours = booking.total_hours or 0
 
 	# ----------------------------------
-	# Temporarily assign & revalidate overlap
+	# Revalidate overlap
 	# ----------------------------------
-	booking.start_datetime = start_dt
-	booking.end_datetime = end_dt
-	booking.validate_booking_overlap()
+	overlapping_bookings = frappe.db.sql("""
+		SELECT name
+		FROM `tabHall Booking`
+		WHERE hall = %(hall)s
+		AND docstatus = 1
+		AND name != %(name)s
+		AND (
+			%(start)s < end_datetime
+			AND %(end)s > start_datetime
+		)
+	""", {
+		"hall": booking.hall,
+		"name": booking.name or "",
+		"start": start_dt,
+		"end": end_dt,
+	}, as_dict=True)
 
+	if overlapping_bookings:
+		frappe.throw(
+			f"Hall '{booking.hall}' is already booked between "
+			f"{start_dt} and {end_dt}."
+		)
+	new_net_total = booking.net_total
 	# ----------------------------------
 	# Financial adjustment
 	# ----------------------------------
@@ -173,6 +192,13 @@ def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=N
 
 		diff_hours = abs(new_total_hours - previous_total_hours)
 
+		if new_total_hours < previous_total_hours:
+			# Return invoice
+			qty = -diff_hours
+		else:
+			# Additional invoice
+			qty = diff_hours
+
 		invoice_data = {
 			"doctype": "Sales Invoice",
 			"customer": booking.customer_name,
@@ -181,7 +207,7 @@ def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=N
 			"items": [{
 				"item_code": booking.hall,
 				"rate": hall.rate_per_hour,
-				"qty": diff_hours,
+				"qty": qty,
 				"income_account": income_account,
 				"cost_center": cost_center
 			}],
@@ -194,6 +220,8 @@ def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=N
 		invoice = frappe.get_doc(invoice_data)
 		invoice.insert(ignore_permissions=True)
 		invoice.submit()
+
+		new_net_total = booking.net_total + invoice.grand_total
 
 	# ----------------------------------
 	# Adjustment history
@@ -215,9 +243,16 @@ def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=N
 	# ----------------------------------
 	# Final save
 	# ----------------------------------
-	booking.db_set("start_datetime", booking.start_datetime)
-	booking.db_set("end_datetime", booking.end_datetime)
-	booking.db_set("total_hours", new_total_hours)
+	total_amount = hall.rate_per_hour * new_total_hours
+
+	booking.start_datetime = start_dt
+	booking.end_datetime = end_dt
+	booking.total_hours = new_total_hours
+	booking.net_total = new_net_total 
+	booking.total_amount = total_amount
+	# booking.db_set("start_datetime", booking.start_datetime)
+	# booking.db_set("end_datetime", booking.end_datetime)
+	# booking.db_set("total_hours", new_total_hours)
 	booking.save()
 	frappe.db.commit()
 

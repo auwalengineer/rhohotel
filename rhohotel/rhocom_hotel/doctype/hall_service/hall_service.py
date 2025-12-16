@@ -10,7 +10,8 @@ class HallService(Document):
 
 	def validate(self):
 		# create Item if not exists
-		self.create_item_if_not_exists()
+		if not self.item_name:
+			self.create_item_if_not_exists()
 	def create_item_if_not_exists(self):
 		#create Hall Service Item group if not exists
 		item_group = None
@@ -24,17 +25,23 @@ class HallService(Document):
 		else:
 			item_group = frappe.get_doc("Item Group", "Hall Service")
 		# create Item if not exists
-		if not frappe.db.exists("Item", self.item_name):
+		if not frappe.db.exists("Item", self.service):
 			item = frappe.get_doc({
 				"doctype": "Item",
-				"item_code": self.item_name,
-				"item_name": self.item_name,
+				"item_code": self.service,
+				"item_name": self.service,
 				"item_group": item_group.name,
 				"is_stock_item": 0,
 				"standard_rate": self.rate,
 			})
 			item.insert(ignore_permissions=True)
+			self.item_name = item.name
 			frappe.db.commit()
+		else:
+			item = frappe.get_doc("Item", self.service)
+			self.item_name = item.name
+			frappe.db.commit()
+
 
 @frappe.whitelist()
 def get_service_rate(hall_service):
