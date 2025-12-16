@@ -87,6 +87,7 @@
       "label": "Guest Email"
     },
     {
+      "allow_on_submit": 1,
       "fieldname": "customer",
       "fieldtype": "Link",
       "in_list_view": 1,
