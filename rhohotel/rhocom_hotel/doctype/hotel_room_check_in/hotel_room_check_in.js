@@ -465,7 +465,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                             title: __("Invalid Date"),
                                             indicator: "red",
                                             message: __("New checkout must be after the check-in date/time: {0}",
-                                                [frappe.datetime.global_format(checkin_dt)])
+                                                [frappe.datetime.str_to_user(checkin_dt)])
                                         });
                                         return;
                                     }
@@ -476,7 +476,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                             title: __("Invalid Date"),
                                             indicator: "red",
                                             message: __("New checkout cannot be in the past. Current time is: {0}",
-                                                [frappe.datetime.global_format(now_dt)])
+                                                [frappe.datetime.str_to_user(now_dt)])
                                         });
                                         return;
                                     }
@@ -492,7 +492,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                                     title: __("Not Allowed"),
                                                     indicator: "red",
                                                     message: __("Reducing stay to today is not allowed because the hotel's default checkout time for today ({0}) has already passed.",
-                                                        [frappe.datetime.global_format(default_dt)])
+                                                        [frappe.datetime.str_to_user(default_dt)])
                                                 });
                                                 return;
                                             }
@@ -503,7 +503,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                                     title: __("Invalid Time"),
                                                     indicator: "red",
                                                     message: __("For today, new checkout must be on or before the hotel's default checkout time: {0}",
-                                                        [frappe.datetime.global_format(default_dt)])
+                                                        [frappe.datetime.str_to_user(default_dt)])
                                                 });
                                                 return;
                                             }
