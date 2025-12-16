@@ -176,23 +176,13 @@ fixtures = [{
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"rhohotel.tasks.all"
-# 	],
-# 	"daily": [
-# 		"rhohotel.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"rhohotel.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"rhohotel.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"rhohotel.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+        "0 11 * * *": [
+            "rhohotel.rhocom_hotel.auto_close_pos_shift.auto_close_pos_shifts"
+        ]
+    }
+}
 
 # Testing
 # -------

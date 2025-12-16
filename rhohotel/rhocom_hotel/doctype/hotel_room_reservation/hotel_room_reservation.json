@@ -21,6 +21,7 @@
     "to_date",
     "number_of_nights",
     "rate",
+    "discount_type",
     "discount",
     "late_checkin",
     "column_break_6",
@@ -105,6 +106,13 @@
       "fieldtype": "Currency",
       "label": "Rate",
       "read_only": 1
+    },
+    {
+      "fieldname": "discount_type",
+      "fieldtype": "Select",
+      "label": "Discount Type",
+      "options": "Percentage\nFlat Amount",
+      "default": "Flat Amount"
     },
     {
       "fieldname": "discount",
@@ -218,7 +226,9 @@
     {
       "fieldname": "net_total",
       "fieldtype": "Currency",
-      "label": "Net Total"
+      "label": "Net Total",
+      "read_only": 1,
+      "allow_on_submit": 1
     },
     {
       "default": "0",

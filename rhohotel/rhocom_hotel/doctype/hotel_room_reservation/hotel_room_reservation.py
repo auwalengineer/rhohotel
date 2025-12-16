@@ -18,8 +18,15 @@ class HotelRoomReservation(Document):
             getdate(self.from_date)
         ) or 1
 
-        self.net_total = (self.number_of_nights * self.rate) - self.discount
+        discounted_amount = 0
+        if self.discount:         
+            if self.discount_type == "Percentage":
+                discounted_amount = self.number_of_nights * self.rate * (self.discount / 100)
+            else:
+                discounted_amount = self.discount
 
+        self.net_total = (self.number_of_nights * self.rate) - discounted_amount
+        
     def before_insert(self):
         self.apply_default_checkout_time()
 
@@ -101,7 +108,10 @@ def make_invoice(name):
     })
 
     if doc.discount:
-        si.discount_amount = doc.discount
+        if doc.discount_type == "Percentage":
+            si.additional_discount_percentage = doc.discount
+        else:
+            si.discount_amount = doc.discount
 
     si.set_taxes()
     si.insert(ignore_permissions=True)
@@ -112,7 +122,7 @@ def make_invoice(name):
     return si.name
 
 @frappe.whitelist()
-def adjust_reservation(reservation_name, new_checkout, new_check_in):
+def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discount=None):
     """
     Unified function for extending or reducing stay.
     Creates invoice (extension) or credit note (reduction) and logs adjustment in child table.
@@ -132,6 +142,7 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
     new_dt = get_datetime(new_checkout)
     current_dt = get_datetime(doc.to_date)
     checkin_dt = get_datetime(doc.from_date)
+    old_from_dt = get_datetime(doc.from_date)
     now_dt = now_datetime()
     
     # VALIDATION 1: New checkout must be different from current checkout and check-in must be different from current check-in
@@ -189,10 +200,12 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
     amount = flt(doc.rate) * diff_nights
     
     # VALIDATION 5: Ensure there's actually a difference in nights
-    if diff_nights == 0:
-        frappe.throw("The new checkout results in the same number of nights. No adjustment needed.")
+    if new_check_in == checkin_dt and old_from_dt == new_checkout:
+        frappe.throw("No adjustment needed.")
     
     adjustment_invoice_name = None
+    
+    new_net_total = doc.net_total
     
     try:
         if new_nights > current_nights:  # Extension
@@ -207,14 +220,26 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
                     "item_code": doc.room_number,
                     "qty": diff_nights,
                     "rate": doc.rate,
-                    "amount": amount
+                    "amount": amount,
+                    "description": f"Invoice for stay extension: {diff_nights} additional night(s)"
                 }],
                 "posting_date": frappe.utils.today(),
                 "remarks": f"Invoice for stay extension: {diff_nights} additional night(s)"
             })
+            
+            invoice.set_taxes()
+            
+            if new_discount and flt(new_discount) > 0:
+                # check discount type
+                if(doc.discount_type == "Percentage"):
+                    invoice.additional_discount_percentage = flt(new_discount)
+                else:
+                    invoice.discount_amount = flt(new_discount)
+            
             invoice.insert(ignore_permissions=True)
             invoice.submit()
             adjustment_invoice_name = invoice.name
+            new_net_total = doc.net_total + invoice.grand_total
             
         else:  # Reduction
             # Create credit note
@@ -236,6 +261,10 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
             credit_note.insert(ignore_permissions=True)
             credit_note.submit()
             adjustment_invoice_name = credit_note.name
+            new_net_total = doc.net_total + credit_note.grand_total
+            
+        if not adjustment_invoice_name:
+            frappe.throw("Failed to create adjustment invoice.")
         
         # Add adjustment to child table
         doc.append('adjustments', {
@@ -246,7 +275,7 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
             "previous_number_of_nights": current_nights,
             "new_number_of_nights": new_nights,
             "nights_difference": diff_nights if adjustment_type == 'Extension' else -diff_nights,
-            "adjustment_invoice": adjustment_invoice_name,
+            "adjustment_nvoice": adjustment_invoice_name,
             "amount": amount
         })
         
@@ -254,6 +283,7 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in):
         doc.to_date = new_dt
         doc.from_date = new_check_in
         doc.number_of_nights = new_nights
+        doc.net_total = new_net_total
         doc.save()
         
         frappe.db.commit()

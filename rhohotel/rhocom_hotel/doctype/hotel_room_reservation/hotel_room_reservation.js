@@ -185,6 +185,35 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									fieldname: 'new_total_amount',
 									fieldtype: 'Currency',
 									read_only: 1
+								},
+								{
+									fieldtype: 'Section Break',
+									label: __('Discount')
+								},
+								{
+									label: __('Current Discount'),
+									fieldname: 'current_discount',
+									fieldtype: 'Currency',
+									default: frm.doc.discount || 0,
+									read_only: 1
+								},
+								{
+									fieldtype: 'Column Break'
+								},
+								{
+									label: __('New Discount'),
+									fieldname: 'new_discount',
+									fieldtype: 'Currency',
+									default: frm.doc.discount || 0,
+									description: __('Adjust discount for the new stay duration.'),
+									onchange: function () {
+										let new_discount = d.get_value('new_discount') || 0;
+										let new_nights = d.get_value('new_nights') || 1;
+										let room_rate = frm.doc.rate_amount || 0;
+
+										let new_total = (new_nights * room_rate) - new_discount;
+										d.set_value('new_total_amount', new_total);
+									}
 								}
 							],
 							primary_action_label: __('Confirm Adjustment'),
@@ -292,7 +321,8 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									args: {
 										reservation_name: frm.doc.name,
 										new_checkout: values.new_checkout,
-										new_check_in: values.from_date
+										new_check_in: values.from_date,
+										new_discount: values.new_discount
 
 									},
 									freeze: true,

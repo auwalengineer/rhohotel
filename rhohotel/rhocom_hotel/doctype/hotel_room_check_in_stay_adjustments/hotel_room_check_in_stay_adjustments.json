@@ -58,7 +58,8 @@
   {
    "fieldname": "adjustment_nvoice",
    "fieldtype": "Link",
-   "label": "adjustment_invoice",
+   "in_list_view": 1,
+   "label": "Adjustment Invoice",
    "options": "Sales Invoice"
   },
   {
@@ -83,7 +84,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-02 10:40:04.159676",
+ "modified": "2025-12-14 19:49:54.651482",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Room Check In Stay Adjustments",

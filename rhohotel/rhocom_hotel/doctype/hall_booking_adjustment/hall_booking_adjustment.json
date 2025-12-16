@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-15 15:35:11.462886",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "previous_start",
+  "previous_end",
+  "previous_hours",
+  "new_start",
+  "new_end",
+  "new_hours",
+  "adjustment_invoice",
+  "adjustment_reason",
+  "adjusted_by",
+  "adjusted_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "previous_start",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Previous Start"
+  },
+  {
+   "fieldname": "previous_end",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Previous End"
+  },
+  {
+   "fieldname": "previous_hours",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Previous Hours"
+  },
+  {
+   "fieldname": "new_start",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "New Start"
+  },
+  {
+   "fieldname": "new_end",
+   "fieldtype": "Datetime",
+   "label": "New End"
+  },
+  {
+   "fieldname": "new_hours",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "New Hours"
+  },
+  {
+   "fieldname": "adjustment_reason",
+   "fieldtype": "Small Text",
+   "label": "Adjustment Reason"
+  },
+  {
+   "fieldname": "adjusted_by",
+   "fieldtype": "Link",
+   "label": "Adjusted By",
+   "options": "User"
+  },
+  {
+   "fieldname": "adjusted_on",
+   "fieldtype": "Datetime",
+   "label": "Adjusted On"
+  },
+  {
+   "fieldname": "adjustment_invoice",
+   "fieldtype": "Link",
+   "label": "Adjustment Invoice",
+   "options": "Sales Invoice"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-15 15:51:47.061279",
+ "modified_by": "Administrator",
+ "module": "Rhocom Hotel",
+ "name": "Hall Booking Adjustment",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

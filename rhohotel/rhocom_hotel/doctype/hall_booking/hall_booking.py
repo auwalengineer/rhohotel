@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import get_datetime
+from frappe.utils import get_datetime, nowdate, getdate, now_datetime
 
 
 class HallBooking(Document):
@@ -50,44 +50,68 @@ class HallBooking(Document):
 
 	def create_invoice(self):
 		hall = frappe.get_doc("Hall", self.hall)
+
 		total_amount = hall.rate_per_hour * self.total_hours
-		# get default company income account and cost center
+
+		# Get default company
 		company = frappe.db.get_single_value("Global Defaults", "default_company")
 		company_doc = frappe.get_doc("Company", company)
-		default_income = frappe.db.get_value("Company", company, "default_income_account")
+
+		default_income = frappe.db.get_value(
+			"Company", company, "default_income_account"
+		)
 
 		if not default_income:
-			frappe.throw(_("No default_income_account set for Company {0}.").format(company))
+			frappe.throw(
+				_("No default income account set for Company {0}.").format(company)
+			)
+
 		cost_center = company_doc.cost_center
 
 		invoice = frappe.get_doc({
 			"doctype": "Sales Invoice",
 			"customer": self.customer_name,
-			"posting_date": frappe.utils.nowdate(),
-			"due_date": self.end_datetime,
+			"posting_date": nowdate(),
+			"due_date": getdate(self.end_datetime),
 			"company": company,
-			
-			"cost_center": cost_center,
 			"items": [{
-				"item_name": hall.item_name,
+				"item_code": self.hall,
 				"rate": hall.rate_per_hour,
 				"qty": self.total_hours,
 				"amount": total_amount,
 				"income_account": default_income,
+				"cost_center": cost_center
 			}]
 		})
-		invoice.set_taxes()
-		if self.discount_amount > 0:
+
+		# Add additional billings (optional)
+		additional_billings = self.get("additional_billings")
+		if additional_billings:
+			for billing in additional_billings:
+				invoice.append("items", {
+					"item_code": billing.service,
+					"rate": billing.rate,
+					"qty": billing.qty,
+					"amount": billing.amount,
+					"income_account": default_income,
+					"cost_center": cost_center
+				})
+
+		# Apply discount correctly
+		if self.discount_amount and self.discount_amount > 0:
 			if self.discount_type == "Percentage":
-				discount_amount = (self.discount_amount / 100) * invoice.grand_total
-				invoice.additional_discount_percentage = discount_amount
+				invoice.additional_discount_percentage = self.discount_amount
 			else:
 				invoice.discount_amount = self.discount_amount
-    
+
+		invoice.set_taxes()
+		invoice.calculate_taxes_and_totals()
+
 		invoice.insert(ignore_permissions=True)
 		invoice.submit()
+
 		self.sales_invoice = invoice.name
-		self.save()
+		self.save(ignore_permissions=True)
 
 	def create_customer_if_not_exists(self):
 		if not frappe.db.exists("Customer", self.customer_name):
@@ -104,3 +128,104 @@ class HallBooking(Document):
 def get_hall_rate(hall_name):
 	hall = frappe.get_doc("Hall", hall_name)
 	return hall.rate_per_hour
+
+
+@frappe.whitelist()
+@frappe.whitelist()
+def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=None):
+	import math
+
+	booking = frappe.get_doc("Hall Booking", booking_name)
+
+	if booking.docstatus != 1:
+		frappe.throw("Only submitted bookings can be adjusted.")
+
+	start_dt = get_datetime(start_datetime)
+	end_dt = get_datetime(end_datetime)
+
+	if end_dt <= start_dt:
+		frappe.throw("End datetime must be after start datetime.")
+
+	# ----------------------------------
+	# Calculate hours (round up)
+	# ----------------------------------
+	new_total_hours = math.ceil(
+		(end_dt - start_dt).total_seconds() / 3600
+	)
+	previous_total_hours = booking.total_hours or 0
+
+	# ----------------------------------
+	# Temporarily assign & revalidate overlap
+	# ----------------------------------
+	booking.start_datetime = start_dt
+	booking.end_datetime = end_dt
+	booking.validate_booking_overlap()
+
+	# ----------------------------------
+	# Financial adjustment
+	# ----------------------------------
+	if new_total_hours != previous_total_hours:
+		hall = frappe.get_doc("Hall", booking.hall)
+		company = frappe.db.get_single_value("Global Defaults", "default_company")
+
+		income_account = frappe.db.get_value("Company", company, "default_income_account")
+		cost_center = frappe.db.get_value("Company", company, "cost_center")
+
+		diff_hours = abs(new_total_hours - previous_total_hours)
+
+		invoice_data = {
+			"doctype": "Sales Invoice",
+			"customer": booking.customer_name,
+			"posting_date": nowdate(),
+			"company": company,
+			"items": [{
+				"item_code": booking.hall,
+				"rate": hall.rate_per_hour,
+				"qty": diff_hours,
+				"income_account": income_account,
+				"cost_center": cost_center
+			}],
+			"custom_hall_booking": booking.name
+		}
+
+		if new_total_hours < previous_total_hours:
+			invoice_data["is_return"] = 1
+
+		invoice = frappe.get_doc(invoice_data)
+		invoice.insert(ignore_permissions=True)
+		invoice.submit()
+
+	# ----------------------------------
+	# Adjustment history
+	# ----------------------------------
+	booking.append("adjustment_history", {
+		"previous_start": booking.start_datetime,
+		"previous_end": booking.end_datetime,
+		"previous_hours": previous_total_hours,
+		"new_start": start_dt,
+		"new_end": end_dt,
+		"new_hours": new_total_hours,
+		"adjustment_reason": reason,
+		"adjusted_by": frappe.session.user,
+		"adjusted_on": nowdate(),
+		"adjustment_invoice": invoice.name if new_total_hours != previous_total_hours else None
+	})
+	
+
+	# ----------------------------------
+	# Final save
+	# ----------------------------------
+	booking.db_set("start_datetime", booking.start_datetime)
+	booking.db_set("end_datetime", booking.end_datetime)
+	booking.db_set("total_hours", new_total_hours)
+	booking.save()
+	frappe.db.commit()
+
+	return {
+		"previous_hours": previous_total_hours,
+		"new_hours": new_total_hours
+	}
+
+
+
+
