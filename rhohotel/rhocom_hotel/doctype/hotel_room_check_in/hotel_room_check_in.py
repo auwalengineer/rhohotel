@@ -885,16 +885,23 @@ def transfer_room(check_in_name, new_room_number, note=None):
 	new_room_doc.current_check_in = check_in_doc.name
 	new_room_doc.save(ignore_permissions=True)
 
+	# get new room type rate 
+	new_rate_data = get_room_rate(new_room_doc.room_type, "", str(getdate(check_in_doc.check_in_datetime)))
+	new_rate = flt(new_rate_data)
+	if new_rate <= 0:
+		frappe.throw(_("No valid rate found for Room Type {0}").format(new_room_doc.room_type))
+
 	# Update check-in document (fixed: also update room_type)
 	old_room_number = check_in_doc.room_number
-	old_room_type = check_in_doc.room_type  # Assume field exists; update if needed
+	old_room_type = check_in_doc.room_type
 	check_in_doc.room_number = new_room_number
 	check_in_doc.room_type = new_room_doc.room_type  # Fixed: Update room type
 	check_in_doc.db_set("room_number", new_room_number)
 	check_in_doc.db_set("room_type", new_room_doc.room_type)  # Direct DB update
+	check_in_doc.db_set("rate_amount", new_rate)
 	check_in_doc.add_comment(
 		"Comment",
-		text=_("Guest transferred from Room {0} to Room {1}. {2}").format(
+		text=_("Guest transferred from {0} to {1}. {2}").format(
 			old_room_number, new_room_number, note or ""
 		)
 	)
@@ -942,6 +949,12 @@ def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
 
 	if remaining_nights <= 0:
 		frappe.logger().info(f"No remaining nights to adjust for {check_in_doc.name}")
+		check_in_doc.add_comment(
+			"Comment",
+			text=_("No remaining nights to adjust for transfer {0}").format(
+				new_room_number, note or ""
+			)
+		)
 		return
 
 	# Calculate total difference for remaining nights
