@@ -259,6 +259,7 @@ class FrontDesk {
             { name: 'check_out_view', label: 'Check-outs', icon: 'sign-out' },
             { name: 'reservation_view', label: 'Reservations', icon: 'calendar-check-o' },
             { name: 'corporate_reservations_view', label: 'Corporate Reservations', icon: 'building' },
+            { name: 'hall_booking_view', label: 'Hall Bookings', icon: 'university' },
             { name: 'available_rooms_view', label: 'Available Rooms', icon: 'bed' },
             { name: 'guest_list_view', label: 'Guests', icon: 'users' },
             { name: 'housekeeping_view', label: 'Housekeeping', icon: 'tasks' },
@@ -534,6 +535,9 @@ class FrontDesk {
             $filter_area.hide();
             this.refresh_stats();
             this.render_corporate_reservations_view();
+        } else if (this.current_view === 'hall_booking_view') {
+            $filter_area.hide();
+            this.render_hall_booking_view();
         } else if (this.current_view === 'available_rooms_view') {
             $filter_area.hide();
             this.render_available_rooms_view();
@@ -2647,4 +2651,97 @@ class FrontDesk {
             }
         });
     }
+
+    render_hall_booking_view() {
+        let $view = this.page.main.find(`[data-view-name="hall_booking_view"]`);
+        if (!$view.length) {
+            $view = $(`<div class="view-container" data-view-name="hall_booking_view" style="padding: 1rem 0;"></div>`).appendTo(this.page.main);
+        }
+        $view.show();
+        $view.html(`<div class="frappe-card"><div class="frappe-card-body"><p class="text-muted">Loading Hall Bookings...</p></div></div>`);
+
+        frappe.call({
+            method: 'rhohotel.rhocom_hotel.page.front_desk.front_desk.get_hall_bookings',
+            callback: (r) => {
+                const bookings = r.message || [];
+                let table_content;
+
+                if (bookings.length === 0) {
+                    table_content = `<p class="text-muted">No hall bookings found.</p>`;
+                } else {
+                    const rows = bookings.map(b => `
+                        <tr>
+                            <td><a href="/app/hall-booking/${b.name}">${b.name}</a></td>
+                            <td>${b.hall}</td>
+                            <td>${b.customer_name}</td>
+                            <td>${frappe.datetime.str_to_user(b.start_datetime)}</td>
+                            <td>${frappe.datetime.str_to_user(b.end_datetime)}</td>
+                            <td class="text-right">${frappe.format(b.net_total, { fieldtype: 'Currency' })}</td>
+                            <td>${getInvoiceBadge(b.invoice_status)}</td>
+                        </tr>
+                    `).join('');
+
+                    table_content = `
+                        <table id="hall_booking_table" class="table table-bordered table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Hall</th>
+                                    <th>Customer</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th class="text-right">Total Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>`;
+                }
+
+                const card_header = `<div class="frappe-card-head d-flex justify-content-between align-items-center">
+                    <h4>Hall Bookings</h4>
+                    <a href="/app/hall-booking/new" class="btn btn-primary btn-sm">New Hall Booking</a>
+                </div>`;
+                const card_body = `<div class="frappe-card-body">${table_content}</div>`;
+                $view.html(`<div class="frappe-card">${card_header}${card_body}</div>`);
+
+                // Initialize DataTable
+                if (bookings.length > 0) {
+                    setTimeout(() => {
+                        if ($.fn.dataTable) {
+                            const table = $view.find('#hall_booking_table');
+                            if (table.length && !$.fn.DataTable.isDataTable(table)) {
+                                table.DataTable({
+                                    paging: true,
+                                    searching: true,
+                                    ordering: true,
+                                    info: true,
+                                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+                                    pageLength: 10,
+                                    dom: 'Bfrtip',
+                                    buttons: ['excel', 'pdf', 'print']
+                                });
+                            }
+                        }
+                    }, 100);
+                }
+            }
+        });
+    }
+
+}
+
+
+function getInvoiceBadge(status) {
+    const map = {
+        Paid: 'badge-success',
+        Unpaid: 'badge-warning',
+        Overdue: 'badge-danger',
+        Draft: 'badge-secondary',
+        Cancelled: 'badge-dark'
+    };
+
+    return `<span class="badge ${map[status] || 'badge-info'}">
+    ${status || 'No Invoice'}
+  </span>`;
 }

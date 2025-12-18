@@ -340,7 +340,7 @@ def get_linked_documents(check_in):
 	# -----------------------------
 	sales_invoices = frappe.get_all(
 		"Sales Invoice",
-		filters={"custom_hotel_room_check_in": check_in_doc.name},
+		filters={"custom_hotel_room_check_in": check_in_doc.name, "status": ["!=", "Cancelled"]},
 		fields=[
 			"name",
 			"customer",
@@ -1059,3 +1059,85 @@ def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
 		),
 		alert=True
 	)
+
+
+@frappe.whitelist()
+def apply_late_checkout_charge(
+    check_in,
+    item,
+    charge_type,
+    amount
+):
+    from frappe.utils import flt
+
+    """
+    Create Sales Invoice for late checkout charge
+    """
+
+    check_in_doc = frappe.get_doc("Hotel Room Check In", check_in)
+
+    # --------------------------------
+    # Safety: prevent duplicate charge
+    # --------------------------------
+    # existing = frappe.db.exists(
+    #     "Sales Invoice Item",
+    #     {
+    #         "item_code": item,
+    #         "custom_hotel_room_check_in": check_in
+    #     }
+    # )
+
+    # if existing:
+    #     frappe.throw("Late check-out charge has already been applied.")
+
+    # ----------------------------
+    # Customer validation using check-in guest
+    # ----------------------------
+    customer = frappe.get_value("Hotel Guest", check_in_doc.guest, "customer")
+    if not customer:
+        frappe.throw("No customer linked to this check-in.")
+
+    # ----------------------------
+    # Determine charge amount
+    # ----------------------------
+    rate = amount
+
+    if charge_type == "Percentage":
+        if not check_in_doc.rate_amount:
+            frappe.throw("Room rate not found for percentage charge.")
+        
+        room_rate = flt(check_in_doc.rate_amount)
+        percentage = flt(amount)
+
+        rate = (room_rate * percentage) / 100
+
+    # ----------------------------
+    # Create Sales Invoice
+    # ----------------------------
+    company = frappe.defaults.get_user_default("Company")
+
+    si = frappe.new_doc("Sales Invoice")
+    si.customer = customer
+    si.posting_date = nowdate()
+    si.company = company
+    si.due_date = nowdate()
+    si.custom_hotel_room_check_in = check_in
+
+    # ----------------------------
+    # Add item
+    # ----------------------------
+    si.append("items", {	
+        "item_code": item,
+        "qty": 1,
+        "rate": rate,
+        "description": "Late Check-out Charge"
+    })
+    si.set_taxes()
+    si.save(ignore_permissions=True)
+    si.submit()
+
+    return {
+        "status": "success",
+        "sales_invoice": si.name,
+        "amount": rate
+    }

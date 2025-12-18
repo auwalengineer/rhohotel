@@ -4,6 +4,7 @@
 frappe.ui.form.on("Hotel Room Check In", {
     refresh(frm) {
 
+        // set fields as read-only
         if (frm.doc.docstatus === 1) {
             // set fields as read-only
             frm.set_df_property("guest", "read_only", 1);
@@ -91,9 +92,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                 });
 
                 dialog.show();
-            }
-                // Implement discount dialog logic here
-                , __("Create"));
+            }, __("Create"));
 
         }
 
@@ -228,11 +227,15 @@ frappe.ui.form.on("Hotel Room Check In", {
                     // Show button if no outstanding OR user is manager
                     if (outstanding === 0 || is_manager) {
 
+
                         frm.add_custom_button(__("Check Out"), () => {
-                            frappe.model.open_mapped_doc({
-                                method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
-                                frm: frm
-                            });
+
+                            frm.trigger("handle_late_checkout");
+
+                            // frappe.model.open_mapped_doc({
+                            //     method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
+                            //     frm: frm
+                            // });
                         }).addClass("btn-primary");
                     }
                 }
@@ -635,6 +638,94 @@ frappe.ui.form.on("Hotel Room Check In", {
                     reservation_source: frm.doc.market_source || ""
                 }
             };
+        });
+    },
+    handle_late_checkout(frm) {
+        frappe.call({
+            method: "rhohotel.rhocom_hotel.doctype.hotel_settings.hotel_settings.check_late_checkout",
+            args: {
+                check_in_name: frm.doc.name
+            },
+            freeze: true,
+            freeze_message: __("Checking late checkout policy..."),
+            callback: function (r) {
+                if (!r.message || !r.message.late) {
+                    frappe.model.open_mapped_doc({
+                        method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
+                        frm: frm
+                    });
+                    return;
+                }
+
+                const hours_late = r.message.hours_late;
+                const policy = r.message.policy;
+
+                const message = `
+                    <b>Late Check-out Detected</b><br><br>
+                    Guest is checking out <b>${hours_late} hour(s) late</b>.<br>
+                    Do you want to apply a late check-out charge?
+                `;
+
+                frappe.confirm(
+                    message,
+                    () => {
+                        frappe.call({
+                            method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.apply_late_checkout_charge",
+                            args: {
+                                check_in: frm.doc.name,
+                                item: policy.item,
+                                charge_type: policy.charge_type,
+                                amount: policy.amount
+                            },
+                            freeze: true,
+                            freeze_message: __("Applying late checkout charge..."),
+                            callback: function () {
+                                frappe.show_alert({
+                                    message: __("Late check-out charge applied, proceeding to check-out."),
+                                    indicator: "green"
+                                });
+
+                            }
+                        });
+
+                        // reload the page to reflect new charge
+                        frm.doc.reload_doc();
+                    },
+                    () => {
+                        frappe.model.open_mapped_doc({
+                            method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.make_check_out",
+                            frm: frm
+                        });
+                    }
+                );
+            }
+        });
+    },
+    apply_late_checkout_charge(frm, policy) {
+
+        frappe.show_alert({
+            message: __(`Applying late check-out charge... ${policy.item} - ${policy.charge_type} - ${policy.amount}`),
+            indicator: "blue"
+        });
+
+        frappe.call({
+            method: "rhohotel.rhocom_hotel.doctype.hotel_room_check_in.hotel_room_check_in.apply_late_checkout_charge",
+            args: {
+                check_in: frm.doc.name,
+                item: policy.item,
+                charge_type: policy.charge_type,
+                amount: policy.amount
+            },
+            freeze: true,
+            freeze_message: __("Applying late checkout charge..."),
+            callback: function () {
+                frappe.show_alert({
+                    message: __("Late check-out charge applied, proceeding to check-out."),
+                    indicator: "green"
+                });
+
+                frm.doc.reload_doc();
+            }
         });
     },
 

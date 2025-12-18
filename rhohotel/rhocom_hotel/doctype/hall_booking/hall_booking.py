@@ -96,6 +96,7 @@ class HallBooking(Document):
 					"income_account": default_income,
 					"cost_center": cost_center
 				})
+		invoice.set_taxes()
 
 		# Apply discount correctly
 		if self.discount_amount and self.discount_amount > 0:
@@ -104,9 +105,7 @@ class HallBooking(Document):
 			else:
 				invoice.discount_amount = self.discount_amount
 
-		invoice.set_taxes()
-		invoice.calculate_taxes_and_totals()
-
+		
 		invoice.insert(ignore_permissions=True)
 		invoice.submit()
 

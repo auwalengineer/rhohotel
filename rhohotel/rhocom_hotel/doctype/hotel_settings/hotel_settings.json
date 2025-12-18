@@ -12,8 +12,9 @@
   "default_invoice_naming_series",
   "default_check_out_time",
   "sb_late_checkout",
-  "enable_late_check_out",
-  "late_check_out_charges",
+  "enable_late_checkout_charges",
+  "late_checkout_grace_hours",
+  "late_checkout_policies",
   "sb_monnify_settings",
   "monnify_api_key",
   "monnify_secret_key",
@@ -54,18 +55,6 @@
    "fieldname": "sb_late_checkout",
    "fieldtype": "Section Break",
    "label": "Late Checkout"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_late_check_out",
-   "fieldtype": "Check",
-   "label": "Enable Late Check-out"
-  },
-  {
-   "depends_on": "eval:doc.enable_late_check_out",
-   "fieldname": "late_check_out_charges",
-   "fieldtype": "Currency",
-   "label": "Late Check-out Charges"
   },
   {
    "fieldname": "sb_monnify_settings",
@@ -112,11 +101,32 @@
    "fieldname": "paystack_secret_key",
    "fieldtype": "Password",
    "label": "Paystack Secret Key"
+  },
+  {
+   "depends_on": "enable_late_checkout_charges",
+   "fieldname": "late_checkout_policies",
+   "fieldtype": "Table",
+   "label": "Late Check-out Policies",
+   "mandatory_depends_on": "enable_late_checkout_charges",
+   "options": "Late Checkout Policy"
+  },
+  {
+   "default": "0.25",
+   "depends_on": "enable_late_checkout_charges",
+   "fieldname": "late_checkout_grace_hours",
+   "fieldtype": "Float",
+   "label": "Late Check-out Grace Period (Hours)"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_late_checkout_charges",
+   "fieldtype": "Check",
+   "label": "Enable Late Check-out Charges"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-11-14 15:22:37.025793",
+ "modified": "2025-12-17 15:15:58.227245",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Settings",
@@ -142,16 +152,10 @@
    "share": 1,
    "write": 1
   },
-{
-  "role": "All",
-  "read": 1,
-  "print": 0,
-  "email": 0,
-  "share": 0,
-  "create": 0,
-  "delete": 0,
-  "write": 0
-}
+  {
+   "read": 1,
+   "role": "All"
+  }
  ],
  "row_format": "Dynamic",
  "sort_field": "modified",

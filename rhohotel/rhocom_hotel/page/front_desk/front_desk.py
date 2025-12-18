@@ -814,3 +814,29 @@ def get_corporate_reservation_details(reservation_name):
             "invoices": [],
             "payments": []
         }
+
+@frappe.whitelist()
+def get_hall_bookings():
+    try:
+        return frappe.db.sql("""
+            SELECT
+                hb.name,
+                hb.hall,
+                hb.customer_name,
+                hb.start_datetime,
+                hb.end_datetime,
+                hb.total_hours,
+                hb.net_total,
+                hb.sales_invoice,
+                si.status AS invoice_status
+            FROM `tabHall Booking` hb
+            LEFT JOIN `tabSales Invoice` si
+                ON si.name = hb.sales_invoice
+            WHERE hb.docstatus != 2
+            ORDER BY hb.start_datetime DESC
+        """, as_dict=True)
+
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Get Hall Bookings Error")
+        return []
+
