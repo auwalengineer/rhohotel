@@ -14,6 +14,13 @@ class HallBooking(Document):
 		if self.total_hours <= 0:
 			frappe.throw("End DateTime must be after Start DateTime.")
 
+		# prevent invalid discount
+		for row in self.additional_billings:
+			if row.discount_amount and row.discount_amount > (row.qty * row.rate):
+				frappe.throw(
+					f"Discount cannot be greater than amount for service {row.service}"
+				)
+
 	def on_submit(self):
 		# Create Customer if not exists
 		self.create_customer_if_not_exists()
@@ -80,7 +87,8 @@ class HallBooking(Document):
 				"qty": self.total_hours,
 				"amount": total_amount,
 				"income_account": default_income,
-				"cost_center": cost_center
+				"cost_center": cost_center,
+				"discount_amount": 0.0
 			}]
 		})
 
@@ -94,7 +102,8 @@ class HallBooking(Document):
 					"qty": billing.qty,
 					"amount": billing.amount,
 					"income_account": default_income,
-					"cost_center": cost_center
+					"cost_center": cost_center,
+					"discount_amount": billing.discount_amount or 0.0
 				})
 		invoice.set_taxes()
 
@@ -260,6 +269,96 @@ def adjust_booking_datetime(booking_name, start_datetime, end_datetime, reason=N
 		"new_hours": new_total_hours
 	}
 
+@frappe.whitelist()
+def get_payment_status(booking_name):
+	booking = frappe.get_doc("Hall Booking", booking_name)
+	if not booking.sales_invoice:
+		return "No Invoice"
+	invoice = frappe.get_doc("Sales Invoice", booking.sales_invoice)
+	if invoice.outstanding_amount <= 0:
+		return "Paid"
+	elif invoice.outstanding_amount < invoice.grand_total:
+		return "Partially Paid"
+	else:
+		return "Unpaid"
+
+@frappe.whitelist()
+def create_payment_entry(booking, data):
+    import json
+    data = frappe._dict(json.loads(data))
+
+    booking = frappe.get_doc("Hall Booking", booking)
+
+    if booking.docstatus != 1:
+        frappe.throw("Only submitted bookings can receive payment.")
+
+    if not booking.sales_invoice:
+        frappe.throw("No invoice linked to this booking.")
+
+    invoice = frappe.get_doc("Sales Invoice", booking.sales_invoice)
+
+    if invoice.outstanding_amount <= 0:
+        frappe.throw("Invoice is already fully paid.")
+
+    company = frappe.db.get_single_value("Global Defaults", "default_company")
+
+    # --------------------------------------------------
+    # Get accounts from Mode of Payment
+    # --------------------------------------------------
+    mop = frappe.get_doc("Mode of Payment", data.payment_mode)
+
+    if not mop.accounts:
+        frappe.throw("Mode of Payment has no accounts configured.")
+
+    mop_account = next(
+        (a.default_account for a in mop.accounts if a.company == company),
+        None
+    )
+
+    if not mop_account:
+        frappe.throw(f"No account found for Mode of Payment in {company}")
+        
+    # avoid duplicate reference numbers
+    existing_pe = frappe.db.get_value(
+		"Payment Entry",
+		{
+			"reference_no": data.reference_no
+		}
+	)
+    if existing_pe:
+        frappe.throw("A Payment Entry with this reference number already exists.")
+
+    # --------------------------------------------------
+    # Create Payment Entry
+    # --------------------------------------------------
+    pe = frappe.get_doc({
+        "doctype": "Payment Entry",
+        "payment_type": "Receive",
+        "company": company,
+        "posting_date": data.payment_date,
+        "party_type": "Customer",
+        "party": invoice.customer,
+        "mode_of_payment": data.payment_mode,
+        "paid_to": mop_account,
+        "paid_amount": data.paid_amount,
+        "received_amount": data.paid_amount,
+        "reference_no": data.reference_no,
+        "reference_date": data.reference_date,
+        "remarks": data.remarks,
+        "references": [{
+            "reference_doctype": "Sales Invoice",
+            "reference_name": invoice.name,
+            "allocated_amount": min(
+                data.paid_amount,
+                invoice.outstanding_amount
+            )
+        }],
+    })
+
+    pe.insert(ignore_permissions=True)
+    pe.submit()
+
+    return pe.name
 
 
 

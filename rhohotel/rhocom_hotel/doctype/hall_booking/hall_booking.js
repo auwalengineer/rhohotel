@@ -19,6 +19,108 @@ frappe.ui.form.on("Hall Booking", {
                 __("Booking Adjustment"),
                 () => open_datetime_adjustment_dialog(frm)
             );
+
+            // add create payment button
+            if (frm.doc.sales_invoice) {
+                frm.add_custom_button(__("Receive Payment"), () => {
+
+                    if (!frm.doc.sales_invoice) {
+                        frappe.msgprint(__("Please create invoice before receiving payment."));
+                        return;
+                    }
+
+                    const d = new frappe.ui.Dialog({
+                        title: __("Receive Payment"),
+                        fields: [
+                            {
+                                fieldname: "payment_date",
+                                label: "Payment Date",
+                                fieldtype: "Date",
+                                default: frappe.datetime.nowdate(),
+                                reqd: 1
+                            },
+                            {
+                                fieldname: "payment_mode",
+                                label: "Mode of Payment",
+                                fieldtype: "Link",
+                                options: "Mode of Payment",
+                                reqd: 1
+                            },
+                            {
+                                fieldname: "paid_amount",
+                                label: "Amount Paid",
+                                fieldtype: "Currency",
+                                default: frm.doc.net_total,
+                                reqd: 1
+                            },
+                            {
+                                fieldname: "reference_no",
+                                label: "Reference No",
+                                fieldtype: "Data"
+                            },
+                            {
+                                fieldname: "reference_date",
+                                label: "Reference Date",
+                                fieldtype: "Date"
+                            },
+                            {
+                                fieldname: "remarks",
+                                label: "Remarks",
+                                fieldtype: "Small Text"
+                            }
+                        ],
+                        primary_action_label: __("Submit Payment"),
+                        primary_action(values) {
+
+                            if (values.paid_amount <= 0) {
+                                frappe.msgprint(__("Paid amount must be greater than zero."));
+                                return;
+                            }
+
+                            frappe.call({
+                                method: "rhohotel.rhocom_hotel.doctype.hall_booking.hall_booking.create_payment_entry",
+                                args: {
+                                    booking: frm.doc.name,
+                                    data: values
+                                },
+                                freeze: true,
+                                callback(r) {
+                                    if (!r.exc) {
+                                        frappe.msgprint({
+                                            title: __("Payment Successful"),
+                                            message: __("Payment Entry {0} created.", [r.message]),
+                                            indicator: "green"
+                                        });
+                                        d.hide();
+                                        frm.reload_doc();
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                    d.show();
+                });
+
+
+            };
+
+
+            // get payment status and set html field
+            frappe.call({
+                method: "rhohotel.rhocom_hotel.doctype.hall_booking.hall_booking.get_payment_status",
+                args: {
+                    booking_name: frm.doc.name
+                },
+                callback: function (r) {
+                    if (r.message) {
+                        let html_status = r.message.includes("Paid") ? "<span style='color:green; font-weight: bold;'>" + r.message + "</span>" : "<span style='color:red; font-weight: bold;'>" + r.message + "</span>";
+                        frm.fields_dict.payment_status.html(html_status);
+                    } else {
+                        frm.fields_dict.payment_status.html("<span style='color:red; font-weight: bold;'>Unpaid</span>");
+                    }
+                }
+            });
         }
 
 
@@ -93,14 +195,20 @@ frappe.ui.form.on("Hall Booking Additional Billing", {
 
     rate: function (frm, cdt, cdn) {
         let row = frappe.get_doc(cdt, cdn);
-        frappe.model.set_value(cdt, cdn, "amount", row.rate * row.qty);
+        frappe.model.set_value(cdt, cdn, "amount", (row.rate * row.qty) - (row.discount_amount || 0));
         frm.refresh_field("additional_billings");
         calculate_net_total_amount(frm);
     },
 
     qty: function (frm, cdt, cdn) {
         let row = frappe.get_doc(cdt, cdn);
-        frappe.model.set_value(cdt, cdn, "amount", row.rate * row.qty);
+        frappe.model.set_value(cdt, cdn, "amount", (row.rate * row.qty) - (row.discount_amount || 0));
+        frm.refresh_field("additional_billings");
+        calculate_net_total_amount(frm);
+    },
+    discount_amount: function (frm, cdt, cdn) {
+        let row = frappe.get_doc(cdt, cdn);
+        frappe.model.set_value(cdt, cdn, "amount", (row.rate * row.qty) - (row.discount_amount || 0));
         frm.refresh_field("additional_billings");
         calculate_net_total_amount(frm);
     }

@@ -34,7 +34,9 @@
   "net_total",
   "section_break_invoice",
   "sales_invoice",
+  "payment_status",
   "amended_from",
+  "column_break_lryn",
   "adjusment_history_tab",
   "adjustment_history"
  ],
@@ -228,6 +230,16 @@
    "fieldtype": "Table",
    "options": "Hall Booking Adjustment",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lryn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "payment_status",
+   "fieldtype": "HTML",
+   "label": "Payment Status"
   }
  ],
  "grid_page_length": 50,
@@ -235,7 +247,7 @@
  "is_calendar_and_gantt": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-16 22:06:04.302982",
+ "modified": "2025-12-18 07:38:56.627704",
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hall Booking",
