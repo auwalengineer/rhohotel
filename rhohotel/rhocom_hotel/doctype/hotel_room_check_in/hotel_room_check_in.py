@@ -879,8 +879,8 @@ def transfer_room(check_in_name, new_room_number, note=None):
 	old_room_doc.db_set("status", "Vacant")
 	old_room_doc.add_comment(
 		"Comment",
-		text=_("Guest transferred out to {1}").format(
-			check_in_doc.room_number, new_room_number
+		text=_("Guest transferred out to {1}. {2}").format(
+			check_in_doc.room_number, new_room_number, note or ""
 		)
 	)
 	old_room_doc.save(ignore_permissions=True)
@@ -923,7 +923,7 @@ def transfer_room(check_in_name, new_room_number, note=None):
 	check_in_doc.save(ignore_permissions=True)
 
 	# Adjust rate if new room type has different tariff
-	adjust_room_rate(check_in_doc, old_room_number, new_room_number)
+	adjust_room_rate(check_in_doc, old_room_number, new_room_number, note)
 
 	frappe.db.commit()
 	frappe.publish_realtime('rhohotel_front_desk_update')
@@ -933,7 +933,7 @@ def transfer_room(check_in_name, new_room_number, note=None):
 		"message": _("Guest transferred successfully to Room {0}").format(new_room_number)
 	}
 
-def adjust_room_rate(check_in_doc, old_room_number, new_room_number):
+def adjust_room_rate(check_in_doc, old_room_number, new_room_number, note=None):
 	"""Adjust room rate after transfer based on remaining nights, and auto-create rate difference invoice."""
 
 	old_room = frappe.get_doc("Hotel Room", old_room_number)
