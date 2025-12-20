@@ -874,9 +874,15 @@ def transfer_room(check_in_name, new_room_number, note=None):
 
 	# Free the old room
 	old_room_doc = frappe.get_doc("Hotel Room", check_in_doc.room_number)
-	old_room_doc.status = "Vacant"
-	old_room_doc.current_guest = None
-	old_room_doc.current_check_in = None
+	old_room_doc.db_set("current_check_in", None)
+	old_room_doc.db_set("current_guest", None)
+	old_room_doc.db_set("status", "Vacant")
+	old_room_doc.add_comment(
+		"Comment",
+		text=_("Guest transferred out to {1}. {2}").format(
+			check_in_doc.room_number, new_room_number, note or ""
+		)
+	)
 	old_room_doc.save(ignore_permissions=True)
 
 	# Update the new room details

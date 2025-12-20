@@ -24,6 +24,7 @@ class HotelRoom(Document):
 			current_check_in = frappe.db.get_value('Hotel Room', self.name, 'current_check_in')
 			if current_check_in:
 				frappe.throw("Cannot set room status to vacant while a check-in is active.")
+    
 		frappe.publish_realtime('rhohotel_front_desk_update')
 
 	def after_insert(self):
