@@ -878,7 +878,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                     frm.set_value('room_number', r.message.room_number);
                                     frm.set_value('rate_amount', r.message.rate);
                                     frm.set_value('guest', r.message.guest_name);
-                                    frm.set_value('number_of_nights', nights);
+                                    frm.set_value('number_of_nights', r.message.number_of_nights || nights);
                                     frm.set_value('discount', r.message.discount);
 
                                     frm.set_df_property('room_number', 'read_only', 1);
