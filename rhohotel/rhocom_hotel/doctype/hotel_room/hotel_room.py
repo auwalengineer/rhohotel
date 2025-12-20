@@ -14,11 +14,20 @@ class HotelRoom(Document):
 		self.create_item()
 
 	def on_update(self):
-		frappe.publish_realtime('rhohotel_front_desk_update')
-	
-	def after_insert(self):
+		# prevent changing current check in to none if the check in is already set and the status the Checked-In on Hotel room check in
+		# if not self.current_check_in:
+		# 	current_check_in = frappe.db.get_value('Hotel Room', self.name, 'current_check_in')
+		# 	if current_check_in and not self.current_check_in:
+		# 		frappe.throw("Cannot change current check-in to none while a check-in is active.")
+		# prevent room from setting status to vacant if current check in is set
+		if self.status == 'Vacant':
+			current_check_in = frappe.db.get_value('Hotel Room', self.name, 'current_check_in')
+			if current_check_in:
+				frappe.throw("Cannot set room status to vacant while a check-in is active.")
 		frappe.publish_realtime('rhohotel_front_desk_update')
 
+	def after_insert(self):
+		frappe.publish_realtime('rhohotel_front_desk_update')
 	def create_item(self):
 
 		#create ERPNEXT item if room.erpnext_item is not selected

@@ -162,13 +162,15 @@
             "fieldname": "current_check_in",
             "fieldtype": "Link",
             "label": "Current Check-In",
-            "options": "Hotel Room Check In"
+            "options": "Hotel Room Check In",
+            "read_only": 1
         },
         {
             "fieldname": "current_guest",
             "fieldtype": "Link",
             "label": "Current Guest",
-            "options": "Hotel Guest"
+            "options": "Hotel Guest",
+            "read_only": 1
         },
         {
             "fieldname": "room_inventory",
