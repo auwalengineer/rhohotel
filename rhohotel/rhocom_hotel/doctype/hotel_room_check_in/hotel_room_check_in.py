@@ -879,8 +879,8 @@ def transfer_room(check_in_name, new_room_number, note=None):
 	old_room_doc.db_set("status", "Vacant")
 	old_room_doc.add_comment(
 		"Comment",
-		text=_("Guest transferred out to {1}. {2}").format(
-			check_in_doc.room_number, new_room_number, note or ""
+		text=_("Guest transferred out to {1}").format(
+			check_in_doc.room_number, new_room_number
 		)
 	)
 	old_room_doc.save(ignore_permissions=True)
