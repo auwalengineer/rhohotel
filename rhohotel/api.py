@@ -1196,18 +1196,17 @@ def get_available_rooms(from_date, to_date, room_type=None):
         if to_date_obj <= from_date_obj:
             frappe.throw(_("Check-out date must be after check-in date"))
         
-        # filters = {
-        #     # "status": "Vacant",
-        #     "operational_status": "In Service",
-        #     "maintenance_flag": 0
-        # }
-        
+        filters = {
+            "operational_status": "In Service",
+            "maintenance_flag": 0
+        }
+
         if room_type:
             filters["room_type"] = room_type
-        
+
         all_rooms = frappe.get_all(
             "Hotel Room",
-            # filters=filters,
+            filters=filters,
             fields=["name", "room_type", "floor", "capacity"]
         )
         

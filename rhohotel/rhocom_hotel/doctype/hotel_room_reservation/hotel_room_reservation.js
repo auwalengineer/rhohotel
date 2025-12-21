@@ -122,10 +122,13 @@ frappe.ui.form.on('Hotel Room Reservation', {
 										d.set_value('adjustment_type', type);
 										d.fields_dict.adjustment_type.$wrapper.find('.control-value').css('color', type_color);
 
+										let from = frappe.datetime.str_to_obj(frm.doc.from_date);
+
+										from.setHours(0, 0, 0, 0);
 										// Calculate difference in nights
 										let diff_days = frappe.datetime.get_day_diff(
 											new_datetime_with_default_time,
-											frm.doc.from_date
+											from
 										);
 										if (diff_days < 1) diff_days = 1;
 										d.set_value('new_nights', diff_days);
