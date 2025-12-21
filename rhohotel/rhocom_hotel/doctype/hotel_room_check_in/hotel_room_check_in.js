@@ -332,11 +332,13 @@ frappe.ui.form.on("Hotel Room Check In", {
 
                                             d.set_value('adjustment_type', type);
                                             d.fields_dict.adjustment_type.$wrapper.find('.control-value').css('color', type_color);
+                                            let from = frappe.datetime.str_to_obj(frm.doc.check_in_datetime);
 
+                                            from.setHours(0, 0, 0, 0);
                                             // Calculate difference in nights
                                             let diff_days = frappe.datetime.get_day_diff(
                                                 new_datetime_with_default_time,
-                                                frm.doc.check_in_datetime
+                                                from
                                             );
                                             if (diff_days < 1) diff_days = 1;
                                             d.set_value('new_nights', diff_days);
@@ -869,7 +871,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                     //frm.set_value('check_in_datetime', check_in_datetime);
 
 
-                                   let from = frappe.datetime.str_to_obj(check_in_datetime);
+                                    let from = frappe.datetime.str_to_obj(check_in_datetime);
                                     let to = frappe.datetime.str_to_obj(formatted_checkout);
 
                                     from.setHours(0, 0, 0, 0);
