@@ -107,7 +107,6 @@ class HallBooking(Document):
 				})
 		invoice.set_taxes()
 
-		frappe.login.log(invoice.items)
 		# Apply discount correctly
 		if self.discount_amount and self.discount_amount > 0:
 			if self.discount_type == "Percentage":
