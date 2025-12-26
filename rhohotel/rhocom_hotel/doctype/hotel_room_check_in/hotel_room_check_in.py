@@ -101,6 +101,11 @@ class HotelRoomCheckIn(Document):
             frappe.throw(_("Reservation {0} does not exist").format(self.reservation))
 
         reservation = frappe.get_doc("Hotel Room Reservation", self.reservation)
+        
+        # ensure the room is vacant
+        room = frappe.get_doc("Hotel Room", self.room_number)
+        if room.status != "Vacant":
+            frappe.throw(_("Room {0} is not vacant").format(self.room_number))
 
         check_in_date = get_datetime(self.check_in_datetime).date()
         if check_in_date < reservation.from_date:
@@ -125,6 +130,10 @@ class HotelRoomCheckIn(Document):
             frappe.throw(_("Room {0} does not exist").format(self.room_number))
 
         room = frappe.get_doc("Hotel Room", self.room_number)
+        
+        if room.status != "Vacant":
+            frappe.throw(_("Room {0} is not vacant").format(self.room_number))
+
 
         if isinstance(self.check_in_datetime, str):
             self.check_in_datetime = datetime.strptime(self.check_in_datetime, "%Y-%m-%d %H:%M:%S")
@@ -139,7 +148,7 @@ class HotelRoomCheckIn(Document):
                 "room_number": self.room_number,
                 "from_date": ["between", [day_start, day_end]],
                 "guest_name": ["not in", [self.guest]],
-                "status": ["in", ["booked", "Confirmed"]]
+                "status": ["in", ["booked", "Confirmed", "Pending Payment", "Checked-In", "Draft"]]
             }
         )
 
@@ -153,7 +162,7 @@ class HotelRoomCheckIn(Document):
                     f"Reservations Found:\n{frappe.as_json(reservation)}"
                 )
             )
-            frappe.throw(_("Room {0} is reserved for today").format(self.room_number))
+            frappe.throw(_("Room {0} is reserved from {1} to {2}").format(self.room_number, reservation[0].from_date, reservation[0].to_date))
 
     def validate_dates(self):
         if get_datetime(self.check_in_datetime) > get_datetime(self.expected_check_out_datetime):
@@ -859,6 +868,14 @@ def adjust_stay(check_in_name, new_checkout, new_discount=0):
 @frappe.whitelist()
 def transfer_room(check_in_name, new_room_number, note=None):
 	check_in_doc = frappe.get_doc("Hotel Room Check In", check_in_name)
+
+	# ensure new room is vacant
+	if not frappe.db.exists("Hotel Room", new_room_number):
+		frappe.throw(_("New room {0} does not exist.").format(new_room_number))
+
+	new_room_doc = frappe.get_doc("Hotel Room", new_room_number)
+	if new_room_doc.status != "Vacant":
+		frappe.throw(_("New room {0} is not vacant.").format(new_room_number))
 
 	# Ensure check-in is active
 	if check_in_doc.status != "Checked In":
