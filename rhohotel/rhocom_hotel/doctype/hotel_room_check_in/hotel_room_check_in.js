@@ -814,7 +814,7 @@ frappe.ui.form.on("Hotel Room Check In", {
     },
 
     setup(frm) {
-        frm.set_query("room", function () {
+        frm.set_query("room_number", function () {
             return {
                 filters: {
                     "status": "Vacant"
