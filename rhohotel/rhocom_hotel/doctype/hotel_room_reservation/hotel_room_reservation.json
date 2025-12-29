@@ -94,19 +94,19 @@
             "allow_on_submit": 1,
             "fieldname": "customer",
             "fieldtype": "Link",
+            "hidden": 1,
             "in_list_view": 1,
             "label": "Customer",
             "options": "Customer"
-            
         },
         {
+            "allow_on_submit": 1,
             "fieldname": "room_number",
             "fieldtype": "Link",
             "in_list_view": 1,
             "label": "Room Number",
             "options": "Hotel Room",
-            "reqd": 1,
-            "allow_on_submit": 1
+            "reqd": 1
         },
         {
             "fieldname": "rate",
@@ -131,17 +131,17 @@
             "allow_on_submit": 1,
             "fieldname": "from_date",
             "fieldtype": "Date",
+            "in_list_view": 1,
             "label": "From Date",
-            "reqd": 1,
-            "in_list_view": 1   
+            "reqd": 1
         },
         {
             "allow_on_submit": 1,
             "fieldname": "to_date",
             "fieldtype": "Date",
+            "in_list_view": 1,
             "label": "To Date",
-            "reqd": 1,
-            "in_list_view": 1
+            "reqd": 1
         },
         {
             "default": "0",
@@ -282,7 +282,7 @@
     ],
     "is_submittable": 1,
     "links": [],
-    "modified": "2025-12-29 09:13:13.876932",
+    "modified": "2025-12-29 21:11:59.304655",
     "modified_by": "Administrator",
     "module": "Rhocom Hotel",
     "name": "Hotel Room Reservation",
