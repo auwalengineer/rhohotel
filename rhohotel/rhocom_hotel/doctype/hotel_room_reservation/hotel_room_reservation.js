@@ -4,8 +4,13 @@
 frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
 
+
 		// add Check In button if status is Booked
 		if (!frm.is_new() && frm.doc.docstatus === 1) {
+
+			frm.set_df_property("room_number", "read_only", 0);
+
+			frm.set_df_property("change_room", "read_only", 0);
 
 			frm.add_custom_button(__('Check In Guest'), () => {
 
@@ -497,7 +502,41 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 	onload: function (frm) {
 		set_default_nigeria_country(frm);
+	},
+
+	change_room: function (frm) {
+
+		// frm.set_df_property("room_number", "read_only", 0);
+
+
+		if (!frm.doc.room_number || !frm.doc.from_date || !frm.doc.to_date) {
+			return;
+		}
+
+		// Fetch selected room to get room type
+		frappe.db.get_doc("Hotel Room", frm.doc.room_number).then(room => {
+			let room_type = room.room_type;
+
+			// Clear selected room number
+			frm.set_value("room_number", null);
+
+			// Rebind query for room_number
+			frm.set_query("room_number", function () {
+				return {
+					query: "rhohotel.api.get_available_rooms",
+					filters: {
+						room_type: room_type,
+						from_date: frm.doc.from_date,
+						to_date: frm.doc.to_date
+					}
+				};
+			});
+
+			// Refresh field
+			frm.refresh_field("room_number");
+		});
 	}
+
 });
 
 function calculate_nights(frm) {

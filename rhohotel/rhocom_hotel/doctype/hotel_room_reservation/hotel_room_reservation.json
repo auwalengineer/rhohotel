@@ -1,347 +1,356 @@
 {
-  "actions": [],
-  "allow_import": 1,
-  "autoname": "HTL-RES-.YYYY.-.#####",
-  "beta": 1,
-  "creation": "2025-10-08 12:33:56.320420",
-  "doctype": "DocType",
-  "document_type": "Document",
-  "editable_grid": 1,
-  "engine": "InnoDB",
-  "field_order": [
-    "temporary_booking_reference",
-    "front_desk_reservation",
-    "booking_number",
-    "guest_name",
-    "guest_phone",
-    "guest_email",
-    "customer",
-    "room_number",
-    "from_date",
-    "to_date",
-    "number_of_nights",
-    "rate",
-    "discount_type",
-    "discount",
-    "late_checkin",
-    "column_break_6",
-    "status",
-    "payment_status",
-    "hold_expires_at",
-    "check_in_time",
-    "check_out_time",
-    "section_break_payment",
-    "sales_invoice",
-    "transaction_id",
-    "section_break_8",
-    "items",
-    "net_total",
-    "is_extension",
-    "amended_from"
-  ],
-  "fields": [
-    {
-      "fieldname": "temporary_booking_reference",
-      "fieldtype": "Link",
-      "label": "Temporary Booking",
-      "options": "Temporary Booking",
-      "description": "Link to the Temporary Booking document",
-      "in_standard_filter": 1
-    },
-    {
-      "fieldname": "front_desk_reservation",
-      "fieldtype": "Link",
-      "label": "Front Desk Reservation",
-      "options": "Hotel Front Desk Reservation",
-      "description": "Linked front desk multi-room reservation",
-      "read_only": 1,
-      "allow_on_submit": 1
-    },
-    {
-      "fieldname": "booking_number",
-      "fieldtype": "Data",
-      "label": "Booking Number",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "read_only": 1,
-      "description": "Unique booking reference from Temporary Booking"
-    },
-    {
-      "fieldname": "guest_name",
-      "fieldtype": "Data",
-      "in_list_view": 1,
-      "label": "Guest Name",
-      "reqd": 1,
-      "allow_on_submit": 1
-    },
-    {
-      "fieldname": "guest_phone",
-      "fieldtype": "Phone",
-      "label": "Guest Phone",
-      "in_list_view": 1,
-      "allow_on_submit": 1
-    },
-    {
-      "fieldname": "guest_email",
-      "fieldtype": "Data",
-      "label": "Guest Email"
-    },
-    {
-      "allow_on_submit": 1,
-      "fieldname": "customer",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "label": "Customer",
-      "options": "Customer"
-    },
-    {
-      "fieldname": "room_number",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "label": "Room Number",
-      "options": "Hotel Room",
-      "reqd": 1
-    },
-    {
-      "fieldname": "rate",
-      "fieldtype": "Currency",
-      "label": "Rate",
-      "read_only": 1
-    },
-    {
-      "fieldname": "discount_type",
-      "fieldtype": "Select",
-      "label": "Discount Type",
-      "options": "Percentage\nFlat Amount",
-      "default": "Flat Amount"
-    },
-    {
-      "fieldname": "discount",
-      "fieldtype": "Currency",
-      "label": "Discount",
-      "default": 0
-    },
-    {
-      "allow_on_submit": 1,
-      "fieldname": "from_date",
-      "fieldtype": "Date",
-      "label": "From Date",
-      "reqd": 1
-    },
-    {
-      "allow_on_submit": 1,
-      "fieldname": "to_date",
-      "fieldtype": "Date",
-      "label": "To Date",
-      "reqd": 1
-    },
-    {
-      "default": "0",
-      "fieldname": "late_checkin",
-      "fieldtype": "Check",
-      "label": "Late Checkin"
-    },
-    {
-      "fieldname": "column_break_6",
-      "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "status",
-      "fieldtype": "Select",
-      "label": "Status",
-      "options": "Pending Payment\nBooked\nChecked-In\nCompleted\nCancelled",
-      "reqd": 1,
-      "allow_on_submit": 1
-    },
-    {
-      "fieldname": "payment_status",
-      "fieldtype": "Select",
-      "label": "Payment Status",
-      "options": "Pending\nPaid\nFailed\nRefunded",
-      "default": "Pending",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "description": "Payment status for this reservation"
-    },
-    {
-      "fieldname": "hold_expires_at",
-      "fieldtype": "DateTime",
-      "label": "Hold Expires At",
-      "read_only": 1,
-      "description": "Rooms held until this time while awaiting payment"
-    },
-    {
-      "fieldname": "check_in_time",
-      "fieldtype": "DateTime",
-      "label": "Check-In Time",
-      "read_only": 1,
-      "description": "Actual check-in timestamp"
-    },
-    {
-      "fieldname": "check_out_time",
-      "fieldtype": "DateTime",
-      "label": "Check-Out Time",
-      "read_only": 1,
-      "description": "Actual check-out timestamp"
-    },
-    {
-      "allow_on_submit": 1,
-      "default": "0",
-      "fieldtype": "Int",
-      "fieldname": "number_of_nights",
-      "label": "Number of Nights",
-      "read_only": 1,
-      "reqd": 1
-    },
-    {
-      "fieldname": "section_break_payment",
-      "fieldtype": "Section Break",
-      "label": "Payment Information"
-    },
-    {
-      "fieldname": "sales_invoice",
-      "fieldtype": "Link",
-      "options": "Sales Invoice",
-      "label": "Sales Invoice",
-      "read_only": 1,
-      "description": "Invoice for this reservation",
-      "allow_on_submit": 1
-    },
-    {
-      "fieldname": "transaction_id",
-      "fieldtype": "Data",
-      "label": "Transaction ID",
-      "read_only": 1,
-      "description": "Paystack transaction reference"
-    },
-    {
-      "fieldname": "section_break_8",
-      "fieldtype": "Section Break"
-    },
-    {
-      "fieldname": "items",
-      "fieldtype": "Table",
-      "label": "Items",
-      "options": "Hotel Room Reservation Item"
-    },
-    {
-      "fieldname": "net_total",
-      "fieldtype": "Currency",
-      "label": "Net Total",
-      "read_only": 1,
-      "allow_on_submit": 1
-    },
-    {
-      "default": "0",
-      "fieldname": "is_extension",
-      "fieldtype": "Check",
-      "label": "Is Extension",
-      "read_only": 1
-    },
-    {
-      "fieldname": "amended_from",
-      "fieldtype": "Link",
-      "label": "Amended From",
-      "no_copy": 1,
-      "options": "Hotel Room Reservation",
-      "print_hide": 1,
-      "read_only": 1
-    },
-    {
-      "fieldname": "reservation_type",
-      "fieldtype": "Select",
-      "label": "Reservation Type",
-      "options": "Individual\nCorporate",
-      "default": "Individual",
-      "read_only": 1,
-      "reqd": 1,
-      "no_copy": 0,
-      "in_list_view": 1,
-      "description": "Determines if Sales Invoice should be created. Corporate reservations handle invoicing separately."
-    },
-    {
-      "fieldname": "stay_extension_tab",
-      "fieldtype": "Tab Break",
-      "label": "Reservation Adjusments"
-    },
-    {
-      "allow_on_submit": 1,
-      "fieldtype": "Table",
-      "fieldname": "adjustments",
-      "label": "Adjustments",
-      "options": "Hotel Room Check In Stay Adjustments",
-      "read_only": 1
-    }
-  ],
-  "is_submittable": 1,
-  "links": [],
-  "modified": "2025-12-03 12:00:00.000000",
-  "modified_by": "Administrator",
-  "module": "Rhocom Hotel",
-  "name": "Hotel Room Reservation",
-  "owner": "Administrator",
-  "permissions": [
-    {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "System Manager",
-      "share": 1,
-      "write": 1
-    },
-    {
-      "amend": 1,
-      "cancel": 1,
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "Hotel Reservation User",
-      "share": 1,
-      "submit": 1,
-      "write": 1
-    },
-    {
-      "amend": 1,
-      "cancel": 1,
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "Hotel Manager",
-      "share": 1,
-      "submit": 1,
-      "write": 1
-    },
-    {
-      "amend": 1,
-      "cancel": 1,
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "Hotel Receptionist",
-      "share": 1,
-      "submit": 1,
-      "write": 1
-    }
-  ],
-  "quick_entry": 1,
-  "row_format": "Dynamic",
-  "sort_field": "modified",
-  "sort_order": "DESC",
-  "track_changes": 1
+    "actions": [],
+    "allow_import": 1,
+    "autoname": "HTL-RES-.YYYY.-.#####",
+    "beta": 1,
+    "creation": "2025-10-08 12:33:56.320420",
+    "doctype": "DocType",
+    "document_type": "Document",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "temporary_booking_reference",
+        "front_desk_reservation",
+        "booking_number",
+        "guest_name",
+        "guest_phone",
+        "guest_email",
+        "customer",
+        "from_date",
+        "to_date",
+        "number_of_nights",
+        "room_number",
+        "late_checkin",
+        "column_break_6",
+        "rate",
+        "discount_type",
+        "discount",
+        "net_total",
+        "status",
+        "payment_status",
+        "hold_expires_at",
+        "check_in_time",
+        "check_out_time",
+        "section_break_payment",
+        "sales_invoice",
+        "transaction_id",
+        "section_break_8",
+        "items",
+        "is_extension",
+        "amended_from",
+        "reservation_type",
+        "stay_extension_tab",
+        "adjustments"
+    ],
+    "fields": [
+        {
+            "description": "Link to the Temporary Booking document",
+            "fieldname": "temporary_booking_reference",
+            "fieldtype": "Link",
+            "in_standard_filter": 1,
+            "label": "Temporary Booking",
+            "options": "Temporary Booking"
+        },
+        {
+            "allow_on_submit": 1,
+            "description": "Linked front desk multi-room reservation",
+            "fieldname": "front_desk_reservation",
+            "fieldtype": "Link",
+            "label": "Front Desk Reservation",
+            "options": "Hotel Front Desk Reservation",
+            "read_only": 1,
+            "search_index": 1
+        },
+        {
+            "description": "Unique booking reference from Temporary Booking",
+            "fieldname": "booking_number",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Booking Number",
+            "read_only": 1
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "guest_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Guest Name",
+            "reqd": 1
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "guest_phone",
+            "fieldtype": "Phone",
+            "in_list_view": 1,
+            "label": "Guest Phone"
+        },
+        {
+            "fieldname": "guest_email",
+            "fieldtype": "Data",
+            "label": "Guest Email"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "customer",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Customer",
+            "options": "Customer"
+            
+        },
+        {
+            "fieldname": "room_number",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Room Number",
+            "options": "Hotel Room",
+            "reqd": 1,
+            "allow_on_submit": 1
+        },
+        {
+            "fieldname": "rate",
+            "fieldtype": "Currency",
+            "label": "Rate",
+            "read_only": 1
+        },
+        {
+            "default": "Flat Amount",
+            "fieldname": "discount_type",
+            "fieldtype": "Select",
+            "label": "Discount Type",
+            "options": "Percentage\nFlat Amount"
+        },
+        {
+            "default": "0",
+            "fieldname": "discount",
+            "fieldtype": "Currency",
+            "label": "Discount"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "from_date",
+            "fieldtype": "Date",
+            "label": "From Date",
+            "reqd": 1,
+            "in_list_view": 1   
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "to_date",
+            "fieldtype": "Date",
+            "label": "To Date",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "default": "0",
+            "fieldname": "late_checkin",
+            "fieldtype": "Check",
+            "label": "Late Checkin"
+        },
+        {
+            "fieldname": "column_break_6",
+            "fieldtype": "Column Break"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "label": "Status",
+            "options": "Pending Payment\nBooked\nChecked-In\nCompleted\nCancelled",
+            "reqd": 1
+        },
+        {
+            "default": "Pending",
+            "description": "Payment status for this reservation",
+            "fieldname": "payment_status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Payment Status",
+            "options": "Pending\nPaid\nFailed\nRefunded"
+        },
+        {
+            "description": "Rooms held until this time while awaiting payment",
+            "fieldname": "hold_expires_at",
+            "fieldtype": "Datetime",
+            "label": "Hold Expires At",
+            "read_only": 1
+        },
+        {
+            "description": "Actual check-in timestamp",
+            "fieldname": "check_in_time",
+            "fieldtype": "Datetime",
+            "label": "Check-In Time",
+            "read_only": 1
+        },
+        {
+            "description": "Actual check-out timestamp",
+            "fieldname": "check_out_time",
+            "fieldtype": "Datetime",
+            "label": "Check-Out Time",
+            "read_only": 1
+        },
+        {
+            "allow_on_submit": 1,
+            "default": "0",
+            "fieldname": "number_of_nights",
+            "fieldtype": "Int",
+            "label": "Number of Nights",
+            "read_only": 1,
+            "reqd": 1
+        },
+        {
+            "fieldname": "section_break_payment",
+            "fieldtype": "Section Break",
+            "label": "Payment Information"
+        },
+        {
+            "allow_on_submit": 1,
+            "description": "Invoice for this reservation",
+            "fieldname": "sales_invoice",
+            "fieldtype": "Link",
+            "label": "Sales Invoice",
+            "options": "Sales Invoice",
+            "read_only": 1
+        },
+        {
+            "description": "Paystack transaction reference",
+            "fieldname": "transaction_id",
+            "fieldtype": "Data",
+            "label": "Transaction ID",
+            "read_only": 1
+        },
+        {
+            "fieldname": "section_break_8",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "items",
+            "fieldtype": "Table",
+            "label": "Items",
+            "options": "Hotel Room Reservation Item"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "net_total",
+            "fieldtype": "Currency",
+            "label": "Net Total",
+            "read_only": 1
+        },
+        {
+            "default": "0",
+            "fieldname": "is_extension",
+            "fieldtype": "Check",
+            "label": "Is Extension",
+            "read_only": 1
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Hotel Room Reservation",
+            "print_hide": 1,
+            "read_only": 1
+        },
+        {
+            "default": "Individual",
+            "description": "Determines if Sales Invoice should be created. Corporate reservations handle invoicing separately.",
+            "fieldname": "reservation_type",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Reservation Type",
+            "options": "Individual\nCorporate",
+            "read_only": 1,
+            "reqd": 1
+        },
+        {
+            "fieldname": "stay_extension_tab",
+            "fieldtype": "Tab Break",
+            "label": "Reservation Adjusments"
+        },
+        {
+            "allow_on_submit": 1,
+            "fieldname": "adjustments",
+            "fieldtype": "Table",
+            "label": "Adjustments",
+            "options": "Hotel Room Check In Stay Adjustments",
+            "read_only": 1
+        }
+    ],
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2025-12-29 09:13:13.876932",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Room Reservation",
+    "naming_rule": "Expression (old style)",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "amend": 1,
+            "cancel": 1,
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Reservation User",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        },
+        {
+            "amend": 1,
+            "cancel": 1,
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        },
+        {
+            "amend": 1,
+            "cancel": 1,
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Receptionist",
+            "share": 1,
+            "submit": 1,
+            "write": 1
+        }
+    ],
+    "quick_entry": 1,
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
 }

@@ -54,6 +54,7 @@ class HotelRoomReservation(Document):
         self.to_date = datetime.combine(to_dt.date(), default_time)
 
     def validate_room_availability(self):
+        
         overlapping = frappe.db.sql("""
             SELECT name FROM `tabHotel Room Reservation`
             WHERE room_number = %s
@@ -74,7 +75,16 @@ class HotelRoomReservation(Document):
                 _("Room {0} is already booked between {1} and {2}.")
                 .format(self.room_number, self.from_date, self.to_date)
             )
-            
+    
+    def on_update(self):
+        self.validate_room_availability()
+    
+    def on_save(self):
+        self.validate_room_availability()
+    
+    def on_change(self):
+        self.validate_room_availability()
+    
 @frappe.whitelist()
 def make_invoice(name):
     doc = frappe.get_doc("Hotel Room Reservation", name)
