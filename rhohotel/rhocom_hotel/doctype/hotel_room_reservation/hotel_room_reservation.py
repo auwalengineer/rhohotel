@@ -402,3 +402,49 @@ def get_or_create_customer_for_guest(guest_name, phone=None, email=None):
     guest.db_set("customer", customer.name, update_modified=False)
 
     return customer.name
+
+@frappe.whitelist()
+def get_available_rooms_for_reservation(doctype, txt, searchfield, start, page_len, filters):
+	from rhohotel.api import get_available_rooms
+	
+	from_date = filters.get("from_date")
+	to_date = filters.get("to_date")
+	room_type = filters.get("room_type")
+
+	if not from_date or not to_date or not room_type:
+		frappe.throw(_("Missing required filters: from_date, to_date, room_type"))
+
+	available_rooms = get_available_rooms(from_date, to_date, room_type)
+	
+	return [[room.get("name")] for room in available_rooms]
+
+@frappe.whitelist()
+def change_reservation_room(reservation_name, new_room_number, reason=None):
+	doc = frappe.get_doc("Hotel Room Reservation", reservation_name)
+
+	if doc.docstatus != 1:
+		frappe.throw(_("Reservation must be submitted to change the room."))
+
+	if doc.status == "Checked In":
+		frappe.throw(_("Cannot change room for a reservation that is already checked in."))
+
+	if doc.room_number == new_room_number:
+		frappe.throw(_("The new room is the same as the current room."))
+
+	# Validate availability of the new room
+	temp_doc = doc.copy()
+	temp_doc.room_number = new_room_number
+	temp_doc.validate_room_availability()
+
+	# Update the room number
+	old_room = doc.room_number
+	doc.room_number = new_room_number
+	doc.save()
+
+	# Add a comment
+	comment_text = _("Room changed from {0} to {1}.").format(old_room, new_room_number)
+	if reason:
+		comment_text += f"\n{reason}"
+	doc.add_comment("Comment", text=comment_text)
+
+	return {"status": "success", "message": _("Room changed successfully.")}

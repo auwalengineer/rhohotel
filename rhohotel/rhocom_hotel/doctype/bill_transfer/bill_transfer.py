@@ -30,9 +30,6 @@ class BillTransfer(Document):
 
         self.create_journal_entry()
 
-    def on_cancel(self):
-        frappe.throw("Cancelling Bill Transfer is not allowed. Reverse journal entry manually.")
-
     # --------------------------------------
     #   CREATE ONE JOURNAL ENTRY
     # --------------------------------------
@@ -41,7 +38,7 @@ class BillTransfer(Document):
         # Get the company from the source invoice
         company = frappe.db.get_value("Sales Invoice", self.source_invoice, "company")
         
-         # Load the source invoice
+        # Load the source invoice
         inv = frappe.get_doc("Sales Invoice", self.source_invoice)
 
         # The customer on the invoice

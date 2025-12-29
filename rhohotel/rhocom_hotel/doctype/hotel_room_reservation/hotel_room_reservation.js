@@ -8,6 +8,64 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		// add Check In button if status is Booked
 		if (!frm.is_new() && frm.doc.docstatus === 1) {
 
+			if (frm.doc.status !== 'Checked In') {
+				frm.add_custom_button(__('Change Room'), function () {
+					const dialog = new frappe.ui.Dialog({
+						title: __('Change Reservation Room'),
+						fields: [
+							{
+								label: 'New Room',
+								fieldname: 'new_room_number',
+								fieldtype: 'Link',
+								options: 'Hotel Room',
+								reqd: 1,
+								get_query: () => {
+									return {
+										query: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.get_available_rooms_for_reservation',
+										filters: {
+											from_date: frm.doc.from_date,
+											to_date: frm.doc.to_date,
+											room_type: frm.doc.room_type
+										}
+									};
+								}
+							},
+							{
+								label: 'Reason',
+								fieldname: 'reason',
+								fieldtype: 'Small Text'
+							}
+						],
+						primary_action_label: __('Change'),
+						primary_action(values) {
+							frappe.dom.freeze();
+							frappe.call({
+								method: 'rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.change_reservation_room',
+								args: {
+									reservation_name: frm.doc.name,
+									new_room_number: values.new_room_number,
+									reason: values.reason
+								},
+								callback: function (r) {
+									frappe.dom.unfreeze();
+									if (r.message && r.message.status === 'success') {
+										frappe.msgprint(r.message.message);
+										frm.reload_doc();
+									}
+								},
+								error: function (r) {
+									frappe.dom.unfreeze();
+									frappe.msgprint(__('Failed to change room.'));
+									console.log(r);
+								}
+							});
+							dialog.hide();
+						}
+					});
+					dialog.show();
+				});
+			}
+
 			frm.set_df_property("room_number", "read_only", 0);
 
 			frm.set_df_property("change_room", "read_only", 0);
