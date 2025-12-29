@@ -78,7 +78,9 @@
             "fieldname": "status",
             "fieldtype": "Select",
             "label": "Status",
-            "options": "Pending\nCompleted\nCancelled"
+            "options": "Pending\nCompleted\nCancelled",
+            "allow_on_submit": 1,
+            "read_only": 1
         },
         {
             "fieldname": "remarks_section",

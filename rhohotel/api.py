@@ -1255,12 +1255,24 @@ def get_available_rooms(from_date, to_date, room_type=None):
             FROM `tabHotel Room Check In`
             WHERE room_number IN ({rooms})
             AND status IN ('Draft', 'Checked In')
-            AND DATE(check_in_datetime) < %s
-            AND DATE(expected_check_out_datetime) > %s
+            AND (
+                -- Normal active stay
+                (
+                    DATE(check_in_datetime) <= %s
+                    AND DATE(expected_check_out_datetime) >= %s
+                )
+                OR
+                -- Overstayed rooms
+                (
+                    status = 'Checked In'
+                    AND DATE(expected_check_out_datetime) < %s
+                )
+            )
         """.format(rooms=", ".join(["%s"] * len(room_numbers))),
-        tuple(room_numbers) + (to_date, from_date),
-        as_dict=True)
-        
+            tuple(room_numbers) + (to_date, from_date, to_date),
+            as_dict=True
+        )
+
         checked_in_rooms = [r.room_number for r in active_checkins]
         
         # ✅ CRITICAL FIX #2: Combine all unavailable rooms

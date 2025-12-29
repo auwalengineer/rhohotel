@@ -771,6 +771,38 @@ def adjust_stay(check_in_name, new_checkout, new_discount=0):
 	if diff_nights == 0:
 		frappe.throw("The new checkout results in the same number of nights.")
 
+	# === Making sure no reservations or check-ins conflict with the new dates ===
+	if adjustment_type == "Extension":
+		conflicting_reservation = frappe.db.exists(
+			"Hotel Room Reservation",
+			{
+				"room_number": doc.room_number,
+				"status": ["not in", ["Cancelled", "No Show"]],
+				"from_date": ["<", new_dt.date()],
+				"to_date": [">", current_dt.date()],
+			},
+		)
+
+		if conflicting_reservation:
+			reservation_guest = frappe.db.get_value("Hotel Room Reservation", conflicting_reservation, "guest_name") if conflicting_reservation else ""
+			frappe.throw(_("{0} is not available for the selected extension period. It is reserved for guest {1} under {2}.").format(doc.room_number, reservation_guest, conflicting_reservation))
+
+		conflicting_check_in = frappe.db.exists(
+			"Hotel Room Check In",
+			{
+				"room_number": doc.room_number,
+				"status": ["in", ["Checked In", "Draft"]],
+				"name": ["!=", doc.name],
+				"check_in_datetime": ["<", new_dt],
+				"expected_check_out_datetime": [">", current_dt],
+			},
+		)
+
+
+		if conflicting_check_in:
+			reservation_guest = frappe.db.get_value("Hotel Room Check In", conflicting_check_in, "guest_name") if conflicting_reservation else ""
+			frappe.throw(_("{0} is not available for the selected extension period. It is occupied by another guest {1} under Check In {2} .").format(doc.room_number, reservation_guest, conflicting_check_in))		
+
 	amount = flt(doc.rate_amount) * diff_nights
 	adjustment_invoice_name = None
 

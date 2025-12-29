@@ -75,6 +75,39 @@ class HotelRoomReservation(Document):
                 _("Room {0} is already booked between {1} and {2}.")
                 .format(self.room_number, self.from_date, self.to_date)
             )
+        
+        # check Hotel Room Check In 
+        overlapping_checkin = frappe.db.sql("""
+            SELECT name
+            FROM `tabHotel Room Check In`
+            WHERE room_number = %s
+            AND status IN ('Draft', 'Checked In')
+            AND (
+                -- Normal active stay
+                (
+                    DATE(check_in_datetime) <= %s
+                    AND DATE(expected_check_out_datetime) >= %s
+                )
+                OR
+                -- Overstayed rooms
+                (
+                    status = 'Checked In'
+                    AND DATE(expected_check_out_datetime) < %s
+                )
+            )
+        """, (
+            self.room_number,
+            self.to_date,      # for check_in_datetime <= to_date
+            self.from_date,    # for expected_check_out_datetime >= from_date
+            self.to_date       # for overstayed check
+        ))
+
+        if overlapping_checkin:
+            frappe.throw(
+                _("Room {0} is already checked in between {1} and {2}.")
+                .format(self.room_number, self.from_date, self.to_date)
+            )
+
     
     def on_update(self):
         self.validate_room_availability()

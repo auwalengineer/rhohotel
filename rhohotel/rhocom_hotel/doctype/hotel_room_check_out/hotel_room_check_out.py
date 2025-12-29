@@ -79,6 +79,7 @@ class HotelRoomCheckOut(Document):
         self.update_room()
         self.update_reservation()  
         self.create_housekeeping_task()
+        self.submit()
         frappe.publish_realtime('rhohotel_front_desk_update')
 
     def update_check_in(self):
