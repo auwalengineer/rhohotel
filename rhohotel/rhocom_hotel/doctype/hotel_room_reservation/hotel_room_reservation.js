@@ -478,7 +478,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 	},
 	recalculate_rates: function (frm) {
-		if (!frm.doc.from_date || !frm.doc.to_date
+		if (!frm.doc.from_date || !frm.doc.to_date || !frm.doc.room_number
 			|| !frm.doc.items.length) {
 			return;
 		}
@@ -551,6 +551,12 @@ frappe.ui.form.on('Hotel Room Reservation', {
 					}
 				});
 			});
+	},
+
+	room_number: function(frm){
+		if(frm.doc.room_number){
+			frm.trigger("recalculate_rates");
+		}
 	},
 
 	onload: function (frm) {
