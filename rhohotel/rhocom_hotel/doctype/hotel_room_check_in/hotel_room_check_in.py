@@ -777,7 +777,8 @@ def adjust_stay(check_in_name, new_checkout, new_discount=0):
 			"Hotel Room Reservation",
 			{
 				"room_number": doc.room_number,
-				"status": ["not in", ["Cancelled", "No Show"]],
+				"status": ["not in", ["Cancelled", "No Show", "Completed"]],
+				"docstatus": ["not in", ["Cancelled", "Draft"]],
 				"from_date": ["<", new_dt.date()],
 				"to_date": [">", current_dt.date()],
 			},
