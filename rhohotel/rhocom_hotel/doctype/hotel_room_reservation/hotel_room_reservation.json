@@ -169,7 +169,10 @@
             "in_list_view": 1,
             "in_standard_filter": 1,
             "label": "Payment Status",
-            "options": "Pending\nPaid\nFailed\nRefunded"
+            "options": "Pending\nPaid\nPartly Paid\nFailed\nRefunded",
+            "allow_on_submit": 1,
+            "read_only":1
+            
         },
         {
             "description": "Rooms held until this time while awaiting payment",

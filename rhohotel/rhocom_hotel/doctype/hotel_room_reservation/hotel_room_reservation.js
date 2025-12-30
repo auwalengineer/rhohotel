@@ -46,6 +46,96 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			});
 		}
 
+if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
+	frm.add_custom_button(__("Receive Payment"), () => {
+
+		frappe.call({
+			method: "frappe.client.get",
+			args: {
+				doctype: "Sales Invoice",
+				name: frm.doc.sales_invoice
+			},
+			callback(r) {
+				if (!r.message) return;
+
+				const outstanding = r.message.outstanding_amount || 0;
+
+				const d = new frappe.ui.Dialog({
+					title: __("Receive Payment"),
+					fields: [
+						{
+							fieldname: "payment_date",
+							label: "Payment Date",
+							fieldtype: "Date",
+							default: frappe.datetime.nowdate(),
+							reqd: 1
+						},
+						{
+							fieldname: "payment_mode",
+							label: "Mode of Payment",
+							fieldtype: "Link",
+							options: "Mode of Payment",
+							reqd: 1
+						},
+						{
+							fieldname: "paid_amount",
+							label: "Amount Paid",
+							fieldtype: "Currency",
+							default: outstanding,   // ✅ OUTSTANDING BALANCE
+							reqd: 1
+						},
+						{
+							fieldname: "reference_no",
+							label: "Reference No",
+							fieldtype: "Data"
+						},
+						{
+							fieldname: "reference_date",
+							label: "Reference Date",
+							fieldtype: "Date"
+						},
+						{
+							fieldname: "remarks",
+							label: "Remarks",
+							fieldtype: "Small Text"
+						}
+					],
+					primary_action_label: __("Submit Payment"),
+					primary_action(values) {
+
+						if (values.paid_amount <= 0) {
+							frappe.msgprint(__("Paid amount must be greater than zero."));
+							return;
+						}
+
+						frappe.call({
+							method: "rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.create_payment_entry",
+							args: {
+								reservation: frm.doc.name,
+								data: values
+							},
+							freeze: true,
+							callback(r) {
+								if (!r.exc) {
+									frappe.msgprint({
+										title: __("Payment Successful"),
+										message: __("Payment Entry {0} created.", [r.message]),
+										indicator: "green"
+									});
+									d.hide();
+									frm.reload_doc();
+								}
+							}
+						});
+					}
+				});
+
+				d.show();
+			}
+		});
+	});
+}
+
 		if (frm.doc.docstatus === 1 && !frm.doc.actual_check_out_datetime) {
 			frm.add_custom_button(__('Adjust Reservation'), () => {
 				// Fetch default checkout time from hotel settings

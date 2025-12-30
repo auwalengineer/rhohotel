@@ -496,3 +496,88 @@ def change_reservation_room(reservation_name, new_room_number, reason=None):
         "status": "success",
         "message": _("Room changed successfully.")
     }
+
+@frappe.whitelist()
+def create_payment_entry(reservation, data):
+    import json
+    data = frappe._dict(json.loads(data))
+
+    reservation_doc = frappe.get_doc("Hotel Room Reservation", reservation)
+
+    if reservation_doc.docstatus != 1:
+        frappe.throw("Only submitted reservations can receive payment.")
+
+    if not reservation_doc.sales_invoice:
+        frappe.throw("No invoice linked to this reservation.")
+
+    invoice = frappe.get_doc("Sales Invoice", reservation_doc.sales_invoice)
+
+    if invoice.outstanding_amount <= 0:
+        frappe.throw("Invoice is already fully paid.")
+
+    company = frappe.db.get_single_value("Global Defaults", "default_company")
+
+    # --------------------------------------------------
+    # Get accounts from Mode of Payment
+    # --------------------------------------------------
+    mop = frappe.get_doc("Mode of Payment", data.payment_mode)
+
+    if not mop.accounts:
+        frappe.throw("Mode of Payment has no accounts configured.")
+
+    mop_account = next(
+        (a.default_account for a in mop.accounts if a.company == company),
+        None
+    )
+
+    if not mop_account:
+        frappe.throw(f"No account found for Mode of Payment in {company}")
+        
+    # avoid duplicate reference numbers
+    if data.reference_no:
+        existing_pe = frappe.db.get_value(
+            "Payment Entry",
+            {
+                "reference_no": data.reference_no
+            }
+        )
+        if existing_pe:
+            frappe.throw("A Payment Entry with this reference number already exists.")
+
+    # --------------------------------------------------
+    # Create Payment Entry
+    # --------------------------------------------------
+    pe = frappe.get_doc({
+        "doctype": "Payment Entry",
+        "payment_type": "Receive",
+        "company": company,
+        "posting_date": data.payment_date,
+        "party_type": "Customer",
+        "party": invoice.customer,
+        "mode_of_payment": data.payment_mode,
+        "paid_to": mop_account,
+        "paid_amount": data.paid_amount,
+        "received_amount": data.paid_amount,
+        "reference_no": data.reference_no,
+        "reference_date": data.reference_date,
+        "remarks": data.remarks,
+        "references": [{
+            "reference_doctype": "Sales Invoice",
+            "reference_name": invoice.name,
+            "allocated_amount": min(
+                flt(data.paid_amount),
+                flt(invoice.outstanding_amount)
+            )
+        }],
+    })
+
+    pe.insert(ignore_permissions=True)
+    pe.submit()
+    
+    # update reservation payment status
+    invoice = frappe.get_doc("Sales Invoice", reservation_doc.sales_invoice)
+    reservation_doc.payment_status = 'Paid' if flt(invoice.outstanding_amount) <= 0 else 'Partly Paid'
+    reservation_doc.save()
+    
+
+    return pe.name
