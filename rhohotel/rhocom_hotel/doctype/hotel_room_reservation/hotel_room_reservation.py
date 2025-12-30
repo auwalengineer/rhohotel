@@ -55,6 +55,8 @@ class HotelRoomReservation(Document):
 
     def validate_room_availability(self):
         
+        if self.docstatus == 2:
+            return
         overlapping = frappe.db.sql("""
             SELECT name FROM `tabHotel Room Reservation`
             WHERE room_number = %s
@@ -80,7 +82,9 @@ class HotelRoomReservation(Document):
         overlapping_checkin = frappe.db.sql("""
             SELECT name
             FROM `tabHotel Room Check In`
-            WHERE room_number = %s
+            WHERE guest != %s
+            AND
+            room_number = %s
             AND status IN ('Draft', 'Checked In')
             AND (
                 -- Normal active stay
@@ -96,6 +100,7 @@ class HotelRoomReservation(Document):
                 )
             )
         """, (
+            self.guest_name,
             self.room_number,
             self.to_date,      # for check_in_datetime <= to_date
             self.from_date,    # for expected_check_out_datetime >= from_date
