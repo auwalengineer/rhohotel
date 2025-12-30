@@ -462,6 +462,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			calculate_nights(frm);
 		}
 
+		if (frm.doc.from_date && frm.doc.to_date) {
+			frm.trigger("get_room_rate");
+			calculate_nights(frm);
+		}
 
 		//frm.trigger("recalculate_rates");
 	},
@@ -478,8 +482,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 	},
 	recalculate_rates: function (frm) {
-		if (!frm.doc.from_date || !frm.doc.to_date || !frm.doc.room_number
-			|| !frm.doc.items.length) {
+		if (!frm.doc.from_date || !frm.doc.to_date || !frm.doc.room_number) {
 			return;
 		}
 		frappe.call({
@@ -520,10 +523,51 @@ frappe.ui.form.on('Hotel Room Reservation', {
 	from_date: function (frm) {
 
 		if (frm.doc.from_date && frm.doc.to_date) {
+			frm.trigger("get_room_rate");
 			calculate_nights(frm);
 		}
 
-		frm.trigger("recalculate_rates");
+		// frm.trigger("recalculate_rates");
+		// // Step 1: Get room type from selected room
+		// frappe.db.get_value("Hotel Room", frm.doc.room_number, "room_type")
+		// 	.then(res => {
+		// 		if (!res.message || !res.message.room_type) return;
+
+		// 		let room_type = res.message.room_type;
+		// 		let check_in_date = frm.doc.from_date;
+
+		// 		if (!check_in_date) {
+		// 			frappe.msgprint("Please select Check-in Date first.");
+		// 			return;
+		// 		}
+
+		// 		// Step 2: Call backend to get rate
+		// 		frappe.call({
+		// 			method: "rhohotel.api.get_room_rate",
+		// 			args: {
+		// 				room_type: room_type,
+		// 				check_in_date: check_in_date
+		// 			},
+		// 			callback: function (r) {
+		// 				if (r.message) {
+		// 					frm.set_value("rate", r.message);
+		// 				}
+		// 			}
+		// 		});
+		// 	});
+	},
+	get_room_rate: function (frm) {
+		if (!frm.doc.from_date || !frm.doc.to_date || !frm.doc.room_number) {
+			frm.set_value("rate", 0);
+			return;
+		}
+
+		if (!frm.doc.from_date || !frm.doc.to_date) {
+			frm.set_value("number_of_nights", 0);
+			frm.set_value("rate", 0);
+			return;
+		}
+
 		// Step 1: Get room type from selected room
 		frappe.db.get_value("Hotel Room", frm.doc.room_number, "room_type")
 			.then(res => {
@@ -553,9 +597,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			});
 	},
 
-	room_number: function(frm){
-		if(frm.doc.room_number){
-			frm.trigger("recalculate_rates");
+	room_number: function (frm) {
+		if (frm.doc.from_date && frm.doc.to_date) {
+			frm.trigger("get_room_rate");
+			calculate_nights(frm);
 		}
 	},
 
