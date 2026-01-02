@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2024-07-31 10:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "menu_item",
+  "rate"
+ ],
+ "fields": [
+  {
+   "fieldname": "menu_item",
+   "fieldtype": "Link",
+   "label": "Menu Item",
+   "options": "Menu Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "read_only": 1,
+   "fetch_from": "menu_item.rate"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2024-07-31 10:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Restaurant",
+ "name": "Restaurant Menu Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
