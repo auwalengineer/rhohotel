@@ -1,0 +1,33 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"fXfnJT-ybv\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Restaurant Dashboard</span>\",\"col\":12}},{\"id\":\"oXAp5NaXby\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today\u2019s Orders\",\"col\":4}}]",
+ "creation": "2026-01-02 00:08:16.386063",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "cyan",
+ "is_hidden": 0,
+ "label": "Restaurant",
+ "links": [],
+ "modified": "2026-01-03 00:15:13.829868",
+ "modified_by": "Administrator",
+ "module": "Restaurant",
+ "name": "Restaurant",
+ "number_cards": [
+  {
+   "label": "Today\u2019s Orders",
+   "number_card_name": "Today\u2019s Orders"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 19.0,
+ "shortcuts": [],
+ "title": "Restaurant"
+}

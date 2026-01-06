@@ -840,6 +840,8 @@ frappe.ui.form.on("Hotel Room Check In", {
     reservation(frm) {
         if (frm.doc.reservation) {
 
+            frm.set_df_property("check_in_datetime", "read_only", 1);
+
             frappe.call({
                 method: "frappe.client.get",
                 args: {
@@ -880,6 +882,7 @@ frappe.ui.form.on("Hotel Room Check In", {
                                     let nights = frappe.datetime.get_day_diff(to, from);
 
                                     //format expected_check_out_datetime and attach default check out time to the time part
+                                    frm.set_value('check_in_datetime', check_in_datetime)
                                     frm.set_value('expected_check_out_datetime', formatted_checkout);
                                     frm.set_value('room_number', r.message.room_number);
                                     frm.set_value('rate_amount', r.message.rate);

@@ -3,7 +3,7 @@ def get_data():
     return [
         {
             "name": "Restaurant",
-            "label": _("Restaurant"),
+            "label": _("Restaurant Dashboard"),
             "icon": "octicon octicon-file-directory",
             "type": "workspace",
             "public": 1,

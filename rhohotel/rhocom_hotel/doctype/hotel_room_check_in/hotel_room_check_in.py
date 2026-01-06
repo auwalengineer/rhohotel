@@ -724,7 +724,7 @@ def reduce_stay(check_in_name, new_checkout):
 	}
 
 @frappe.whitelist()
-def adjust_stay(check_in_name, new_checkout, new_discount=0):
+def adjust_stay(check_in_name, new_checkout, new_discount=None):
 	from frappe.utils import now_datetime, get_datetime, getdate, date_diff, flt
 	# Safe-get doc (avoid missing permissions)
 	doc = frappe.get_doc("Hotel Room Check In", check_in_name)
@@ -805,6 +805,8 @@ def adjust_stay(check_in_name, new_checkout, new_discount=0):
 			frappe.throw(_("{0} is not available for the selected extension period. It is occupied by another guest {1} under Check In {2} .").format(doc.room_number, reservation_guest, conflicting_check_in))		
 
 	amount = flt(doc.rate_amount) * diff_nights
+	amount_with_discount = flt(amount)  - flt(new_discount) if flt(new_discount) > 0 else 0
+	frappe.log_error(amount_with_discount)
 	adjustment_invoice_name = None
 
 	try:
@@ -820,23 +822,36 @@ def adjust_stay(check_in_name, new_checkout, new_discount=0):
 					"item_code": doc.room_number,
 					"qty": diff_nights,
 					"rate": doc.rate_amount,
+					"amount": diff_nights * doc.rate_amount
 				}],
 				"posting_date": frappe.utils.today(),
 			})
-			if new_discount and flt(new_discount) > 0:
-
-				# check discount type
-				if(doc.discount_type == "Percentage"):
-					invoice.additional_discount_percentage = flt(new_discount)
-				else:
-					invoice.discount_amount = flt(new_discount)
 
 			# Permission bypass
 			invoice.flags.ignore_permissions = True
 			invoice.flags.ignore_mandatory = True
 			invoice.flags.ignore_links = True
 
-			invoice.insert()
+
+			if new_discount and flt(new_discount) > 0:
+
+				# check discount type
+				if(doc.discount_type == "Percentage" and doc.discount > 0):
+					invoice.additional_discount_percentage = flt(new_discount)
+				elif doc.discount_type == "Fixed Amount":
+					invoice.discount_amount = flt(new_discount)
+
+			# if invoice.discount_amount and invoice.discount_amount >= invoice.net_total:
+			# 	frappe.throw(
+			# 		"Discount cannot be greater than or equal to invoice amount."
+			# 	)
+
+			# if invoice.additional_discount_percentage and invoice.additional_discount_percentage >= 100:
+			# 	frappe.throw(
+			# 		"Discount percentage cannot be 100% or more."
+			# 	)	
+			invoice.insert(ignore_permissions=True)
+			invoice.calculate_taxes_and_totals()
 			invoice.submit()
 			adjustment_invoice_name = invoice.name
 
@@ -856,12 +871,14 @@ def adjust_stay(check_in_name, new_checkout, new_discount=0):
 				"posting_date": frappe.utils.today(),
 			})
 
+
 			# Permission bypass
 			credit_note.flags.ignore_permissions = True
 			credit_note.flags.ignore_mandatory = True
 			credit_note.flags.ignore_links = True
 
 			credit_note.insert()
+			credit_note.calculate_taxes_and_totals()
 			credit_note.submit()
 			adjustment_invoice_name = credit_note.name
 
