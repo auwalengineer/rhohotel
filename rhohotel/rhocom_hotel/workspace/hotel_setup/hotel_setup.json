@@ -220,8 +220,57 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Guest Operations",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Check In",
+   "link_count": 0,
+   "link_to": "Hotel Room Check In",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Room Reservations",
+   "link_count": 0,
+   "link_to": "Hotel Room Reservation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hotel Guests",
+   "link_count": 0,
+   "link_to": "Hotel Guest",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hall Booking",
+   "link_count": 0,
+   "link_to": "Hall Booking",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Room Setup",
-   "link_count": 5,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -279,54 +328,19 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Guest Operations",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Room Check In",
+   "label": "Hall Service",
    "link_count": 0,
-   "link_to": "Hotel Room Check In",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Room Reservations",
-   "link_count": 0,
-   "link_to": "Hotel Room Reservation",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Hotel Guests",
-   "link_count": 0,
-   "link_to": "Hotel Guest",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Hall Booking",
-   "link_count": 0,
-   "link_to": "Hall Booking",
+   "link_to": "Hall Service",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
+<<<<<<< HEAD
  "modified": "2026-01-02 00:08:34.308280",
+=======
+ "modified": "2025-12-16 17:05:12.768637",
+>>>>>>> 39ce322 (front desk)
  "modified_by": "Administrator",
  "module": "Rhocom Hotel",
  "name": "Hotel Setup",
