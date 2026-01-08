@@ -408,11 +408,11 @@ frappe.ui.form.on("Hotel Room Check In", {
                                         label: __('Discount')
                                     },
                                     {
-                                        label: __('Current Discount'),
-                                        fieldname: 'current_discount',
-                                        fieldtype: 'Currency',
-                                        default: frm.doc.discount || 0,
-                                        read_only: 1
+                                        label: __('Discount Type'),
+                                        fieldname: 'discount_type',
+                                        fieldtype: 'Select',
+                                        options: 'None\nPercentage\nFixed Amount',
+                                        default: frm.doc.discount_type || 'None'
                                     },
                                     {
                                         fieldtype: 'Column Break'
@@ -539,7 +539,8 @@ frappe.ui.form.on("Hotel Room Check In", {
                                         args: {
                                             check_in_name: frm.doc.name,
                                             new_checkout: values.new_checkout,
-                                            new_discount: values.new_discount
+                                            new_discount: values.new_discount,
+                                            discount_type: values.discount_type
                                         },
                                         freeze: true,
                                         freeze_message: __("Processing stay adjustment..."),
@@ -799,6 +800,13 @@ frappe.ui.form.on("Hotel Room Check In", {
     },
 
     discount_type: function (frm) {
+        if (frm.doc.discount_type === "None") {
+            // hide discount
+            frm.set_df_property("discount", "hidden", 1);
+        }
+        else {
+            frm.set_df_property("discount", "hidden", 0);
+        }
         frm.trigger('calculate_total_charges');
     },
 

@@ -724,7 +724,7 @@ def reduce_stay(check_in_name, new_checkout):
 	}
 
 @frappe.whitelist()
-def adjust_stay(check_in_name, new_checkout, new_discount=None):
+def adjust_stay(check_in_name, new_checkout, discount_type, new_discount=None):
 	from frappe.utils import now_datetime, get_datetime, getdate, date_diff, flt
 	# Safe-get doc (avoid missing permissions)
 	doc = frappe.get_doc("Hotel Room Check In", check_in_name)
@@ -836,20 +836,20 @@ def adjust_stay(check_in_name, new_checkout, new_discount=None):
 			if new_discount and flt(new_discount) > 0:
 
 				# check discount type
-				if(doc.discount_type == "Percentage" and doc.discount > 0):
+				if(discount_type == "Percentage"):
 					invoice.additional_discount_percentage = flt(new_discount)
-				elif doc.discount_type == "Fixed Amount":
+				elif discount_type == "Fixed Amount":
 					invoice.discount_amount = flt(new_discount)
 
-			# if invoice.discount_amount and invoice.discount_amount >= invoice.net_total:
-			# 	frappe.throw(
-			# 		"Discount cannot be greater than or equal to invoice amount."
-			# 	)
+			if invoice.discount_amount and invoice.discount_amount >= invoice.net_total:
+				frappe.throw(
+					"Discount cannot be greater than or equal to invoice amount."
+				)
 
-			# if invoice.additional_discount_percentage and invoice.additional_discount_percentage >= 100:
-			# 	frappe.throw(
-			# 		"Discount percentage cannot be 100% or more."
-			# 	)	
+			if invoice.additional_discount_percentage and invoice.additional_discount_percentage >= 100:
+				frappe.throw(
+					"Discount percentage cannot be 100% or more."
+				)	
 			invoice.insert(ignore_permissions=True)
 			invoice.calculate_taxes_and_totals()
 			invoice.submit()
@@ -865,7 +865,7 @@ def adjust_stay(check_in_name, new_checkout, new_discount=None):
 				"custom_hotel_room_check_in": doc.name,
 				"items": [{
 					"item_code": doc.room_number,
-					"qty": -diff_nights,   # positive quantity for credit note
+					"qty": -diff_nights,
 					"rate": doc.rate_amount,
 				}],
 				"posting_date": frappe.utils.today(),
