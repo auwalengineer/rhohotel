@@ -841,10 +841,10 @@ def adjust_stay(check_in_name, new_checkout, discount_type, new_discount=None):
 				elif discount_type == "Fixed Amount":
 					invoice.discount_amount = flt(new_discount)
 
-			if invoice.discount_amount and invoice.discount_amount >= invoice.net_total:
-				frappe.throw(
-					"Discount cannot be greater than or equal to invoice amount."
-				)
+			# if invoice.discount_amount and invoice.discount_amount >= invoice.net_total:
+			# 	frappe.throw(
+			# 		"Discount cannot be greater than or equal to invoice amount."
+			# 	)
 
 			if invoice.additional_discount_percentage and invoice.additional_discount_percentage >= 100:
 				frappe.throw(

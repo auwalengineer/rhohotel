@@ -515,6 +515,15 @@ frappe.ui.form.on("Hotel Room Check In", {
                                         }
                                     }
 
+                                    if (values.new_discount > 0 && values.discount_type === "None") {
+                                        frappe.msgprint({
+                                            title: __("Invalid Discount"),
+                                            indicator: "red",
+                                            message: __("Please select a discount type.")
+                                        });
+                                        return;
+                                    }
+
                                     // VALIDATION 4 (Optional): Minimum notice period for reductions
                                     // Uncomment if you want to enforce advance notice
                                     /*
