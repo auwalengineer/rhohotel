@@ -53,10 +53,10 @@ class HotelRoomReservation(Document):
 
         self.to_date = datetime.combine(to_dt.date(), default_time)
 
-    def validate_room_availability(self):
-        
+    def validate_room_availability(self):  
         if self.docstatus == 2:
             return
+        
         overlapping = frappe.db.sql("""
             SELECT name FROM `tabHotel Room Reservation`
             WHERE room_number = %s
@@ -83,28 +83,27 @@ class HotelRoomReservation(Document):
             SELECT name
             FROM `tabHotel Room Check In`
             WHERE guest != %s
-            AND
-            room_number = %s
+            AND room_number = %s
             AND status IN ('Draft', 'Checked In')
+            AND name != %s
             AND (
-                -- Normal active stay
-                (
-                    DATE(check_in_datetime) <= %s
-                    AND DATE(expected_check_out_datetime) >= %s
-                )
-                OR
-                -- Overstayed rooms
-                (
-                    status = 'Checked In'
-                    AND DATE(expected_check_out_datetime) < %s
+                -- Check for overlap: check-in before reservation ends AND checkout after reservation starts
+                DATE(check_in_datetime) < %s
+                AND (
+                    -- Either expected checkout is after reservation start
+                    DATE(expected_check_out_datetime) > %s
+                    OR
+                    -- Or still checked in (overstayed) and check-in is before reservation end
+                    (status = 'Checked In' AND DATE(check_in_datetime) < %s)
                 )
             )
         """, (
             self.guest_name,
             self.room_number,
-            self.to_date,      # for check_in_datetime <= to_date
-            self.from_date,    # for expected_check_out_datetime >= from_date
-            self.to_date       # for overstayed check
+            self.name or '',     # Exclude current check-in if updating
+            self.to_date,        # check_in_datetime < to_date
+            self.from_date,      # expected_check_out_datetime > from_date
+            self.to_date         # for overstayed: check_in_datetime < to_date
         ))
 
         if overlapping_checkin:
@@ -112,7 +111,6 @@ class HotelRoomReservation(Document):
                 _("Room {0} is already checked in between {1} and {2}.")
                 .format(self.room_number, self.from_date, self.to_date)
             )
-
     
     def on_update(self):
         self.validate_room_availability()
