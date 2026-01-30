@@ -1704,7 +1704,8 @@ def create_sales_invoice_for_reservation(reservation_name):
                 item_name = room.room_type
             
             si.append("items", {
-                "item_code": item_name,
+                # "item_code": item_name,
+                "item_code": room.room_number,
                 "item_name": f"{room.room_number} - {room.guest_name}",
                 "description": _(
                     "Room {0} ({1}) - {2} night(s) @ {3}/night for {4}"

@@ -296,7 +296,7 @@ class CorporateCheckIn(Document):
             room_charge = flt(room.rate_amount) * flt(self.number_of_nights)
             
             items.append({
-                "item_code": room.room_type,  # Assuming room type is linked to item
+                 "item_code": room.room_number,
                 "item_name": f"Room {room.room_number} - {room.guest_name}",
                 "description": f"Room booking for {self.number_of_nights} night(s)\nGuest: {room.guest_name}\nCheck-in: {self.check_in_datetime}\nCheck-out: {self.expected_check_out_datetime}",
                 "qty": self.number_of_nights,

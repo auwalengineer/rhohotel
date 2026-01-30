@@ -1,434 +1,398 @@
 {
- "actions": [],
- "allow_import": 1,
- "autoname": "format:FDR-{YYYY}-{#####}",
- "creation": "2025-12-01 12:00:00",
- "doctype": "DocType",
- "document_type": "Document",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "reservation_type_section",
-  "reservation_type",
-  "reservation_number",
-  "column_break_type",
-  "created_by_user",
-  "created_at",
-  "guest_details_section",
-  "corporate_guest",
-  "customer",
-  "column_break_guest",
-  "primary_guest_name",
-  "primary_guest_email",
-  "primary_guest_phone",
-  "dates_section",
-  "from_date",
-  "number_of_nights",
-  "column_break_dates",
-  "to_date",
-  "late_checkin",
-  "room_filter_section",
-  "filter_by_room_type",
-  "rooms_section",
-  "rooms",
-  "total_rooms",
-  "pricing_section",
-  "subtotal",
-  "discount_type",
-  "discount",
-  "column_break_pricing",
-  "discount_amount",
-  "total_amount",
-  "payment_section",
-  "payment_status",
-  "payment_method",
-  "advance_payment",
-  "column_break_payment",
-  "sales_invoice",
-  "payment_entry",
-  "status_section",
-  "status",
-  "booking_source",
-  "column_break_status",
-  "notes",
-  "internal_notes",
-  "amended_from",
-  "invoices_section",
-  "sales_invoices",
-  "adjustment_invoices_section",
-  "adjustment_invoices"
- ],
- "fields": [
-  {
-   "fieldname": "reservation_type_section",
-   "fieldtype": "Section Break",
-   "label": "Reservation Information"
-  },
-  {
-   "default": "Corporate",
-   "fieldname": "reservation_type",
-   "fieldtype": "Select",
-   "label": "Reservation Type",
-   "options": "Walk-In\nPhone Booking\nEmail Booking\nCorporate\nOther",
-   "reqd": 1
-  },
-  {
-   "fieldname": "reservation_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Reservation Number",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_type",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "user",
-   "fieldname": "created_by_user",
-   "fieldtype": "Link",
-   "label": "Created By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "default": "now",
-   "fieldname": "created_at",
-   "fieldtype": "Datetime",
-   "label": "Created At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "guest_details_section",
-   "fieldtype": "Section Break",
-   "label": "Guest Details"
-  },
-  {
-   "depends_on": "eval:doc.reservation_type=='Corporate'",
-   "description": "Select corporate client (Hotel Guest with type=Corporate)",
-   "fieldname": "corporate_guest",
-   "fieldtype": "Link",
-   "label": "Corporate Guest",
-   "mandatory_depends_on": "eval:doc.reservation_type=='Corporate'",
-   "options": "Hotel Guest"
-  },
-  {
-   "description": "Auto-fetched from Corporate Guest or created for regular guest",
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer"
-  },
-  {
-   "fieldname": "column_break_guest",
-   "fieldtype": "Column Break"
-  },
-  {
-   "description": "Main contact person (for corporate) or guest name",
-   "fieldname": "primary_guest_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Primary Guest Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "primary_guest_email",
-   "fieldtype": "Data",
-   "label": "Email"
-  },
-  {
-   "fieldname": "primary_guest_phone",
-   "fieldtype": "Data",
-   "label": "Phone Number",
-   "reqd": 1
-  },
-  {
-   "fieldname": "dates_section",
-   "fieldtype": "Section Break",
-   "label": "Booking Dates"
-  },
-  {
-   "fieldname": "from_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Check-In Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "to_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Check-Out Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "number_of_nights",
-   "fieldtype": "Int",
-   "label": "Number of Nights",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_dates",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "fieldname": "late_checkin",
-   "fieldtype": "Check",
-   "label": "Late Check-In"
-  },
-  {
-   "fieldname": "room_filter_section",
-   "fieldtype": "Section Break",
-   "label": "Room Selection"
-  },
-  {
-   "description": "Filter available rooms by type",
-   "fieldname": "filter_by_room_type",
-   "fieldtype": "Link",
-   "label": "Filter by Room Type (Optional)",
-   "options": "Hotel Room Type"
-  },
-  {
-   "fieldname": "rooms_section",
-   "fieldtype": "Section Break",
-   "label": "Rooms & Guests"
-  },
-  {
-   "description": "Add multiple rooms and assign guests to each",
-   "fieldname": "rooms",
-   "fieldtype": "Table",
-   "label": "Rooms",
-   "options": "Front Desk Reservation Room",
-   "reqd": 1
-  },
-  {
-   "fieldname": "total_rooms",
-   "fieldtype": "Int",
-   "label": "Total Rooms",
-   "read_only": 1
-  },
-  {
-   "fieldname": "pricing_section",
-   "fieldtype": "Section Break",
-   "label": "Pricing"
-  },
-  {
-   "fieldname": "subtotal",
-   "fieldtype": "Currency",
-   "label": "Subtotal",
-   "read_only": 1
-  },
-  {
-   "fieldname": "discount_type",
-   "fieldtype": "Select",
-   "label": "Discount Type",
-   "options": "\nPercentage\nAmount"
-  },
-  {
-   "depends_on": "eval:doc.discount_type",
-   "fieldname": "discount",
-   "fieldtype": "Float",
-   "label": "Discount"
-  },
-  {
-   "fieldname": "column_break_pricing",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "discount_amount",
-   "fieldtype": "Currency",
-   "label": "Discount Amount",
-   "read_only": 1
-  },
-  {
-   "bold": 1,
-   "fieldname": "total_amount",
-   "fieldtype": "Currency",
-   "label": "Total Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "payment_section",
-   "fieldtype": "Section Break",
-   "label": "Payment & Invoice"
-  },
-  {
-   "default": "Pending",
-   "fieldname": "payment_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Payment Status",
-   "options": "Pending\nPartially Paid\nPaid\nRefunded",
-   "reqd": 1
-  },
-  {
-   "fieldname": "payment_method",
-   "fieldtype": "Select",
-   "label": "Payment Method",
-   "options": "\nCash\nCard\nBank Transfer\nCorporate Account\nOther"
-  },
-  {
-   "fieldname": "advance_payment",
-   "fieldtype": "Currency",
-   "label": "Advance Payment Received"
-  },
-  {
-   "fieldname": "column_break_payment",
-   "fieldtype": "Column Break"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "label": "Sales Invoice",
-   "options": "Sales Invoice",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "payment_entry",
-   "fieldtype": "Link",
-   "label": "Payment Entry",
-   "options": "Payment Entry",
-   "read_only": 1
-  },
-  {
-   "fieldname": "status_section",
-   "fieldtype": "Section Break",
-   "label": "Status & Notes"
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "Draft",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Reservation Status",
-   "options": "Draft\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show",
-   "reqd": 1
-  },
-  {
-   "fieldname": "booking_source",
-   "fieldtype": "Select",
-   "label": "Booking Source",
-   "options": "Front Desk\nPhone\nEmail\nWebsite\nCorporate\nTravel Agent\nOther"
-  },
-  {
-   "fieldname": "column_break_status",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Text",
-   "label": "Guest Notes/Requests"
-  },
-  {
-   "fieldname": "internal_notes",
-   "fieldtype": "Text",
-   "label": "Internal Notes (Staff Only)"
-  },
-  {
-   "fieldname": "invoices_section",
-   "fieldtype": "Section Break",
-   "label": "Invoices"
-  },
-  {
-   "description": "All Sales Invoices created for this reservation (one per room)",
-   "fieldname": "sales_invoices",
-   "fieldtype": "Table",
-   "label": "Sales Invoices",
-   "options": "Hotel Front Desk Reservation Invoice",
-   "read_only": 1
-  },
-  {
-   "fieldname": "adjustment_invoices_section",
-   "fieldtype": "Section Break",
-   "label": "Extension & Reduction Invoices"
-  },
-{
-  "fieldname": "adjustment_invoices",
-  "fieldtype": "Table",
-  "label": "Extension & Reduction Invoices",
-  "options": "Hotel Room Check In Stay Adjustments", 
-  "read_only": 1
-},
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Hotel Front Desk Reservation",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  }
- ],
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [
-  {
-   "link_doctype": "Hotel Room Reservation",
-   "link_fieldname": "front_desk_reservation"
-  },
-  {
-   "link_doctype": "Hotel Room Check In",
-   "link_fieldname": "front_desk_reservation"
-  }
- ],
- "modified": "2025-12-10 01:19:46.992333",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Hotel Front Desk Reservation",
- "naming_rule": "Expression (old style)",
- "owner": "Administrator",
- "permissions": [
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Hotel Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "print": 1,
-   "read": 1,
-   "role": "Hotel Receptionist",
-   "submit": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "track_changes": 1,
- "track_seen": 1
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "format:FDR-{YYYY}-{#####}",
+  "creation": "2025-12-01 12:00:00",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "reservation_type_section",
+    "reservation_type",
+    "reservation_number",
+    "column_break_type",
+    "created_by_user",
+    "created_at",
+    "guest_details_section",
+    "corporate_guest",
+    "customer",
+    "column_break_guest",
+    "primary_guest_name",
+    "primary_guest_email",
+    "primary_guest_phone",
+    "dates_section",
+    "from_date",
+    "number_of_nights",
+    "column_break_dates",
+    "to_date",
+    "room_filter_section",
+    "filter_by_room_type",
+    "rooms_section",
+    "rooms",
+    "total_rooms",
+    "pricing_section",
+    "subtotal",
+    "discount_type",
+    "discount",
+    "column_break_pricing",
+    "discount_amount",
+    "total_amount",
+    "column_break_payment",
+    "sales_invoice",
+    "payment_entry",
+    "status_section",
+    "status",
+    "booking_source",
+    "column_break_status",
+    "notes",
+    "internal_notes",
+    "amended_from",
+    "invoices_section",
+    "sales_invoices",
+    "adjustment_invoices_section",
+    "adjustment_invoices"
+  ],
+  "fields": [
+    {
+      "fieldname": "reservation_type_section",
+      "fieldtype": "Section Break",
+      "label": "Reservation Information"
+    },
+    {
+      "default": "Corporate",
+      "fieldname": "reservation_type",
+      "fieldtype": "Select",
+      "label": "Reservation Type",
+      "options": "Walk-In\nPhone Booking\nEmail Booking\nCorporate\nOther",
+      "reqd": 1
+    },
+    {
+      "fieldname": "reservation_number",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Reservation Number",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_type",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "user",
+      "fieldname": "created_by_user",
+      "fieldtype": "Link",
+      "label": "Created By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "default": "now",
+      "fieldname": "created_at",
+      "fieldtype": "Datetime",
+      "label": "Created At",
+      "read_only": 1
+    },
+    {
+      "fieldname": "guest_details_section",
+      "fieldtype": "Section Break",
+      "label": "Guest Details"
+    },
+    {
+      "depends_on": "eval:doc.reservation_type=='Corporate'",
+      "description": "Select corporate client (Hotel Guest with type=Corporate)",
+      "fieldname": "corporate_guest",
+      "fieldtype": "Link",
+      "label": "Corporate Guest",
+      "mandatory_depends_on": "eval:doc.reservation_type=='Corporate'",
+      "options": "Hotel Guest"
+    },
+    {
+      "description": "Auto-fetched from Corporate Guest or created for regular guest",
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer"
+    },
+    {
+      "fieldname": "column_break_guest",
+      "fieldtype": "Column Break"
+    },
+    {
+      "description": "Main contact person (for corporate) or guest name",
+      "fieldname": "primary_guest_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Primary Guest Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "primary_guest_email",
+      "fieldtype": "Data",
+      "label": "Email"
+    },
+    {
+      "fieldname": "primary_guest_phone",
+      "fieldtype": "Data",
+      "label": "Phone Number",
+      "reqd": 1
+    },
+    {
+      "fieldname": "dates_section",
+      "fieldtype": "Section Break",
+      "label": "Booking Dates"
+    },
+    {
+      "fieldname": "from_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Check-In Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "to_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Check-Out Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "number_of_nights",
+      "fieldtype": "Int",
+      "label": "Number of Nights",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "column_break_dates",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "room_filter_section",
+      "fieldtype": "Section Break",
+      "label": "Room Selection"
+    },
+    {
+      "description": "Filter available rooms by type",
+      "fieldname": "filter_by_room_type",
+      "fieldtype": "Link",
+      "label": "Filter by Room Type (Optional)",
+      "options": "Hotel Room Type"
+    },
+    {
+      "fieldname": "rooms_section",
+      "fieldtype": "Section Break",
+      "label": "Rooms & Guests"
+    },
+    {
+      "description": "Add multiple rooms and assign guests to each",
+      "fieldname": "rooms",
+      "fieldtype": "Table",
+      "label": "Rooms",
+      "options": "Front Desk Reservation Room",
+      "reqd": 1
+    },
+    {
+      "fieldname": "total_rooms",
+      "fieldtype": "Int",
+      "label": "Total Rooms",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pricing_section",
+      "fieldtype": "Section Break",
+      "label": "Pricing"
+    },
+    {
+      "fieldname": "subtotal",
+      "fieldtype": "Currency",
+      "label": "Subtotal",
+      "read_only": 1
+    },
+    {
+      "fieldname": "discount_type",
+      "fieldtype": "Select",
+      "label": "Discount Type",
+      "options": "\nPercentage\nAmount"
+    },
+    {
+      "depends_on": "eval:doc.discount_type",
+      "fieldname": "discount",
+      "fieldtype": "Float",
+      "label": "Discount"
+    },
+    {
+      "fieldname": "column_break_pricing",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "discount_amount",
+      "fieldtype": "Currency",
+      "label": "Discount Amount",
+      "read_only": 1
+    },
+    {
+      "bold": 1,
+      "fieldname": "total_amount",
+      "fieldtype": "Currency",
+      "label": "Total Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_payment",
+      "fieldtype": "Column Break"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "sales_invoice",
+      "fieldtype": "Link",
+      "label": "Sales Invoice",
+      "options": "Sales Invoice",
+      "read_only": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "payment_entry",
+      "fieldtype": "Link",
+      "label": "Payment Entry",
+      "options": "Payment Entry",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status_section",
+      "fieldtype": "Section Break",
+      "label": "Status & Notes"
+    },
+    {
+      "allow_on_submit": 1,
+      "default": "Draft",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Reservation Status",
+      "options": "Draft\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show",
+      "reqd": 1
+    },
+    {
+      "fieldname": "booking_source",
+      "fieldtype": "Select",
+      "label": "Booking Source",
+      "options": "Front Desk\nPhone\nEmail\nWebsite\nCorporate\nTravel Agent\nOther"
+    },
+    {
+      "fieldname": "column_break_status",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Text",
+      "label": "Guest Notes/Requests"
+    },
+    {
+      "fieldname": "internal_notes",
+      "fieldtype": "Text",
+      "label": "Internal Notes (Staff Only)"
+    },
+    {
+      "fieldname": "invoices_section",
+      "fieldtype": "Section Break",
+      "label": "Invoices"
+    },
+    {
+      "description": "All Sales Invoices created for this reservation (one per room)",
+      "fieldname": "sales_invoices",
+      "fieldtype": "Table",
+      "label": "Sales Invoices",
+      "options": "Hotel Front Desk Reservation Invoice",
+      "read_only": 1
+    },
+    {
+      "fieldname": "adjustment_invoices_section",
+      "fieldtype": "Section Break",
+      "label": "Extension & Reduction Invoices"
+    },
+    {
+      "fieldname": "adjustment_invoices",
+      "fieldtype": "Table",
+      "label": "Extension & Reduction Invoices",
+      "options": "Hotel Room Check In Stay Adjustments",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Hotel Front Desk Reservation",
+      "print_hide": 1,
+      "read_only": 1,
+      "search_index": 1
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 1,
+  "links": [
+    {
+      "link_doctype": "Hotel Room Reservation",
+      "link_fieldname": "front_desk_reservation"
+    },
+    {
+      "link_doctype": "Hotel Room Check In",
+      "link_fieldname": "front_desk_reservation"
+    }
+  ],
+  "modified": "2025-12-10 01:19:46.992333",
+  "modified_by": "Administrator",
+  "module": "Rhocom Hotel",
+  "name": "Hotel Front Desk Reservation",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Hotel Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "role": "Hotel Receptionist",
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "track_seen": 1
 }
