@@ -76,8 +76,8 @@ class HallBooking(Document):
 			{
 				"doctype": "Sales Invoice",
 				"customer": self.customer_name,
-				"posting_date": nowdate(),
-				# "posting_date": getdate(self.end_datetime),
+				# "posting_date": nowdate(),
+				"posting_date": getdate(self.end_datetime),
 				"due_date": getdate(self.end_datetime),
 				"set_posting_time": 1,
 				"company": company,

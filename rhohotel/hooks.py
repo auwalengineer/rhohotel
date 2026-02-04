@@ -297,4 +297,5 @@ after_request = "rhohotel.api.add_cors_headers"
 #     ]
 # }
 
+
 doc_events = {"Sales Invoice": {"validate": "rhohotel.overrides.sales_invoice.validate_sales_invoice"}}
