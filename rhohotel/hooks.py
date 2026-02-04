@@ -30,9 +30,9 @@ app_license = "mit"
 # app_include_css = "/assets/rhohotel/css/rhohotel.css"
 # app_include_js = "/assets/rhohotel/js/rhohotel.js"
 app_include_js = [
-    "/assets/rhohotel/js/pos_room_extension.js",
-    "/assets/rhohotel/js/pos_payment.js",
-    "/assets/rhohotel/js/pos_print_invoice_extension.js",
+	"/assets/rhohotel/js/pos_room_extension.js",
+	"/assets/rhohotel/js/pos_payment.js",
+	"/assets/rhohotel/js/pos_print_invoice_extension.js",
 ]
 # include js, css files in header of web template
 # web_include_css = "/assets/rhohotel/css/rhohotel.css"
@@ -55,21 +55,9 @@ app_include_js = [
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
 
+doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
 
-doctype_js = {
-	"Sales Invoice" : "public/js/sales_invoice.js"
-}
-
-fixtures = [{
-                "doctype": "Workflow"
-        },
-			{
-				"doctype": "Workflow State"
-			},
-			{
-				"doctype": "Workflow Action"
-			}
-	]
+fixtures = [{"doctype": "Workflow"}, {"doctype": "Workflow State"}, {"doctype": "Workflow Action"}]
 # Svg Icons
 # ------------------
 # include app icons in desk
@@ -106,7 +94,7 @@ fixtures = [{
 
 # before_install = "rhohotel.install.before_install"
 # after_install = "rhohotel.install.after_install"
-#after_migrate = "rhohotel.rhocom_hotel.patches.add_checkin_room_fields.add_checkin_room_fields"
+# after_migrate = "rhohotel.rhocom_hotel.patches.add_checkin_room_fields.add_checkin_room_fields"
 
 
 # Uninstallation
@@ -177,11 +165,7 @@ fixtures = [{
 # ---------------
 
 scheduler_events = {
-	"cron": {
-        "0 11 * * *": [
-            "rhohotel.rhocom_hotel.auto_close_pos_shift.auto_close_pos_shifts"
-        ]
-    }
+	"cron": {"0 11 * * *": ["rhohotel.rhocom_hotel.auto_close_pos_shift.auto_close_pos_shifts"]}
 }
 
 # Testing
@@ -261,19 +245,19 @@ scheduler_events = {
 # }
 
 doc_events = {
-    "Asset Repair": {
-        "after_insert": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
-        "on_submit": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
-        "on_update": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
-        "after_amend": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
-        "on_cancel": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request"
-    },
+	"Asset Repair": {
+		"after_insert": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+		"on_submit": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+		"on_update": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+		"after_amend": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+		"on_cancel": "rhohotel.rhocom_hotel.utils.asset_repair_events.sync_maintenance_request",
+	},
 }
 
 frappe_csrf_exempt_methods = [
-    "rhohotel.search_available_rooms.search_available_rooms",
-    "rhohotel.hotel_booking.create_booking",
-    "rhohotel.hotel_booking.create_payment_link",
+	"rhohotel.search_available_rooms.search_available_rooms",
+	"rhohotel.hotel_booking.create_booking",
+	"rhohotel.hotel_booking.create_payment_link",
 ]
 
 frappe.csrf_exempt_methods = frappe_csrf_exempt_methods
@@ -284,7 +268,6 @@ after_request = "rhohotel.api.add_cors_headers"
 # override_doctype_class = {
 #     "POS Invoice": "rhocom_hotel.pos_invoice.pos_invoice.POSInvoice"
 # }
-
 
 
 # Scheduled Tasks
@@ -313,3 +296,5 @@ after_request = "rhohotel.api.add_cors_headers"
 #         "rhohotel.background_jobs.cleanup_expired_booking_rooms"
 #     ]
 # }
+
+doc_events = {"Sales Invoice": {"validate": "rhohotel.overrides.sales_invoice.validate_sales_invoice"}}

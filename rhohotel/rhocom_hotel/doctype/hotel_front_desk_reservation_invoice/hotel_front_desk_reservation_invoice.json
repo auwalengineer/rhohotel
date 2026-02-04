@@ -1,71 +1,71 @@
 {
- "actions": [],
- "creation": "2025-12-04 14:49:19.219290",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "room_number",
-  "guest_name",
-  "sales_invoice",
-  "amount",
-  "created_at"
- ],
- "fields": [
-  {
-   "fieldname": "room_number",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Room",
-   "options": "Hotel Room",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "guest_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Guest Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Sales Invoice",
-   "options": "Sales Invoice",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "created_at",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Created At",
-   "read_only": 1
-  }
- ],
- "istable": 1,
- "links": [],
- "modified": "2025-12-04 15:42:45.557510",
- "modified_by": "Administrator",
- "module": "Rhocom Hotel",
- "name": "Hotel Front Desk Reservation Invoice",
- "owner": "Administrator",
- "permissions": [],
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+    "actions": [],
+    "creation": "2025-12-04 14:49:19.219290",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "room_number",
+        "guest_name",
+        "sales_invoice",
+        "amount",
+        "created_at"
+    ],
+    "fields": [
+        {
+            "fieldname": "room_number",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Room",
+            "options": "Hotel Room",
+            "read_only": 1,
+            "reqd": 1
+        },
+        {
+            "fieldname": "guest_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Guest Name",
+            "read_only": 1
+        },
+        {
+            "fieldname": "sales_invoice",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Sales Invoice",
+            "options": "Sales Invoice",
+            "read_only": 1,
+            "reqd": 1
+        },
+        {
+            "fieldname": "amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Amount",
+            "read_only": 1
+        },
+        {
+            "fieldname": "created_at",
+            "fieldtype": "Datetime",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Created At",
+            "read_only": 1
+        }
+    ],
+    "istable": 1,
+    "links": [],
+    "modified": "2025-12-04 15:42:45.557510",
+    "modified_by": "Administrator",
+    "module": "Rhocom Hotel",
+    "name": "Hotel Front Desk Reservation Invoice",
+    "owner": "Administrator",
+    "permissions": [],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
 }

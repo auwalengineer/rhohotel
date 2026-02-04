@@ -8,11 +8,8 @@
   "editable_grid": 1,
   "engine": "InnoDB",
   "field_order": [
-    "reservation_type_section",
-    "reservation_type",
     "reservation_number",
-    "column_break_type",
-    "created_by_user",
+    "column_break_1",
     "created_at",
     "guest_details_section",
     "corporate_guest",
@@ -42,29 +39,23 @@
     "sales_invoice",
     "payment_entry",
     "status_section",
-    "status",
-    "booking_source",
+    "column_break_stgm",
     "column_break_status",
-    "notes",
-    "internal_notes",
     "amended_from",
     "invoices_section",
     "sales_invoices",
     "adjustment_invoices_section",
-    "adjustment_invoices"
+    "adjustment_invoices",
+    "reservation_type"
   ],
   "fields": [
-    {
-      "fieldname": "reservation_type_section",
-      "fieldtype": "Section Break",
-      "label": "Reservation Information"
-    },
     {
       "default": "Corporate",
       "fieldname": "reservation_type",
       "fieldtype": "Select",
+      "hidden": 1,
       "label": "Reservation Type",
-      "options": "Walk-In\nPhone Booking\nEmail Booking\nCorporate\nOther",
+      "options": "Corporate\nIndividual",
       "reqd": 1
     },
     {
@@ -76,21 +67,14 @@
       "read_only": 1
     },
     {
-      "fieldname": "column_break_type",
+      "fieldname": "column_break_1",
       "fieldtype": "Column Break"
-    },
-    {
-      "default": "user",
-      "fieldname": "created_by_user",
-      "fieldtype": "Link",
-      "label": "Created By",
-      "options": "User",
-      "read_only": 1
     },
     {
       "default": "now",
       "fieldname": "created_at",
       "fieldtype": "Datetime",
+      "hidden": 1,
       "label": "Created At",
       "read_only": 1
     },
@@ -100,42 +84,43 @@
       "label": "Guest Details"
     },
     {
-      "depends_on": "eval:doc.reservation_type=='Corporate'",
       "description": "Select corporate client (Hotel Guest with type=Corporate)",
       "fieldname": "corporate_guest",
       "fieldtype": "Link",
       "label": "Corporate Guest",
-      "mandatory_depends_on": "eval:doc.reservation_type=='Corporate'",
-      "options": "Hotel Guest"
+      "options": "Hotel Guest",
+      "reqd": 1
     },
     {
-      "description": "Auto-fetched from Corporate Guest or created for regular guest",
+      "description": "Auto-fetched from Corporate Guest",
       "fieldname": "customer",
       "fieldtype": "Link",
       "label": "Customer",
-      "options": "Customer"
+      "options": "Customer",
+      "read_only": 1
     },
     {
       "fieldname": "column_break_guest",
       "fieldtype": "Column Break"
     },
     {
-      "description": "Main contact person (for corporate) or guest name",
+      "description": "Main contact person",
       "fieldname": "primary_guest_name",
       "fieldtype": "Data",
       "in_list_view": 1,
-      "label": "Primary Guest Name",
+      "label": "Contact Person Name",
       "reqd": 1
     },
     {
       "fieldname": "primary_guest_email",
       "fieldtype": "Data",
-      "label": "Email"
+      "label": "Contact Person Email",
+      "options": "Email"
     },
     {
       "fieldname": "primary_guest_phone",
       "fieldtype": "Data",
-      "label": "Phone Number",
+      "label": "Contact Person Phone Number",
       "reqd": 1
     },
     {
@@ -265,35 +250,8 @@
       "label": "Status & Notes"
     },
     {
-      "allow_on_submit": 1,
-      "default": "Draft",
-      "fieldname": "status",
-      "fieldtype": "Select",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "label": "Reservation Status",
-      "options": "Draft\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show",
-      "reqd": 1
-    },
-    {
-      "fieldname": "booking_source",
-      "fieldtype": "Select",
-      "label": "Booking Source",
-      "options": "Front Desk\nPhone\nEmail\nWebsite\nCorporate\nTravel Agent\nOther"
-    },
-    {
       "fieldname": "column_break_status",
       "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "notes",
-      "fieldtype": "Text",
-      "label": "Guest Notes/Requests"
-    },
-    {
-      "fieldname": "internal_notes",
-      "fieldtype": "Text",
-      "label": "Internal Notes (Staff Only)"
     },
     {
       "fieldname": "invoices_section",
@@ -329,6 +287,10 @@
       "print_hide": 1,
       "read_only": 1,
       "search_index": 1
+    },
+    {
+      "fieldname": "column_break_stgm",
+      "fieldtype": "Column Break"
     }
   ],
   "index_web_pages_for_search": 1,
@@ -343,7 +305,7 @@
       "link_fieldname": "front_desk_reservation"
     }
   ],
-  "modified": "2025-12-10 01:19:46.992333",
+  "modified": "2026-02-03 15:08:47.798935",
   "modified_by": "Administrator",
   "module": "Rhocom Hotel",
   "name": "Hotel Front Desk Reservation",

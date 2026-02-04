@@ -115,11 +115,11 @@
             "read_only": 1
         },
         {
-            "default": "Flat Amount",
+            "default": "Amount",
             "fieldname": "discount_type",
             "fieldtype": "Select",
             "label": "Discount Type",
-            "options": "Percentage\nFlat Amount"
+            "options": "Percentage\nAmount"
         },
         {
             "default": "0",
@@ -171,8 +171,7 @@
             "label": "Payment Status",
             "options": "Pending\nPaid\nPartly Paid\nFailed\nRefunded",
             "allow_on_submit": 1,
-            "read_only":1
-            
+            "read_only": 1
         },
         {
             "description": "Rooms held until this time while awaiting payment",
