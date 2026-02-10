@@ -115,11 +115,11 @@
             "read_only": 1
         },
         {
-            "default": "Amount",
+            "default": "None",
             "fieldname": "discount_type",
             "fieldtype": "Select",
             "label": "Discount Type",
-            "options": "Percentage\nAmount"
+            "options": "None\nPercentage\nAmount"
         },
         {
             "default": "0",

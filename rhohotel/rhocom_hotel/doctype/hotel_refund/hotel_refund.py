@@ -104,13 +104,16 @@ def create_payment_entry(refund_name):
     refund_amount = refund.refund_amount
     
     credit_note = frappe.get_doc("Sales Invoice", refund.credit_note)
+    
+    # get default paid from account
+    
 
     # Create Payment Entry
     payment_entry = frappe.new_doc("Payment Entry")
     payment_entry.payment_type = "Pay"
     payment_entry.party_type = "Customer"
     payment_entry.party = customer
-    payment_entry.paid_from = "Cash - P"  # You may adjust account
+    payment_entry.paid_from = "1310 - Debtors - WRH"  # You may adjust account
     payment_entry.paid_to = credit_note.debit_to
     payment_entry.paid_amount = refund_amount
     payment_entry.received_amount = refund_amount

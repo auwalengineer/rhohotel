@@ -46,95 +46,95 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			});
 		}
 
-if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
-	frm.add_custom_button(__("Receive Payment"), () => {
+		if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
+			frm.add_custom_button(__("Receive Payment"), () => {
 
-		frappe.call({
-			method: "frappe.client.get",
-			args: {
-				doctype: "Sales Invoice",
-				name: frm.doc.sales_invoice
-			},
-			callback(r) {
-				if (!r.message) return;
+				frappe.call({
+					method: "frappe.client.get",
+					args: {
+						doctype: "Sales Invoice",
+						name: frm.doc.sales_invoice
+					},
+					callback(r) {
+						if (!r.message) return;
 
-				const outstanding = r.message.outstanding_amount || 0;
+						const outstanding = r.message.outstanding_amount || 0;
 
-				const d = new frappe.ui.Dialog({
-					title: __("Receive Payment"),
-					fields: [
-						{
-							fieldname: "payment_date",
-							label: "Payment Date",
-							fieldtype: "Date",
-							default: frappe.datetime.nowdate(),
-							reqd: 1
-						},
-						{
-							fieldname: "payment_mode",
-							label: "Mode of Payment",
-							fieldtype: "Link",
-							options: "Mode of Payment",
-							reqd: 1
-						},
-						{
-							fieldname: "paid_amount",
-							label: "Amount Paid",
-							fieldtype: "Currency",
-							default: outstanding,   // ✅ OUTSTANDING BALANCE
-							reqd: 1
-						},
-						{
-							fieldname: "reference_no",
-							label: "Reference No",
-							fieldtype: "Data"
-						},
-						{
-							fieldname: "reference_date",
-							label: "Reference Date",
-							fieldtype: "Date"
-						},
-						{
-							fieldname: "remarks",
-							label: "Remarks",
-							fieldtype: "Small Text"
-						}
-					],
-					primary_action_label: __("Submit Payment"),
-					primary_action(values) {
-
-						if (values.paid_amount <= 0) {
-							frappe.msgprint(__("Paid amount must be greater than zero."));
-							return;
-						}
-
-						frappe.call({
-							method: "rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.create_payment_entry",
-							args: {
-								reservation: frm.doc.name,
-								data: values
-							},
-							freeze: true,
-							callback(r) {
-								if (!r.exc) {
-									frappe.msgprint({
-										title: __("Payment Successful"),
-										message: __("Payment Entry {0} created.", [r.message]),
-										indicator: "green"
-									});
-									d.hide();
-									frm.reload_doc();
+						const d = new frappe.ui.Dialog({
+							title: __("Receive Payment"),
+							fields: [
+								{
+									fieldname: "payment_date",
+									label: "Payment Date",
+									fieldtype: "Date",
+									default: frappe.datetime.nowdate(),
+									reqd: 1
+								},
+								{
+									fieldname: "payment_mode",
+									label: "Mode of Payment",
+									fieldtype: "Link",
+									options: "Mode of Payment",
+									reqd: 1
+								},
+								{
+									fieldname: "paid_amount",
+									label: "Amount Paid",
+									fieldtype: "Currency",
+									default: outstanding,   // ✅ OUTSTANDING BALANCE
+									reqd: 1
+								},
+								{
+									fieldname: "reference_no",
+									label: "Reference No",
+									fieldtype: "Data"
+								},
+								{
+									fieldname: "reference_date",
+									label: "Reference Date",
+									fieldtype: "Date"
+								},
+								{
+									fieldname: "remarks",
+									label: "Remarks",
+									fieldtype: "Small Text"
 								}
+							],
+							primary_action_label: __("Submit Payment"),
+							primary_action(values) {
+
+								if (values.paid_amount <= 0) {
+									frappe.msgprint(__("Paid amount must be greater than zero."));
+									return;
+								}
+
+								frappe.call({
+									method: "rhohotel.rhocom_hotel.doctype.hotel_room_reservation.hotel_room_reservation.create_payment_entry",
+									args: {
+										reservation: frm.doc.name,
+										data: values
+									},
+									freeze: true,
+									callback(r) {
+										if (!r.exc) {
+											frappe.msgprint({
+												title: __("Payment Successful"),
+												message: __("Payment Entry {0} created.", [r.message]),
+												indicator: "green"
+											});
+											d.hide();
+											frm.reload_doc();
+										}
+									}
+								});
 							}
 						});
+
+						d.show();
 					}
 				});
-
-				d.show();
-			}
-		});
-	});
-}
+			});
+		}
 
 		if (frm.doc.docstatus === 1 && !frm.doc.actual_check_out_datetime) {
 			frm.add_custom_button(__('Adjust Reservation'), () => {
@@ -155,7 +155,81 @@ if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
 									label: __('From Date'),
 									fieldname: 'from_date',
 									fieldtype: 'Datetime',
-									default: frm.doc.from_date
+									default: frm.doc.from_date,
+									onchange: function () {
+										let new_from_date_str = d.get_value('from_date');
+										let new_checkout = d.get_value('new_checkout');
+
+										if (!new_from_date_str) return;
+
+										// Auto-set time to 11:00:00
+										const selected_date = new_from_date_str.split(" ")[0];
+										const new_from_datetime_with_default_time = selected_date + " 11:00:00";
+
+										// Update the field with default time
+										if (new_from_date_str !== new_from_datetime_with_default_time) {
+											d.set_value('from_date', new_from_datetime_with_default_time);
+											return; // onchange will trigger again with correct value
+										}
+
+										if (!new_checkout) return;
+
+										// let from = frappe.datetime.str_to_obj(new_from_datetime_with_default_time);
+										// from.setHours(0, 0, 0, 0);
+
+										// Recalculate nights based on new from_date
+										// let diff_days = frappe.datetime.get_day_diff(new_checkout, from);
+										let diff_days = frappe.datetime.get_day_diff(new_checkout, new_from_datetime_with_default_time);
+										if (diff_days < 1) diff_days = 1;
+
+										// Update current nights display
+										d.set_value('current_nights', frm.doc.number_of_nights || 1);
+										d.set_value('new_nights', diff_days);
+
+										// Calculate night difference
+										let current_nights = frm.doc.number_of_nights || 1;
+										let nights_diff = diff_days - current_nights;
+										d.set_value('nights_difference', nights_diff);
+
+										// Calculate amount
+										let room_rate = frm.doc.rate || 0;
+										let amount_change = nights_diff * room_rate;
+										d.set_value('amount_change', amount_change);
+
+										// Calculate new total with discount
+										let new_discount = d.get_value('new_discount') || 0;
+										let discount_type = d.get_value('discount_type') || 'None';
+
+										if (discount_type === 'None') {
+											new_discount = 0;
+										} else if (discount_type === 'Percentage') {
+											new_discount = (diff_days * room_rate) * (new_discount / 100);
+										}
+
+										let new_total = (diff_days * room_rate) - new_discount;
+										d.set_value('new_total_amount', new_total);
+
+										// Update adjustment type
+										let current_checkout = frm.doc.to_date;
+										let current_dt = frappe.datetime.str_to_obj(current_checkout);
+										let selected_dt = frappe.datetime.str_to_obj(new_checkout);
+
+										let type = '';
+										let type_color = '';
+										if (selected_dt > current_dt) {
+											type = 'Extension';
+											type_color = 'blue';
+										} else if (selected_dt < current_dt) {
+											type = 'Reduction';
+											type_color = 'orange';
+										} else {
+											type = 'No Change';
+											type_color = 'grey';
+										}
+
+										d.set_value('adjustment_type', type);
+										d.fields_dict.adjustment_type.$wrapper.find('.control-value').css('color', type_color);
+									}
 								},
 								{
 									label: __('To Date'),
@@ -226,14 +300,23 @@ if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
 										d.set_value('adjustment_type', type);
 										d.fields_dict.adjustment_type.$wrapper.find('.control-value').css('color', type_color);
 
-										let from = frappe.datetime.str_to_obj(frm.doc.from_date);
+										// let from = frappe.datetime.str_to_obj(frm.doc.from_date);
 
-										from.setHours(0, 0, 0, 0);
+										// from.setHours(0, 0, 0, 0);
+										// Calculate difference in nights
+										// let diff_days = frappe.datetime.get_day_diff(
+										// 	new_datetime_with_default_time,
+										// 	from
+										// );
+
+										let from_date_value = d.get_value('from_date') || frm.doc.from_date;
+
 										// Calculate difference in nights
 										let diff_days = frappe.datetime.get_day_diff(
 											new_datetime_with_default_time,
-											from
+											from_date_value
 										);
+
 										if (diff_days < 1) diff_days = 1;
 										d.set_value('new_nights', diff_days);
 
@@ -298,11 +381,11 @@ if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
 									label: __('Discount')
 								},
 								{
-									label: __('Current Discount'),
-									fieldname: 'current_discount',
-									fieldtype: 'Currency',
-									default: frm.doc.discount || 0,
-									read_only: 1
+									label: __('Discount Type'),
+									fieldname: 'discount_type',
+									fieldtype: 'Select',
+									options: 'None\nPercentage\nAmount',
+									default: frm.doc.discount_type || 'None'
 								},
 								{
 									fieldtype: 'Column Break'
@@ -316,12 +399,21 @@ if (frm.doc.sales_invoice && frm.doc.docstatus === 1) {
 									onchange: function () {
 										let new_discount = d.get_value('new_discount') || 0;
 										let new_nights = d.get_value('new_nights') || 1;
-										let room_rate = frm.doc.rate_amount || 0;
+										let room_rate = frm.doc.rate || 0;
+										discount_type = d.get_value('discount_type');
 
+										if (discount_type === 'None') {
+											new_discount = 0;
+										} else if (discount_type === 'Percentage') {
+											new_discount = (new_nights * room_rate) * (new_discount / 100);
+										}
+
+										// Calculate new total
 										let new_total = (new_nights * room_rate) - new_discount;
 										d.set_value('new_total_amount', new_total);
 									}
 								}
+
 							],
 							primary_action_label: __('Confirm Adjustment'),
 							primary_action: (values) => {
