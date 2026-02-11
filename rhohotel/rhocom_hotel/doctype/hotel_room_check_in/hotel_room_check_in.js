@@ -3,6 +3,9 @@
 
 frappe.ui.form.on("Hotel Room Check In", {
     refresh(frm) {
+        frm.add_custom_button(__('Front Desk'), () => {
+            frappe.set_route('front-desk');
+        });
 
         // set fields as read-only
         if (frm.doc.docstatus === 1) {

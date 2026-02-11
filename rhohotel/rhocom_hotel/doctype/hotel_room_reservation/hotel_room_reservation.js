@@ -4,6 +4,10 @@
 frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
 
+        frm.add_custom_button(__('Front Desk'), () => {
+            frappe.set_route('front-desk');
+        });
+
 
 		// add Check In button if status is Booked
 		if (!frm.is_new() && frm.doc.docstatus === 1) {
