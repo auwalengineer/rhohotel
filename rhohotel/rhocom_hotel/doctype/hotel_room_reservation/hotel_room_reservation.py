@@ -835,12 +835,12 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discoun
 		frappe.throw("New checkout/checkin is the same as current checkout/checkin. No adjustment needed.")
 
 	# VALIDATION 2
-	if new_dt <= checkin_dt:
-		frappe.throw("New checkout must be after check-in date/time.")
+	# if new_dt <= checkin_dt:
+	# 	frappe.throw("New checkout must be after check-in date/time.")
 
-	# VALIDATION 3
-	if new_dt < now_dt:
-		frappe.throw("New checkout cannot be in the past.")
+	# # VALIDATION 3
+	# if new_dt < now_dt:
+	# 	frappe.throw("New checkout cannot be in the past.")
 
 	# Determine adjustment type
 	adjustment_type = "Extension" if new_dt > current_dt else "Reduction"

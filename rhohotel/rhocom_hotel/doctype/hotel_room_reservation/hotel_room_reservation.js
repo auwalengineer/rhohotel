@@ -155,6 +155,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									label: __('From Date'),
 									fieldname: 'from_date',
 									fieldtype: 'Datetime',
+								reqd: 1,
 									default: frm.doc.from_date,
 									onchange: function () {
 										let new_from_date_str = d.get_value('from_date');
@@ -445,27 +446,27 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									return;
 								}
 
-								// VALIDATION 1: Must be after check-in datetime
-								if (new_dt <= checkin_dt) {
-									frappe.msgprint({
-										title: __("Invalid Date"),
-										indicator: "red",
-										message: __("New checkout must be after the check-in date/time: {0}",
-											[frappe.datetime.global_format(checkin_dt)])
-									});
-									return;
-								}
+								// // VALIDATION 1: Must be after check-in datetime
+								// if (new_dt <= checkin_dt) {
+								// 	frappe.msgprint({
+								// 		title: __("Invalid Date"),
+								// 		indicator: "red",
+								// 		message: __("New checkout must be after the check-in date/time: {0}",
+								// 			[frappe.datetime.str_to_user(checkin_dt)])
+								// 	});
+								// 	return;
+								// }
 
 								// VALIDATION 2: Cannot be in the past
-								if (new_dt < now_dt) {
-									frappe.msgprint({
-										title: __("Invalid Date"),
-										indicator: "red",
-										message: __("New checkout cannot be in the past. Current time is: {0}",
-											[frappe.datetime.global_format(now_dt)])
-									});
-									return;
-								}
+								// if (new_dt < now_dt) {
+								// 	frappe.msgprint({
+								// 		title: __("Invalid Date"),
+								// 		indicator: "red",
+								// 		message: __("New checkout cannot be in the past. Current time is: {0}",
+								// 			[frappe.datetime.str_to_user(now_dt)])
+								// 	});
+								// 	return;
+								// }
 
 								// VALIDATION 3: For REDUCTION only - special rules for "today"
 								if (is_reduction) {
@@ -478,7 +479,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 												title: __("Not Allowed"),
 												indicator: "red",
 												message: __("Reducing stay to today is not allowed because the hotel's default checkout time for today ({0}) has already passed.",
-													[frappe.datetime.global_format(default_dt)])
+													[frappe.datetime.str_to_user(default_dt)])
 											});
 											return;
 										}
@@ -489,7 +490,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 												title: __("Invalid Time"),
 												indicator: "red",
 												message: __("For today, new checkout must be on or before the hotel's default checkout time: {0}",
-													[frappe.datetime.global_format(default_dt)])
+													[frappe.datetime.str_to_user(default_dt)])
 											});
 											return;
 										}
