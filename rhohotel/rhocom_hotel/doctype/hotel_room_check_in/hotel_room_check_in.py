@@ -172,7 +172,7 @@ class HotelRoomCheckIn(Document):
 		self.make_sales_invoice()
 
 		if self.reservation:
-			frappe.db.set_value("Hotel Room Reservation", self.reservation, "status", "Checked-In")
+			frappe.db.set_value("Hotel Room Reservation", self.reservation, "status", "Completed")
 
 		frappe.publish_realtime("rhohotel_front_desk_update")
 
