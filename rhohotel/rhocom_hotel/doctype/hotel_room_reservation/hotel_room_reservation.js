@@ -4,9 +4,9 @@
 frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
 
-        frm.add_custom_button(__('Front Desk'), () => {
-            frappe.set_route('front-desk');
-        });
+		frm.add_custom_button(__('Front Desk'), () => {
+			frappe.set_route('front-desk');
+		});
 
 
 		// add Check In button if status is Booked
@@ -159,7 +159,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 									label: __('From Date'),
 									fieldname: 'from_date',
 									fieldtype: 'Datetime',
-								reqd: 1,
+									reqd: 1,
 									default: frm.doc.from_date,
 									onchange: function () {
 										let new_from_date_str = d.get_value('from_date');
@@ -406,6 +406,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 										let new_nights = d.get_value('new_nights') || 1;
 										let room_rate = frm.doc.rate || 0;
 										discount_type = d.get_value('discount_type');
+
+										if (discount_type === 'Flat Amount') {
+											discount_type = 'Amount';
+										}
 
 										if (discount_type === 'None') {
 											new_discount = 0;
