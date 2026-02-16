@@ -85,3 +85,144 @@ def make_check_out(checkin_name):
 		ci.submit()
 
 	return {"success": True, "checkin": ci.name}
+
+
+@frappe.whitelist()
+def get_checkin_invoice_list(check_in):
+	"""Return compact list of invoices and totals for a check-in."""
+	if not check_in:
+		frappe.throw("Check-in not supplied")
+
+	invoices = frappe.get_all(
+		"Sales Invoice",
+		filters={"custom_hotel_room_check_in": check_in},
+		fields=["name", "posting_date", "grand_total", "outstanding_amount", "docstatus", "customer"],
+		order_by="posting_date desc",
+	)
+
+	total_invoiced = sum(i.grand_total or 0 for i in invoices)
+	total_outstanding = sum(i.outstanding_amount or 0 for i in invoices)
+
+	return {"invoices": invoices, "total_invoiced": total_invoiced, "total_outstanding": total_outstanding}
+
+
+@frappe.whitelist()
+def collect_payment_for_checkin(check_in, allocations=None, payment_info=None):
+	"""Create and submit a Payment Entry for a Hotel Room Check In.
+
+	allocations: JSON string or list of {invoice: name, amount: value}
+	payment_info: JSON string or dict with keys: mode_of_payment, paid_amount, reference_no, reference_date, remarks
+	Returns: dict with payment_entry name
+	"""
+	import json
+
+	if not check_in:
+		frappe.throw("Check-in not supplied")
+
+	allocations = json.loads(allocations) if allocations and isinstance(allocations, str) else (allocations or [])
+	payment_info = json.loads(payment_info) if payment_info and isinstance(payment_info, str) else (payment_info or {})
+
+	# Fetch check-in and guest/customer
+	ci = frappe.get_doc("Hotel Room Check In", check_in)
+	guest = None
+	customer = None
+	try:
+		if ci.guest:
+			guest = frappe.get_doc("Hotel Guest", ci.guest)
+			customer = guest.customer
+	except Exception:
+		customer = None
+
+	total_paid = sum([float(a.get("amount") or 0) for a in allocations]) if allocations else float(payment_info.get("paid_amount") or 0)
+
+	pe = frappe.new_doc("Payment Entry")
+	pe.payment_type = "Receive"
+	pe.party_type = "Customer"
+	pe.party = customer or ci.guest or ""
+	pe.paid_amount = total_paid
+	pe.received_amount = total_paid
+	pe.mode_of_payment = payment_info.get("mode_of_payment") or payment_info.get("mode") or "Cash"
+	if payment_info.get("reference_no"):
+		pe.reference_no = payment_info.get("reference_no")
+	if payment_info.get("reference_date"):
+		pe.reference_date = payment_info.get("reference_date")
+	if payment_info.get("remarks"):
+		pe.remarks = payment_info.get("remarks")
+
+	# link to check-in for traceability
+	pe.custom_hotel_room_check_in = check_in
+
+	# Append references
+	for alloc in allocations:
+		inv = alloc.get("invoice") or alloc.get("invoice_name") or alloc.get("name")
+		amt = float(alloc.get("amount") or 0)
+		if not inv or amt <= 0:
+			continue
+		pe.append("references", {
+			"reference_doctype": "Sales Invoice",
+			"reference_name": inv,
+			"allocated_amount": amt,
+		})
+
+	try:
+		pe.insert(ignore_permissions=True)
+		# try to submit if possible
+		try:
+			pe.submit()
+		except Exception:
+			# if submission fails due to workflow/accounts, keep as draft but return name
+			frappe.log_error(frappe.get_traceback(), "Payment Entry submit failed from collect_payment_for_checkin")
+
+		frappe.db.commit()
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Failed to create Payment Entry from front desk")
+		frappe.throw("Failed to create payment entry")
+
+	return {"payment_entry": pe.name}
+
+
+@frappe.whitelist()
+def collect_payment_and_checkout(check_in, allocations=None, payment_info=None, force_checkout=False):
+	"""Collect payment (if any) and perform checkout for a check-in.
+
+	If outstanding invoices remain after payment and force_checkout is False, raise.
+	If force_checkout is True, user must have Manager/System Manager role.
+	"""
+	import json
+
+	if isinstance(force_checkout, str):
+		force_checkout = force_checkout.lower() in ("1", "true", "yes")
+
+	# First collect payment if provided
+	if allocations or (payment_info and (payment_info.get("paid_amount") or (isinstance(payment_info, dict) and payment_info.get('paid_amount')))):
+		res = collect_payment_for_checkin(check_in, allocations=allocations, payment_info=payment_info)
+		payment_entry = res.get("payment_entry")
+	else:
+		payment_entry = None
+
+	# Re-check outstanding invoices
+	invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in, "outstanding_amount": [">", 0]}, fields=["name", "outstanding_amount"]) or []
+	if invoices and len(invoices) > 0:
+		if not force_checkout:
+			frappe.throw("Outstanding invoices remain. Collect payment or use force checkout with manager authorization.")
+		# check roles
+		roles = frappe.get_roles(frappe.session.user)
+		if "System Manager" not in roles and "Hotel Manager" not in roles:
+			frappe.throw("Only a manager can perform a force checkout")
+
+	# perform checkout using existing helper
+	check_out_res = make_check_out(check_in)
+
+	return {"payment_entry": payment_entry, "checkout": check_out_res}
+
+
+@frappe.whitelist()
+def create_payment_receipt(payment_entry):
+	"""Return a PDF download URL for a Payment Entry using the Payment Receipt print format."""
+	if not payment_entry:
+		frappe.throw("Payment entry not supplied")
+
+	# Use frappe print format download endpoint
+	site_url = frappe.utils.get_url()
+	pd_url = f"/api/method/frappe.utils.print_format.download_pdf?doctype=Payment%20Entry&name={payment_entry}&format=Payment%20Receipt"
+	return {"print_url": site_url + pd_url}
