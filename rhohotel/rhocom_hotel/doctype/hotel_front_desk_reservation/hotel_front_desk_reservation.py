@@ -715,7 +715,7 @@ def check_in_rooms_in_bulk_invoice(reservation_name, room_indices, check_in_note
 					"check_in_notes": check_in_notes,
 					"sales_invoice": reservation.sales_invoice,
 					"is_bulk_invoice_room": 1,
-					"discount": reservation.discount_amount or 0,
+					"discount": reservation.discount or 0,
 					"discount_type": reservation.discount_type or "None",
 					"total_charges": room.room_total,
 				}
