@@ -278,7 +278,7 @@ class HotelFrontDeskReservation(frappe.model.document.Document):
 		if self.discount_type and self.discount:
 			if self.discount_type == "Percentage":
 				self.discount_amount = (self.subtotal * self.discount) / 100
-			elif self.discount_type == "Amount":
+			elif self.discount_type == "Fixed Amount":
 				self.discount_amount = self.discount
 
 		self.total_amount = max(0, self.subtotal - self.discount_amount)

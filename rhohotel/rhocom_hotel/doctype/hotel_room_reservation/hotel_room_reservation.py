@@ -126,13 +126,7 @@ def make_invoice(name):
 	if not doc.customer:
 		doc.customer = get_or_create_customer_for_guest(doc.guest_name, doc.guest_phone, doc.guest_email)
 
-	if doc.discount_type == "Flat Amount":
-		doc.discount_type = "Amount"
-		doc.save()
-		# frappe.db.set_value(
-		# 	"Hotel Room Reservation", doc.name, "discount_type", "Amount", update_modified=False
-		# )
-		# doc.reload()
+	
 
 	room = frappe.get_doc("Hotel Room", doc.room_number)
 
@@ -184,12 +178,6 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discoun
 	if not doc.customer:
 		doc.customer = get_or_create_customer_for_guest(doc.guest_name, doc.guest_phone, doc.guest_email)
 
-	if doc.discount_type == "Flat Amount":
-		doc.discount_type = "Amount"
-		frappe.db.set_value(
-			"Hotel Room Reservation", doc.name, "discount_type", "Amount", update_modified=False
-		)
-		doc.reload()
 
 	# Convert to datetime objects
 	new_dt = get_datetime(new_checkout)
@@ -533,8 +521,6 @@ def change_reservation_room(reservation_name, new_room_number, reason=None):
 	old_room = doc.room_number
 	doc.room_number = new_room_number
 
-	if(doc.discount_type == "Flat Amount"):
-		doc.discount_type = "Amount"
 
 	doc.save(ignore_permissions=True)
 

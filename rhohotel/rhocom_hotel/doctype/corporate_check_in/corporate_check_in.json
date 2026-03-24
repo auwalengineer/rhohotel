@@ -126,7 +126,7 @@
       "fieldname": "discount_type",
       "fieldtype": "Select",
       "label": "Discount Type",
-      "options": "\nPercentage\nAmount"
+      "options": "\nPercentage\nFixed Amount"
     },
     {
       "depends_on": "eval:doc.discount_type",

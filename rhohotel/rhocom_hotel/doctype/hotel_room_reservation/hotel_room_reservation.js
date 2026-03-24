@@ -389,7 +389,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 											label: __('Discount Type'),
 											fieldname: 'discount_type',
 											fieldtype: 'Select',
-											options: 'None\nPercentage\nAmount',
+											options: 'None\nPercentage\nFixed Amount',
 											default: frm.doc.discount_type || 'None'
 										},
 										{
@@ -407,9 +407,6 @@ frappe.ui.form.on('Hotel Room Reservation', {
 												let room_rate = frm.doc.rate || 0;
 												discount_type = d.get_value('discount_type');
 
-												if (discount_type === 'Flat Amount') {
-													discount_type = 'Amount';
-												}
 
 												if (discount_type === 'None') {
 													new_discount = 0;

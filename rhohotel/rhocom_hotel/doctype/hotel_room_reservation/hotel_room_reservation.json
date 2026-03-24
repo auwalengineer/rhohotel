@@ -120,7 +120,7 @@
             "fieldname": "discount_type",
             "fieldtype": "Select",
             "label": "Discount Type",
-            "options": "None\nPercentage\nAmount"
+            "options": "None\nPercentage\nFixed Amount"
         },
         {
             "default": "0",
