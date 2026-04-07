@@ -1196,6 +1196,8 @@ def get_available_rooms(from_date, to_date, room_type=None):
 			return []
 
 		room_numbers = [r.name for r in all_rooms]
+		requested_check_in = f"{from_date_obj} 12:00:00"
+		requested_check_out = f"{to_date_obj} 12:00:00"
 		# return all_rooms
 
 		# ✅ CRITICAL FIX #1: Exclude rooms with active holds from Temporary Booking
@@ -1224,11 +1226,14 @@ def get_available_rooms(from_date, to_date, room_type=None):
             SELECT DISTINCT room_number
             FROM `tabHotel Room Reservation`
             WHERE room_number IN ({rooms})
+            AND docstatus != 2
             AND status NOT IN ('Cancelled', 'Completed')
-            AND from_date < %s
-            AND to_date > %s
+            AND NOT (
+                TIMESTAMP(DATE(to_date), '12:00:00') <= %s
+                OR TIMESTAMP(DATE(from_date), '12:00:00') >= %s
+            )
         """.format(rooms=", ".join(["%s"] * len(room_numbers))),
-			tuple(room_numbers) + (to_date, from_date),
+			tuple(room_numbers) + (requested_check_in, requested_check_out),
 			as_dict=True,
 		)
 
@@ -1241,21 +1246,12 @@ def get_available_rooms(from_date, to_date, room_type=None):
             FROM `tabHotel Room Check In`
             WHERE room_number IN ({rooms})
             AND status IN ('Draft', 'Checked In')
-            AND (
-                -- Normal active stay
-                (
-                    DATE(check_in_datetime) <= %s
-                    AND DATE(expected_check_out_datetime) >= %s
-                )
-                OR
-                -- Overstayed rooms
-                (
-                    status = 'Checked In'
-                    AND DATE(expected_check_out_datetime) < %s
-                )
+            AND NOT (
+                expected_check_out_datetime <= %s
+                OR check_in_datetime >= %s
             )
         """.format(rooms=", ".join(["%s"] * len(room_numbers))),
-			tuple(room_numbers) + (to_date, from_date, to_date),
+			tuple(room_numbers) + (requested_check_in, requested_check_out),
 			as_dict=True,
 		)
 

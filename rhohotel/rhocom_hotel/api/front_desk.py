@@ -2,12 +2,14 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, add_to_date
 
+
 @frappe.whitelist()
 def get_rooms_summary(filters=None):
 	"""Return list of rooms with status, maintenance, current_check_in info and reservation/check-out times.
 	filters (json string) can include: floor, room_type, status, maintenance, upcoming_checkout_hours
 	"""
 	import json
+
 	filters = json.loads(filters) if filters else {}
 	conds = ["1=1"]
 	args = []
@@ -52,11 +54,12 @@ def get_rooms_summary(filters=None):
 			`tabHotel Room Check In` ci on ci.name = room.current_check_in
 		left join
 			`tabHotel Room Reservation` r on r.name = ci.reservation
-		where {' AND '.join(conds)}
+		where {" AND ".join(conds)}
 		order by room.floor, room.name
 	"""
 	rows = frappe.db.sql(query, tuple(args), as_dict=1)
 	return rows
+
 
 @frappe.whitelist()
 def make_check_out(checkin_name):
@@ -119,8 +122,29 @@ def collect_payment_for_checkin(check_in, allocations=None, payment_info=None):
 	if not check_in:
 		frappe.throw("Check-in not supplied")
 
-	allocations = json.loads(allocations) if allocations and isinstance(allocations, str) else (allocations or [])
-	payment_info = json.loads(payment_info) if payment_info and isinstance(payment_info, str) else (payment_info or {})
+	allocations = (
+		json.loads(allocations) if allocations and isinstance(allocations, str) else (allocations or [])
+	)
+	payment_info = (
+		json.loads(payment_info) if payment_info and isinstance(payment_info, str) else (payment_info or {})
+	)
+
+	company = frappe.db.get_single_value("Global Defaults", "default_company")
+	mop = frappe.get_doc("Mode of Payment", payment_info.get("mode_of_payment"))
+
+	if not mop.accounts:
+		frappe.throw("Mode of Payment has no accounts configured.")
+
+	mop_account = next((a.default_account for a in mop.accounts if a.company == company), None)
+
+	if not mop_account:
+		frappe.throw(f"No account found for Mode of Payment in {company}")
+
+	# avoid duplicate reference numbers
+	if payment_info.get("reference_no"):
+		existing_pe = frappe.db.get_value("Payment Entry", {"reference_no": payment_info.get("reference_no")})
+		if existing_pe:
+			frappe.throw("A Payment Entry with this reference number already exists.")
 
 	# Fetch check-in and guest/customer
 	ci = frappe.get_doc("Hotel Room Check In", check_in)
@@ -133,14 +157,21 @@ def collect_payment_for_checkin(check_in, allocations=None, payment_info=None):
 	except Exception:
 		customer = None
 
-	total_paid = sum([float(a.get("amount") or 0) for a in allocations]) if allocations else float(payment_info.get("paid_amount") or 0)
+	total_paid = float(payment_info.get("paid_amount") or 0)
+	if total_paid <= 0:
+		total_paid = sum(float(a.get("amount") or 0) for a in allocations)
 
 	pe = frappe.new_doc("Payment Entry")
 	pe.payment_type = "Receive"
 	pe.party_type = "Customer"
 	pe.party = customer or ci.guest or ""
+	pe.posting_date = payment_info.get("payment_date") or frappe.utils.today()
 	pe.paid_amount = total_paid
+	pe.paid_to = mop_account
 	pe.received_amount = total_paid
+	pe.source_exchange_rate = 1
+	pe.target_exchange_rate = 1
+	pe.company = company
 	pe.mode_of_payment = payment_info.get("mode_of_payment") or payment_info.get("mode") or "Cash"
 	if payment_info.get("reference_no"):
 		pe.reference_no = payment_info.get("reference_no")
@@ -155,14 +186,28 @@ def collect_payment_for_checkin(check_in, allocations=None, payment_info=None):
 	# Append references
 	for alloc in allocations:
 		inv = alloc.get("invoice") or alloc.get("invoice_name") or alloc.get("name")
-		amt = float(alloc.get("amount") or 0)
-		if not inv or amt <= 0:
+		requested_amount = float(alloc.get("amount") or 0)
+		if not inv or requested_amount <= 0:
 			continue
-		pe.append("references", {
-			"reference_doctype": "Sales Invoice",
-			"reference_name": inv,
-			"allocated_amount": amt,
-		})
+
+		invoice = frappe.get_doc("Sales Invoice", inv)
+		if invoice.docstatus != 1:
+			frappe.throw(_("Invoice {0} is not submitted.").format(inv))
+		if invoice.custom_hotel_room_check_in != check_in:
+			frappe.throw(_("Invoice {0} is not linked to Check In {1}.").format(inv, check_in))
+
+		allocated_amount = min(requested_amount, float(invoice.outstanding_amount or 0))
+		if allocated_amount <= 0:
+			continue
+
+		pe.append(
+			"references",
+			{
+				"reference_doctype": "Sales Invoice",
+				"reference_name": inv,
+				"allocated_amount": allocated_amount,
+			},
+		)
 
 	try:
 		pe.insert(ignore_permissions=True)
@@ -171,7 +216,9 @@ def collect_payment_for_checkin(check_in, allocations=None, payment_info=None):
 			pe.submit()
 		except Exception:
 			# if submission fails due to workflow/accounts, keep as draft but return name
-			frappe.log_error(frappe.get_traceback(), "Payment Entry submit failed from collect_payment_for_checkin")
+			frappe.log_error(
+				frappe.get_traceback(), "Payment Entry submit failed from collect_payment_for_checkin"
+			)
 
 		frappe.db.commit()
 	except Exception:
@@ -194,17 +241,32 @@ def collect_payment_and_checkout(check_in, allocations=None, payment_info=None, 
 		force_checkout = force_checkout.lower() in ("1", "true", "yes")
 
 	# First collect payment if provided
-	if allocations or (payment_info and (payment_info.get("paid_amount") or (isinstance(payment_info, dict) and payment_info.get('paid_amount')))):
+	if allocations or (
+		payment_info
+		and (
+			payment_info.get("paid_amount")
+			or (isinstance(payment_info, dict) and payment_info.get("paid_amount"))
+		)
+	):
 		res = collect_payment_for_checkin(check_in, allocations=allocations, payment_info=payment_info)
 		payment_entry = res.get("payment_entry")
 	else:
 		payment_entry = None
 
 	# Re-check outstanding invoices
-	invoices = frappe.get_all("Sales Invoice", filters={"custom_hotel_room_check_in": check_in, "outstanding_amount": [">", 0]}, fields=["name", "outstanding_amount"]) or []
+	invoices = (
+		frappe.get_all(
+			"Sales Invoice",
+			filters={"custom_hotel_room_check_in": check_in, "outstanding_amount": [">", 0]},
+			fields=["name", "outstanding_amount"],
+		)
+		or []
+	)
 	if invoices and len(invoices) > 0:
 		if not force_checkout:
-			frappe.throw("Outstanding invoices remain. Collect payment or use force checkout with manager authorization.")
+			frappe.throw(
+				"Outstanding invoices remain. Collect payment or use force checkout with manager authorization."
+			)
 		# check roles
 		roles = frappe.get_roles(frappe.session.user)
 		if "System Manager" not in roles and "Hotel Manager" not in roles:

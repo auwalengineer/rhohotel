@@ -13,7 +13,9 @@
         "sales_invoice",
         "refund_amount",
         "reasons",
-        "status"
+        "status",
+        "credit_note",
+        "payment_entry"
     ],
     "fields": [
         {
@@ -76,7 +78,7 @@
             "fieldname": "status",
             "fieldtype": "Select",
             "label": "Status",
-            "options": "Pending\nApproved\nRejected\nRefunded",
+            "options": "Pending\nPending Approval\nApproved\nRejected\nRefunded",
             "allow_on_submit": 1,
             "read_only": 1
         },

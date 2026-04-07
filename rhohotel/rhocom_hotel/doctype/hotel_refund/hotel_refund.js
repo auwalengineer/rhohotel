@@ -45,6 +45,10 @@ frappe.ui.form.on("Hotel Refund", {
                                             freeze: true,
                                             freeze_message: "Creating Payment Entry...",
                                             callback: function (res) {
+                                                if (!res.message) {
+                                                    frappe.msgprint("Payment Entry could not be created.");
+                                                    return;
+                                                }
                                                 frappe.msgprint(
                                                     `Payment Entry <b>${res.message}</b> created.`
                                                 );
@@ -79,6 +83,10 @@ frappe.ui.form.on("Hotel Refund", {
                             freeze: true,
                             freeze_message: "Creating Payment Entry...",
                             callback: function (res) {
+                                if (!res.message) {
+                                    frappe.msgprint("Payment Entry could not be created.");
+                                    return;
+                                }
                                 frappe.msgprint(`Payment Entry <b>${res.message}</b> created.`);
                                 frm.reload_doc();
                             }

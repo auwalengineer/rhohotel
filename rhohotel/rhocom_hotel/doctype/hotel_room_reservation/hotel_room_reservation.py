@@ -3,14 +3,15 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import get_datetime, getdate, date_diff, flt
-from datetime import datetime
 from frappe import _
-from datetime import datetime
+from datetime import datetime, time
 import json
 
 
 class HotelRoomReservation(Document):
 	def validate(self):
+		if self.status == "Cancelled" and self.docstatus != 2:
+			frappe.throw("Use the Cancel button to cancel this reservation.")
 		self.validate_room_availability()
 
 		self.number_of_nights = date_diff(getdate(self.to_date), getdate(self.from_date)) or 1
@@ -23,6 +24,7 @@ class HotelRoomReservation(Document):
 				discounted_amount = self.discount
 
 		self.net_total = (self.number_of_nights * self.rate) - discounted_amount
+
 
 	def before_insert(self):
 		self.apply_default_checkout_time()
@@ -46,28 +48,41 @@ class HotelRoomReservation(Document):
 	def validate_room_availability(self):
 		if self.docstatus == 2:
 			return
+		if not self.from_date or not self.to_date:
+			return
+
+		# -----------------------------------
+		# Build TIME-AWARE boundaries
+		# -----------------------------------
+		CHECK_IN_TIME = time(12, 0)
+		CHECK_OUT_TIME = time(12, 0)
+		from_date = getdate(self.from_date)
+		to_date = getdate(self.to_date)
+
+		new_start = datetime.combine(from_date, CHECK_IN_TIME)
+		new_end = datetime.combine(to_date, CHECK_OUT_TIME)
 
 		# -----------------------------
 		# Reservation Overlap Check
 		# -----------------------------
 		overlapping_reservation = frappe.db.sql(
 			"""
-			SELECT name 
+			SELECT name
 			FROM `tabHotel Room Reservation`
 			WHERE room_number = %s
 				AND docstatus = 1
 				AND status NOT IN ('Cancelled', 'Completed')
 				AND name != %s
 				AND NOT (
-					DATE(to_date) <= DATE(%s)
-					OR DATE(from_date) >= DATE(%s)
+					TIMESTAMP(to_date, '12:00:00') <= %s
+					OR TIMESTAMP(from_date, '12:00:00') >= %s
 				)
 			""",
 			(
 				self.room_number,
 				self.name or "",
-				self.from_date,
-				self.to_date
+				new_start,   # compare with datetime
+				new_end
 			),
 		)
 
@@ -96,8 +111,8 @@ class HotelRoomReservation(Document):
 			(
 				self.room_number,
 				self.name or "",
-				self.from_date,
-				self.to_date
+				new_start,
+				new_end
 			),
 		)
 
@@ -107,16 +122,91 @@ class HotelRoomReservation(Document):
 					self.room_number, self.from_date, self.to_date
 				)
 			)
+	# def validate_room_availability(self):
+	# 	if self.docstatus == 2:
+	# 		return
+
+	# 	# -----------------------------
+	# 	# Reservation Overlap Check
+	# 	# -----------------------------
+	# 	overlapping_reservation = frappe.db.sql(
+	# 		"""
+	# 		SELECT name 
+	# 		FROM `tabHotel Room Reservation`
+	# 		WHERE room_number = %s
+	# 			AND docstatus = 1
+	# 			AND status NOT IN ('Cancelled', 'Completed')
+	# 			AND name != %s
+	# 			AND NOT (
+	# 				DATE(to_date) <= DATE(%s)
+	# 				OR DATE(from_date) >= DATE(%s)
+	# 			)
+	# 		""",
+	# 		(
+	# 			self.room_number,
+	# 			self.name or "",
+	# 			self.from_date,
+	# 			self.to_date
+	# 		),
+	# 	)
+
+	# 	if overlapping_reservation:
+	# 		frappe.throw(
+	# 			_("{0} is already booked between {1} and {2}.").format(
+	# 				self.room_number, self.from_date, self.to_date
+	# 			)
+	# 		)
+
+	# 	# -----------------------------
+	# 	# Check-In Overlap Check
+	# 	# -----------------------------
+	# 	overlapping_checkin = frappe.db.sql(
+	# 		"""
+	# 		SELECT name
+	# 		FROM `tabHotel Room Check In`
+	# 		WHERE room_number = %s
+	# 			AND status IN ('Draft', 'Checked In')
+	# 			AND name != %s
+	# 			AND NOT (
+	# 				expected_check_out_datetime <= %s
+	# 				OR check_in_datetime >= %s
+	# 			)
+	# 		""",
+	# 		(
+	# 			self.room_number,
+	# 			self.name or "",
+	# 			self.from_date,
+	# 			self.to_date
+	# 		),
+	# 	)
+
+	# 	if overlapping_checkin:
+	# 		frappe.throw(
+	# 			_("{0} is already checked in between {1} and {2}.").format(
+	# 				self.room_number, self.from_date, self.to_date
+	# 			)
+	# 		)
 
 
 	def on_update(self):
+		if self.status == "Cancelled":
+			frappe.throw("Use the Cancel button instead of setting status manually.")
+
 		self.validate_room_availability()
 
 	def on_save(self):
+		frappe.throw(self.status)
+		if self.status == "Cancelled":
+			frappe.throw("Use the Cancel button instead of setting status manually.")
+
 		self.validate_room_availability()
 
 	def on_change(self):
+		if self.status == "Cancelled" and self.docstatus != 2:
+			frappe.throw("Use the Cancel button to cancel this reservation.")
 		self.validate_room_availability()
+	def on_cancel(self):
+		self.status = "Cancelled"
 
 
 @frappe.whitelist()
@@ -162,6 +252,84 @@ def make_invoice(name):
 	doc.db_set("sales_invoice", si.name)
 
 	return si.name
+
+
+def _get_reservation_item_code(reservation_doc, invoice=None):
+	if invoice and invoice.items:
+		return invoice.items[0].item_code
+
+	room_item = frappe.db.get_value("Hotel Room", reservation_doc.room_number, "erpnext_item")
+	return room_item or reservation_doc.room_number
+
+
+def _invoice_has_payment_activity(invoice):
+	if not invoice:
+		return False
+
+	if flt(invoice.outstanding_amount) < flt(invoice.grand_total):
+		return True
+
+	return bool(
+		frappe.db.sql(
+			"""
+			SELECT per.name
+			FROM `tabPayment Entry Reference` per
+			INNER JOIN `tabPayment Entry` pe ON pe.name = per.parent
+			WHERE per.reference_doctype = 'Sales Invoice'
+				AND per.reference_name = %s
+				AND pe.docstatus = 1
+			LIMIT 1
+			""",
+			(invoice.name,),
+		)
+	)
+
+
+def _build_reservation_invoice(
+	reservation_doc,
+	nights,
+	discount_value,
+	from_date,
+	to_date,
+	item_code,
+	is_return=False,
+	return_against=None,
+	amount_override=None,
+	remarks=None,
+):
+	invoice = frappe.get_doc(
+		{
+			"doctype": "Sales Invoice",
+			"customer": reservation_doc.customer,
+			"posting_date": frappe.utils.today(),
+			"due_date": get_datetime(to_date).date(),
+			"is_return": 1 if is_return else 0,
+			"return_against": return_against,
+			"update_stock": 0,
+			"items": [
+				{
+					"item_code": item_code,
+					"qty": -nights if is_return else nights,
+					"rate": (abs(amount_override) / nights) if amount_override is not None and nights else reservation_doc.rate,
+					"description": _("Reservation charge for {0} from {1} to {2}").format(
+						reservation_doc.room_number, getdate(from_date), getdate(to_date)
+					),
+				}
+			],
+			"remarks": remarks,
+		}
+	)
+
+	if not is_return and amount_override is None and discount_value:
+		if reservation_doc.discount_type == "Percentage":
+			invoice.additional_discount_percentage = discount_value
+		else:
+			invoice.discount_amount = discount_value
+
+	invoice.set_taxes()
+	invoice.insert(ignore_permissions=True)
+	invoice.submit()
+	return invoice
 
 @frappe.whitelist()
 def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discount=None):
@@ -224,31 +392,6 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discoun
 	if new_check_in == checkin_dt and new_dt == current_dt:
 		frappe.throw("No adjustment needed.")
 
-	if diff_nights == 0:
-		# Just update the dates without creating invoice/credit note
-		doc.flags.ignore_validate_update_after_submit = True
-		doc.to_date = new_dt
-		doc.from_date = new_check_in
-
-		if new_discount is not None:
-			doc.discount = flt(new_discount)
-
-		doc.save(ignore_permissions=True)
-		frappe.db.commit()
-
-		return {
-			"status": "success",
-			"adjustment_type": "Date Change Only",
-			"new_checkout": str(new_dt),
-			"new_checkin": str(new_check_in),
-			"previous_nights": current_nights,
-			"new_nights": new_nights,
-			"nights_difference": 0,
-			"adjustment_invoice": None,
-			"amount": 0,
-			"new_net_total": doc.net_total,
-		}
-
 	# Handle discount - use new_discount if provided (even if 0)
 	if new_discount is not None:
 		discount_to_use = flt(new_discount)
@@ -271,79 +414,90 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discoun
 
 	# Calculate the adjustment amount (what the invoice should be)
 	adjustment_amount = new_net_total - flt(doc.net_total)
+	if abs(adjustment_amount) < 0.01:
+		doc.flags.ignore_validate_update_after_submit = True
+		doc.to_date = new_dt
+		doc.from_date = new_check_in
+		doc.number_of_nights = new_nights
+		doc.net_total = new_net_total
 
-	# if abs(adjustment_amount) < 0.01:
-	# 	frappe.throw("No adjustment needed - amounts are the same.")
+		if new_discount is not None:
+			doc.discount = discount_to_use
+
+		doc.save(ignore_permissions=True)
+		frappe.db.commit()
+
+		return {
+			"status": "success",
+			"adjustment_type": "Date Change Only",
+			"new_checkout": str(new_dt),
+			"new_checkin": str(new_check_in),
+			"previous_nights": current_nights,
+			"new_nights": new_nights,
+			"nights_difference": new_nights - current_nights,
+			"adjustment_invoice": None,
+			"amount": 0,
+			"new_net_total": new_net_total,
+		}
 
 	adjustment_invoice_name = None
 
 	try:
-		if adjustment_amount > 0:  # Extension
-			# 🔧 SIMPLIFIED: Calculate rate that gives us exact adjustment_amount
-			# adjustment_amount is already the final amount we need to charge
-			calculated_rate = adjustment_amount / diff_nights if diff_nights > 0 else adjustment_amount
+		original_invoice = frappe.get_doc("Sales Invoice", doc.sales_invoice) if doc.sales_invoice else None
+		item_code = _get_reservation_item_code(doc, original_invoice)
+		has_payment_activity = _invoice_has_payment_activity(original_invoice)
 
-			if doc.sales_invoice:
-				# Create invoice for the exact adjustment amount
-				invoice = frappe.get_doc(
-					{
-						"doctype": "Sales Invoice",
-						"customer": doc.customer,
-						"is_return": 0,
-						"update_stock": 0,
-						"items": [
-							{
-								"item_code": doc.room_number,
-								"qty": diff_nights,
-								"rate": calculated_rate,  # This will give us exactly adjustment_amount
-								"description": f"Stay extension: {current_nights} nights → {new_nights} nights",
-							}
-						],
-						"posting_date": frappe.utils.today(),
-						"remarks": f"Invoice for stay extension: {diff_nights} additional night(s)",
-					}
-				)
+		if original_invoice and not has_payment_activity:
+			if original_invoice.docstatus == 1:
+				original_invoice.flags.ignore_permissions = True
+				original_invoice.cancel()
 
-				invoice.set_taxes()
-				invoice.insert(ignore_permissions=True)
-				invoice.submit()
-				adjustment_invoice_name = invoice.name
-
-		else:  # Reduction
-			# Calculate rate for credit note
-
-			if doc.sales_invoice:
-				calculated_rate = (
-					abs(adjustment_amount) / diff_nights if diff_nights > 0 else abs(adjustment_amount)
-				)
-
-			# Create credit note
-			credit_note = frappe.get_doc(
-				{
-					"doctype": "Sales Invoice",
-					"customer": doc.customer,
-					"is_return": 1,
-					"update_stock": 0,
-					"items": [
-						{
-							"item_code": doc.room_number,
-							"qty": -diff_nights,
-							"rate": calculated_rate,
-							"description": f"Stay reduction: {current_nights} nights → {new_nights} nights",
-						}
-					],
-					"posting_date": frappe.utils.today(),
-					"remarks": f"Credit note for stay reduction: {diff_nights} night(s) removed",
-				}
+			replacement_invoice = _build_reservation_invoice(
+				doc,
+				nights=new_nights,
+				discount_value=discount_to_use,
+				from_date=new_check_in,
+				to_date=new_dt,
+				item_code=item_code,
+				remarks=_("Recreated after reservation adjustment from {0} nights to {1} nights.").format(
+					current_nights, new_nights
+				),
 			)
-			credit_note.insert(ignore_permissions=True)
-			credit_note.submit()
+			adjustment_invoice_name = replacement_invoice.name
+			doc.sales_invoice = replacement_invoice.name
+			doc.payment_status = "Pending"
+		elif adjustment_amount > 0:
+			adjustment_invoice = _build_reservation_invoice(
+				doc,
+				nights=diff_nights or 1,
+				discount_value=0,
+				from_date=current_dt,
+				to_date=new_dt,
+				item_code=item_code,
+				amount_override=adjustment_amount,
+				remarks=_("Adjustment invoice for reservation change from {0} nights to {1} nights.").format(
+					current_nights, new_nights
+				),
+			)
+			adjustment_invoice_name = adjustment_invoice.name
+		else:
+			credit_note = _build_reservation_invoice(
+				doc,
+				nights=diff_nights or 1,
+				discount_value=0,
+				from_date=new_check_in,
+				to_date=current_dt,
+				item_code=item_code,
+				is_return=True,
+				return_against=original_invoice.name if original_invoice and original_invoice.docstatus == 1 else None,
+				amount_override=abs(adjustment_amount),
+				remarks=_("Credit note for reservation change from {0} nights to {1} nights.").format(
+					current_nights, new_nights
+				),
+			)
 			adjustment_invoice_name = credit_note.name
 
 		if adjustment_invoice_name:
-			# frappe.throw("Failed to create adjustment invoice.")
-
-			# Add adjustment to child table
 			doc.append(
 				"adjustments",
 				{
@@ -366,14 +520,10 @@ def adjust_reservation(reservation_name, new_checkout, new_check_in, new_discoun
 		doc.from_date = new_check_in
 		doc.number_of_nights = new_nights
 		doc.net_total = new_net_total
+		if new_discount is not None:
+			doc.discount = discount_to_use
 
 		doc.save(ignore_permissions=True)
-
-		# Update discount using db_set if new_discount was provided
-		# if new_discount is not None:
-		# 	frappe.db.set_value(
-		# 		"Hotel Room Reservation", doc.name, "discount", flt(new_discount), update_modified=False
-		# 	)
 
 		frappe.db.commit()
 

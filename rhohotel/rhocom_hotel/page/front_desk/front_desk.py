@@ -443,29 +443,35 @@ def get_rooms_with_payment_status(filters=None):
             ci.guest,
             COALESCE(inv.total_invoice, 0) AS total_invoice,
             COALESCE(inv.balance, 0) AS balance,
-            COALESCE(pay.total_paid, 0) AS total_paid
+            COALESCE(inv.total_paid, 0) AS total_paid
         FROM `tabHotel Room Check In` ci
 
-        -- Aggregate Sales Invoices per check-in
+        -- Aggregate active room charges per check-in across Sales and POS invoices.
         LEFT JOIN (
             SELECT
-                custom_hotel_room_check_in,
-                SUM(grand_total) AS total_invoice,
-                SUM(outstanding_amount) AS balance
-            FROM `tabSales Invoice`
-            WHERE docstatus = 1
-            GROUP BY custom_hotel_room_check_in
-        ) inv ON inv.custom_hotel_room_check_in = ci.name
+                invoice_data.check_in,
+                SUM(invoice_data.total_invoice) AS total_invoice,
+                SUM(invoice_data.balance) AS balance,
+                SUM(invoice_data.total_invoice - invoice_data.balance) AS total_paid
+            FROM (
+                SELECT
+                    custom_hotel_room_check_in AS check_in,
+                    grand_total AS total_invoice,
+                    outstanding_amount AS balance
+                FROM `tabSales Invoice`
+                WHERE docstatus = 1
 
-        -- Aggregate Payments per check-in
-        LEFT JOIN (
-            SELECT
-                custom_hotel_room_check_in,
-                SUM(paid_amount) AS total_paid
-            FROM `tabPayment Entry`
-            WHERE docstatus = 1
-            GROUP BY custom_hotel_room_check_in
-        ) pay ON pay.custom_hotel_room_check_in = ci.name
+                UNION ALL
+
+                SELECT
+                    custom_hotel_room_check_in AS check_in,
+                    grand_total AS total_invoice,
+                    outstanding_amount AS balance
+                FROM `tabPOS Invoice`
+                WHERE docstatus = 1
+            ) invoice_data
+            GROUP BY invoice_data.check_in
+        ) inv ON inv.check_in = ci.name
 
         WHERE ci.status = 'Checked In'
         AND ci.docstatus = 1
@@ -839,4 +845,3 @@ def get_hall_bookings():
     except Exception:
         frappe.log_error(frappe.get_traceback(), "Get Hall Bookings Error")
         return []
-

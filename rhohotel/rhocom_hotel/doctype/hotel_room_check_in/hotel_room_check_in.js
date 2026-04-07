@@ -7,7 +7,7 @@ frappe.ui.form.on("Hotel Room Check In", {
             frappe.set_route('front-desk');
         });
 
-        // set fields as read-only
+        // set fields as read-onlyr
         if (frm.doc.docstatus === 1) {
             // set fields as read-only
             frm.set_df_property("guest", "read_only", 1);
@@ -133,6 +133,10 @@ frappe.ui.form.on("Hotel Room Check In", {
                         frm.fields_dict.payments_html.html(render_payments(r.message.payments));
 
                         if (r.message.total_outstanding_amount > 0) {
+                            frm.add_custom_button(__("Receive Payment"), () => {
+                                open_checkin_payment_dialog(frm);
+                            });
+
                             // Fetch terminals and create payment buttons
                             frappe.call({
                                 method: 'frappe.client.get_list',
@@ -1047,6 +1051,429 @@ frappe.ui.form.on("Hotel Room Check In", {
         }
     }
 });
+
+function open_checkin_payment_dialog(frm) {
+    frappe.call({
+        method: 'rhohotel.api.get_outstanding_invoices',
+        args: {
+            check_in: frm.doc.name
+        },
+        callback: function (r) {
+            const invoices = r.message || [];
+
+            if (!invoices.length) {
+                frappe.msgprint(__('No outstanding invoices found.'));
+                return;
+            }
+
+            const invoice_map = {};
+            const total_outstanding = invoices.reduce((sum, inv) => sum + (inv.outstanding_amount || 0), 0);
+            let dialog;
+            let is_syncing_totals = false;
+
+            const parse_amount = (value) => {
+                if (value === null || value === undefined) return 0;
+                if (typeof value === 'number') return value;
+                const normalized = String(value).replace(/,/g, '').trim();
+                return parseFloat(normalized) || 0;
+            };
+
+            const format_amount = (value) => {
+                const amount = parse_amount(value);
+                return frappe.format(amount, { fieldtype: 'Currency' }, { inline: true });
+            };
+
+            const format_amount_input = (value) => {
+                const amount = parse_amount(value);
+                return new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                }).format(amount);
+            };
+
+            let html = `
+                <div class="invoice-selection-container">
+                    <style>
+                        .invoice-selection-container {
+                            max-height: 400px;
+                            overflow-y: auto;
+                        }
+                        .invoice-item {
+                            border: 1px solid #d1d8dd;
+                            border-radius: 4px;
+                            padding: 12px;
+                            margin-bottom: 10px;
+                            background: #f8f9fa;
+                        }
+                        .invoice-item:hover {
+                            background: #e9ecef;
+                        }
+                        .invoice-header {
+                            display: flex;
+                            align-items: center;
+                            margin-bottom: 8px;
+                        }
+                        .invoice-details {
+                            flex: 1;
+                        }
+                        .invoice-number {
+                            font-weight: bold;
+                            color: #2490ef;
+                        }
+                        .invoice-amount {
+                            color: #6c757d;
+                            font-size: 0.9em;
+                        }
+                        .invoice-allocation {
+                            margin-top: 8px;
+                            padding-left: 28px;
+                        }
+                        .total-section {
+                            margin-top: 20px;
+                            padding: 15px;
+                            background: #fff3cd;
+                            border: 1px solid #ffc107;
+                            border-radius: 4px;
+                            text-align: center;
+                        }
+                        .total-label {
+                            font-weight: bold;
+                            font-size: 1.1em;
+                            color: #333;
+                        }
+                        .total-amount {
+                            font-size: 1.5em;
+                            font-weight: bold;
+                            color: #28a745;
+                            margin-top: 5px;
+                        }
+                        .payment-summary {
+                            margin-top: 10px;
+                            color: #6c757d;
+                            font-size: 0.95em;
+                        }
+                    </style>
+                    <div id="manual-payment-invoice-list">
+            `;
+
+            invoices.forEach((invoice, index) => {
+                invoice_map[invoice.name] = invoice;
+                html += `
+                    <div class="invoice-item" data-invoice="${invoice.name}">
+                        <div class="invoice-header">
+                            <input type="checkbox"
+                                   class="manual-payment-checkbox"
+                                   id="manual_chk_${index}"
+                                   data-invoice="${invoice.name}"
+                                   checked>
+                            <div class="invoice-details">
+                                <div class="invoice-number">${invoice.name}</div>
+                                <div class="invoice-amount">
+                                    Outstanding: ${format_currency(invoice.outstanding_amount)}
+                                    | Posted: ${frappe.datetime.str_to_user(invoice.posting_date)}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="invoice-allocation">
+                            <label style="display:block; margin-bottom:4px; font-size:0.9em;">
+                                Amount to Pay:
+                            </label>
+                            <input type="text"
+                                   class="manual-allocation-input"
+                                   id="manual_amt_${index}"
+                                   data-invoice="${invoice.name}"
+                                   value="${format_amount_input(invoice.outstanding_amount)}"
+                                   inputmode="decimal">
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                    <div class="total-section">
+                        <div class="total-label">${__("Distributed Amount")}</div>
+                        <div class="total-amount" id="manual-total-payment-amount">
+                            ${format_amount(total_outstanding)}
+                        </div>
+                        <div class="payment-summary">
+                            ${__("Selected invoices outstanding: {0}", [format_amount(total_outstanding)])}
+                        </div>
+                        <div class="payment-summary" id="manual-unallocated-payment-amount">
+                            ${__("Unallocated Amount: {0}", [format_amount(0)])}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            dialog = new frappe.ui.Dialog({
+                title: __('Receive Payment'),
+                fields: [
+                    {
+                        fieldtype: 'HTML',
+                        fieldname: 'invoice_html',
+                        options: html
+                    },
+                    {
+                        fieldname: 'amount_to_collect',
+                        label: __('Total Amount to Collect'),
+                        fieldtype: 'Currency',
+                        reqd: 1,
+                        default: total_outstanding,
+                        description: __('Enter the full amount received. It will be distributed across selected invoices, and any balance will remain unallocated.')
+                    },
+                    {
+                        fieldname: 'payment_mode',
+                        label: __('Mode of Payment'),
+                        fieldtype: 'Link',
+                        options: 'Mode of Payment',
+                        reqd: 1,
+                        default: 'Moniepoint - Front Desk'
+                    },
+                    {
+                        fieldname: 'payment_date',
+                        label: __('Payment Date'),
+                        fieldtype: 'Date',
+                        default: frappe.datetime.nowdate(),
+                        reqd: 1
+                    },
+                    {
+                        fieldname: 'reference_no',
+                        label: __('Reference No'),
+                        fieldtype: 'Data'
+                    },
+                    {
+                        fieldname: 'reference_date',
+                        label: __('Reference Date'),
+                        fieldtype: 'Date'
+                    },
+                    {
+                        fieldname: 'remarks',
+                        label: __('Remarks'),
+                        fieldtype: 'Small Text'
+                    }
+                ],
+                primary_action_label: __('Submit Payment'),
+                primary_action(values) {
+                    const allocations = [];
+                    let distributed_total = 0;
+                    const total_collected = parse_amount(values.amount_to_collect);
+
+                    invoices.forEach((invoice, index) => {
+                        const checkbox = document.getElementById(`manual_chk_${index}`);
+                        const amount_input = document.getElementById(`manual_amt_${index}`);
+
+                        if (!checkbox || !amount_input || !checkbox.checked) {
+                            return;
+                        }
+
+                        const allocated_amount = parse_amount(amount_input.value);
+                        if (allocated_amount <= 0) {
+                            return;
+                        }
+
+                        allocations.push({
+                            invoice: invoice.name,
+                            amount: allocated_amount
+                        });
+                        distributed_total += allocated_amount;
+                    });
+
+                    if (total_collected <= 0) {
+                        frappe.msgprint(__('Please enter a total amount greater than zero.'));
+                        return;
+                    }
+
+                    if (!allocations.length && total_collected <= 0) {
+                        frappe.msgprint(__('Please select at least one invoice with an amount greater than zero.'));
+                        return;
+                    }
+
+                    frappe.call({
+                        method: 'rhohotel.rhocom_hotel.api.front_desk.collect_payment_for_checkin',
+                        args: {
+                            check_in: frm.doc.name,
+                            allocations: JSON.stringify(allocations),
+                            payment_info: JSON.stringify({
+                                mode_of_payment: values.payment_mode,
+                                paid_amount: total_collected,
+                                payment_date: values.payment_date,
+                                reference_no: values.reference_no,
+                                reference_date: values.reference_date || values.payment_date,
+                                remarks: values.remarks,
+                                source_exchange_rate: 1,
+                                exchange_rate: 1,
+                            })
+                        },
+                        freeze: true,
+                        freeze_message: __('Recording payment...'),
+                        callback: function (res) {
+                            const payment_entry = res.message && res.message.payment_entry;
+                            if (!payment_entry) {
+                                frappe.msgprint(__('Payment could not be recorded.'));
+                                return;
+                            }
+
+                            frappe.msgprint({
+                                title: __('Payment Successful'),
+                                message: __('Payment Entry {0} created.', [payment_entry]),
+                                indicator: 'green'
+                            });
+                            dialog.hide();
+                            frm.reload_doc();
+                        }
+                    });
+                }
+            });
+
+            dialog.show();
+
+            setTimeout(() => {
+                const update_summary = () => {
+                    let distributed_total = 0;
+                    let selected_outstanding_total = 0;
+
+                    document.querySelectorAll('.manual-allocation-input').forEach(input => {
+                        const invoice_name = input.getAttribute('data-invoice');
+                        const checkbox = document.querySelector(`input.manual-payment-checkbox[data-invoice="${invoice_name}"]`);
+
+                        if (checkbox && checkbox.checked) {
+                            distributed_total += parse_amount(input.value);
+                            selected_outstanding_total += parse_amount(invoice_map[invoice_name].outstanding_amount);
+                        }
+                    });
+
+                    const total_collected = parse_amount(dialog.get_value('amount_to_collect'));
+                    const unallocated_amount = Math.max(total_collected - distributed_total, 0);
+
+                    const totalWrapper = document.getElementById('manual-total-payment-amount');
+                    if (totalWrapper) {
+                        totalWrapper.textContent = format_amount(distributed_total);
+                    }
+
+                    const unallocatedWrapper = document.getElementById('manual-unallocated-payment-amount');
+                    if (unallocatedWrapper) {
+                        unallocatedWrapper.textContent = __('Selected invoices outstanding: {0}. Unallocated Amount: {1}', [
+                            format_amount(selected_outstanding_total),
+                            format_amount(unallocated_amount)
+                        ]);
+                    }
+                };
+
+                const sync_total_field_from_allocations = () => {
+                    if (is_syncing_totals) return;
+
+                    let distributed_total = 0;
+                    document.querySelectorAll('.manual-allocation-input').forEach(input => {
+                        const invoice_name = input.getAttribute('data-invoice');
+                        const checkbox = document.querySelector(`input.manual-payment-checkbox[data-invoice="${invoice_name}"]`);
+
+                        if (checkbox && checkbox.checked) {
+                            distributed_total += parse_amount(input.value);
+                        }
+                    });
+
+                    const current_total = parse_amount(dialog.get_value('amount_to_collect'));
+                    if (distributed_total <= current_total) {
+                        update_summary();
+                        return;
+                    }
+
+                    is_syncing_totals = true;
+                    dialog.set_value('amount_to_collect', distributed_total);
+                    is_syncing_totals = false;
+                    update_summary();
+                };
+
+                const distribute_total = () => {
+                    if (is_syncing_totals) return;
+
+                    const total_to_collect = parse_amount(dialog.get_value('amount_to_collect'));
+                    let remaining = Math.max(total_to_collect, 0);
+
+                    is_syncing_totals = true;
+                    invoices.forEach((invoice, index) => {
+                        const checkbox = document.getElementById(`manual_chk_${index}`);
+                        const amount_input = document.getElementById(`manual_amt_${index}`);
+                        if (!checkbox || !amount_input) return;
+
+                        if (!checkbox.checked) {
+                            amount_input.value = format_amount_input(0);
+                            return;
+                        }
+
+                        const outstanding = parse_amount(invoice.outstanding_amount);
+                        const allocated = Math.min(remaining, outstanding);
+                        amount_input.value = format_amount_input(allocated);
+                        remaining = Math.max(remaining - allocated, 0);
+                    });
+                    is_syncing_totals = false;
+                    update_summary();
+                };
+
+                document.querySelectorAll('.manual-payment-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', function () {
+                        const invoice_name = this.getAttribute('data-invoice');
+                        const amount_input = document.querySelector(`input.manual-allocation-input[data-invoice="${invoice_name}"]`);
+
+                        if (!amount_input) return;
+
+                        if (!this.checked) {
+                            amount_input.value = format_amount_input(0);
+                        } else {
+                            amount_input.value = format_amount_input(invoice_map[invoice_name].outstanding_amount);
+                        }
+
+                        distribute_total();
+                    });
+                });
+
+                document.querySelectorAll('.manual-allocation-input').forEach(input => {
+                    input.addEventListener('input', function () {
+                        const invoice_name = this.getAttribute('data-invoice');
+                        const checkbox = document.querySelector(`input.manual-payment-checkbox[data-invoice="${invoice_name}"]`);
+                        const outstanding = parse_amount(invoice_map[invoice_name].outstanding_amount);
+                        let value = parse_amount(this.value);
+
+                        if (value < 0) {
+                            value = 0;
+                        }
+
+                        if (value > outstanding) {
+                            value = outstanding;
+                        }
+
+                        this.value = value ? String(value) : '';
+
+                        if (checkbox) {
+                            checkbox.checked = value > 0;
+                        }
+
+                        sync_total_field_from_allocations();
+                    });
+
+                    input.addEventListener('blur', function () {
+                        const invoice_name = this.getAttribute('data-invoice');
+                        const outstanding = parse_amount(invoice_map[invoice_name].outstanding_amount);
+                        const formatted_value = Math.min(Math.max(parse_amount(this.value), 0), outstanding);
+                        this.value = format_amount_input(formatted_value);
+                        sync_total_field_from_allocations();
+                    });
+                });
+
+                const totalField = dialog.get_field('amount_to_collect');
+                if (totalField && totalField.$input) {
+                    totalField.$input.on('input', function () {
+                        if (is_syncing_totals) return;
+                        distribute_total();
+                    });
+                }
+
+                distribute_total();
+            }, 100);
+        }
+    });
+}
 
 // NEW FUNCTION: Show invoice selection dialog with partial payment support
 function show_invoice_selection_dialog(frm, terminal_id) {

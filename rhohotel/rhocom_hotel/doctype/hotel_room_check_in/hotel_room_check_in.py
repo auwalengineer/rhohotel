@@ -123,39 +123,64 @@ class HotelRoomCheckIn(Document):
 		if room.status != "Vacant":
 			frappe.throw(_("Room {0} is not vacant").format(self.room_number))
 
+		# Skip for front desk override
 		if self.front_desk_reservation:
 			return
 
+		# Normalize datetime
 		if isinstance(self.check_in_datetime, str):
-			self.check_in_datetime = datetime.strptime(self.check_in_datetime, "%Y-%m-%d %H:%M:%S")
+			self.check_in_datetime = datetime.strptime(
+				self.check_in_datetime, "%Y-%m-%d %H:%M:%S"
+			)
 
-		start_date = self.check_in_datetime.date()
-		day_start = datetime.combine(start_date, time.min)
-		day_end = datetime.combine(start_date, time.max)
+		check_in = self.check_in_datetime
+		check_out = self.expected_check_out_datetime
 
-		reservation = frappe.get_all(
+		if not check_out:
+			frappe.throw("Check-out date is required for reservation validation.")
+
+		# 🔥 Correct overlap logic
+		reservations = frappe.get_all(
 			"Hotel Room Reservation",
 			filters={
+				"name": ["!=", self.reservation],
 				"room_number": self.room_number,
-				"from_date": ["between", [day_start, day_end]],
-				"guest_name": ["not in", [self.guest]],
-				"status": ["in", ["booked", "Confirmed", "Pending Payment", "Checked-In", "Draft"]],
+				"guest_name": ["!=", self.name],
+				"docstatus": ["!=", 2],
+				"status": ["in", ["Booked", "Confirmed", "Pending Payment", "Checked-In", "Draft"]],
+				"from_date": ["<=", check_out],
+				"to_date": [">=", check_in],
 			},
+			fields=["name", "from_date", "to_date", "guest_name"],
 		)
 
-		if reservation:
+		for res in reservations:
+			# ✅ Allow if SAME guest and SAME dates
+			if (
+				res.guest_name == self.guest and
+				str(res.from_date) == str(check_in) and
+				str(res.to_date) == str(check_out)
+			):
+				continue  # ✅ valid reservation → allow
+
+			# ❌ Otherwise block
 			frappe.log_error(
 				title="Room Reservation Conflict Debug",
 				message=(
 					f"Room: {self.room_number}\n"
-					f"Date: {start_date}\n"
+					f"Check-in: {check_in}\n"
+					f"Check-out: {check_out}\n"
 					f"Guest: {self.guest}\n"
-					f"Reservations Found:\n{frappe.as_json(reservation)}"
+					f"Conflicting Reservation:\n{frappe.as_json(res)}"
 				),
 			)
+
 			frappe.throw(
-				_("Room {0} is reserved from {1} to {2}").format(
-					self.room_number, reservation[0].from_date, reservation[0].to_date
+				_("Room {0} is already reserved from {1} to {2} by {3}").format(
+					self.room_number,
+					res.from_date,
+					res.to_date,
+					res.guest_name
 				)
 			)
 
@@ -383,7 +408,7 @@ def get_linked_documents(check_in):
 	# -----------------------------
 	payments = frappe.get_all(
 		"Payment Entry",
-		filters={"custom_hotel_room_check_in": check_in_doc.name},
+		filters={"custom_hotel_room_check_in": check_in_doc.name, "payment_type": "Receive", "docstatus": 1},
 		fields=["name", "party", "posting_date", "paid_amount"],
 	)
 

@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import getdate, get_datetime, date_diff, nowdate, now_datetime, format_datetime
+from frappe.utils import getdate, get_datetime, date_diff, nowdate, now_datetime, format_datetime, flt
 from datetime import datetime
 import json
 
@@ -762,6 +762,105 @@ def check_in_rooms_in_bulk_invoice(reservation_name, room_indices, check_in_note
 		frappe.throw(_("Error: {0}").format(str(e)))
 
 
+# @frappe.whitelist()
+# def create_sales_invoice_for_reservation(reservation_name):
+# 	"""Create bulk sales invoice for unchecked rooms"""
+# 	try:
+# 		reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+
+# 		if reservation.docstatus != 1:
+# 			frappe.throw(_("Reservation must be submitted"))
+
+# 		if reservation.sales_invoice:
+# 			frappe.throw(_("Invoice exists: {0}").format(reservation.sales_invoice))
+
+# 		if not reservation.customer:
+# 			frappe.throw(_("Customer required"))
+
+# 		# Get checked-in rooms
+# 		checked_in = frappe.get_all(
+# 			"Hotel Room Check In",
+# 			filters={"front_desk_reservation": reservation_name, "status": ["in", ["Draft", "Checked In"]]},
+# 			pluck="room_number",
+# 		)
+
+# 		# Filter unchecked rooms
+# 		unchecked_rooms = [r for r in reservation.rooms if r.room_number not in checked_in]
+
+# 		if not unchecked_rooms:
+# 			frappe.throw(_("All rooms already checked in"))
+
+# 		# Create invoice
+# 		si = frappe.new_doc("Sales Invoice")
+# 		si.customer = reservation.customer
+# 		si.posting_date = nowdate()
+# 		si.due_date = reservation.to_date
+# 		si.po_no = reservation.reservation_number
+# 		si.remarks = _("Bulk invoice for {0}").format(reservation.reservation_number)
+
+# 		total = 0
+# 		for room in unchecked_rooms:
+# 			# try:
+# 			#     item_name = create_or_get_item(room.room_type)
+# 			# except:
+# 			#     item_name = room.room_type
+
+# 			try:
+# 				item_code = create_or_get_item(
+# 					room_number=room.room_number, room_type=room.room_type, erpnext_item=None
+# 				)
+# 			except Exception as item_error:
+# 				frappe.log_error(f"Item creation failed: {str(item_error)}", "Bulk Invoice Item Error")
+# 				# Fallback to room type
+# 				item_code = room.room_type
+
+# 			si.append(
+# 				"items",
+# 				{
+# 					"item_code": item_code,
+# 					"item_name": f"{room.room_number} - {room.guest_name}",
+# 					"description": _("Room {0} ({1}) - {2} night(s) @ {3}/night for {4}").format(
+# 						room.room_number,
+# 						room.room_type,
+# 						reservation.number_of_nights,
+# 						room.rate_per_night,
+# 						room.guest_name,
+# 					),
+# 					"qty": reservation.number_of_nights,
+# 					"rate": room.rate_per_night,
+# 					"amount": room.room_total,
+# 				},
+# 			)
+# 			total += room.room_total
+
+# 		if reservation.discount_amount:
+# 			si.discount_amount = reservation.discount_amount
+
+# 		si.flags.ignore_permissions = True
+# 		si.insert()
+# 		si.submit()
+
+# 		frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "sales_invoice", si.name)
+# 		frappe.db.commit()
+
+# 		message = _("Invoice {0} created for {1} room(s)").format(si.name, len(unchecked_rooms))
+# 		if checked_in:
+# 			message += _(" | {0} checked-in rooms excluded").format(len(checked_in))
+
+# 		return {
+# 			"success": True,
+# 			"message": message,
+# 			"invoice": si.name,
+# 			"total_rooms": len(reservation.rooms),
+# 			"unchecked_rooms": len(unchecked_rooms),
+# 			"excluded_rooms": len(checked_in),
+# 		}
+
+# 	except Exception as e:
+# 		frappe.log_error(frappe.get_traceback(), "Create Invoice Error")
+# 		frappe.throw(_("Error: {0}").format(str(e)))
+
+
 @frappe.whitelist()
 def create_sales_invoice_for_reservation(reservation_name):
 	"""Create bulk sales invoice for unchecked rooms"""
@@ -772,46 +871,59 @@ def create_sales_invoice_for_reservation(reservation_name):
 			frappe.throw(_("Reservation must be submitted"))
 
 		if reservation.sales_invoice:
-			frappe.throw(_("Invoice exists: {0}").format(reservation.sales_invoice))
+			frappe.throw(
+				_("A bulk invoice ({0}) already exists for this reservation.").format(
+					reservation.sales_invoice
+				)
+			)
+
+		# ── GUARD: block if individual invoices already exist ────────────────────
+		existing_individual_invoices = [r for r in reservation.sales_invoices if r.sales_invoice]
+		if existing_individual_invoices:
+			invoiced_rooms = ", ".join([r.room_number for r in existing_individual_invoices])
+			frappe.throw(
+				_(
+					"Individual invoices already exist for {0} room(s): {1}.<br>"
+					"Cannot create a bulk invoice when individual invoices have already been issued.<br>"
+				).format(len(existing_individual_invoices), invoiced_rooms)
+			)
 
 		if not reservation.customer:
 			frappe.throw(_("Customer required"))
 
-		# Get checked-in rooms
-		checked_in = frappe.get_all(
+		# ── GET CHECKED-IN ROOMS ─────────────────────────────────────────────────
+		checked_in_room_numbers = frappe.get_all(
 			"Hotel Room Check In",
-			filters={"front_desk_reservation": reservation_name, "status": ["in", ["Draft", "Checked In"]]},
+			filters={
+				"front_desk_reservation": reservation_name,
+				"status": ["in", ["Draft", "Checked In"]],
+			},
 			pluck="room_number",
 		)
 
-		# Filter unchecked rooms
-		unchecked_rooms = [r for r in reservation.rooms if r.room_number not in checked_in]
+		# ── FILTER TO UNCHECKED ROOMS ONLY ───────────────────────────────────────
+		unchecked_rooms = [r for r in reservation.rooms if r.room_number not in checked_in_room_numbers]
 
 		if not unchecked_rooms:
-			frappe.throw(_("All rooms already checked in"))
+			frappe.throw(_("All rooms are already checked in. No bulk invoice needed."))
 
-		# Create invoice
+		# ── BUILD INVOICE ────────────────────────────────────────────────────────
 		si = frappe.new_doc("Sales Invoice")
 		si.customer = reservation.customer
 		si.posting_date = nowdate()
 		si.due_date = reservation.to_date
 		si.po_no = reservation.reservation_number
-		si.remarks = _("Bulk invoice for {0}").format(reservation.reservation_number)
+		si.remarks = _("Bulk invoice for reservation {0}").format(reservation.reservation_number)
 
-		total = 0
+		unchecked_subtotal = sum(flt(r.room_total) for r in unchecked_rooms)
+
 		for room in unchecked_rooms:
-			# try:
-			#     item_name = create_or_get_item(room.room_type)
-			# except:
-			#     item_name = room.room_type
-
 			try:
 				item_code = create_or_get_item(
 					room_number=room.room_number, room_type=room.room_type, erpnext_item=None
 				)
 			except Exception as item_error:
 				frappe.log_error(f"Item creation failed: {str(item_error)}", "Bulk Invoice Item Error")
-				# Fallback to room type
 				item_code = room.room_type
 
 			si.append(
@@ -831,21 +943,52 @@ def create_sales_invoice_for_reservation(reservation_name):
 					"amount": room.room_total,
 				},
 			)
-			total += room.room_total
 
-		if reservation.discount_amount:
-			si.discount_amount = reservation.discount_amount
+		# ── DISCOUNT ─────────────────────────────────────────────────────────────
+		# If some rooms were already checked in with individual invoices,
+		# only apply the remaining discount (what hasn't been applied yet).
+		# If no prior individual invoices exist (guarded above), apply full discount.
+		if reservation.discount_amount and reservation.subtotal:
+			total_discount = flt(reservation.discount_amount, 2)
+
+			already_applied = flt(
+				frappe.db.sql(
+					"""
+					SELECT IFNULL(SUM(si.discount_amount), 0)
+					FROM `tabSales Invoice` si
+					INNER JOIN `tabHotel Front Desk Reservation Invoice` fdri
+						ON fdri.sales_invoice = si.name
+					WHERE fdri.parent = %s
+					AND si.docstatus = 1
+					""",
+					(reservation_name,),
+				)[0][0],
+				2,
+			)
+
+			remaining_discount = flt(total_discount - already_applied, 2)
+
+			if remaining_discount > 0 and unchecked_subtotal > 0:
+				# Prorate remaining discount against unchecked rooms only
+				bulk_share = unchecked_subtotal / flt(reservation.subtotal)
+				bulk_discount = flt(remaining_discount * bulk_share, 2)
+
+				if bulk_discount > 0:
+					si.discount_amount = bulk_discount
+					si.apply_discount_on = "Grand Total"
 
 		si.flags.ignore_permissions = True
 		si.insert()
 		si.submit()
 
+		# ── SAVE INVOICE REFERENCE ON FDR ────────────────────────────────────────
 		frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "sales_invoice", si.name)
 		frappe.db.commit()
 
-		message = _("Invoice {0} created for {1} room(s)").format(si.name, len(unchecked_rooms))
-		if checked_in:
-			message += _(" | {0} checked-in rooms excluded").format(len(checked_in))
+		# ── BUILD RESPONSE MESSAGE ───────────────────────────────────────────────
+		message = _("Bulk invoice {0} created for {1} room(s)").format(si.name, len(unchecked_rooms))
+		if checked_in_room_numbers:
+			message += _(" | {0} already checked-in room(s) excluded").format(len(checked_in_room_numbers))
 
 		return {
 			"success": True,
@@ -853,7 +996,7 @@ def create_sales_invoice_for_reservation(reservation_name):
 			"invoice": si.name,
 			"total_rooms": len(reservation.rooms),
 			"unchecked_rooms": len(unchecked_rooms),
-			"excluded_rooms": len(checked_in),
+			"excluded_rooms": len(checked_in_room_numbers),
 		}
 
 	except Exception as e:
@@ -861,12 +1004,755 @@ def create_sales_invoice_for_reservation(reservation_name):
 		frappe.throw(_("Error: {0}").format(str(e)))
 
 
+# @frappe.whitelist()
+# def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
+# 	"""Check in selected rooms (creates individual invoices if no bulk invoice)"""
+# 	try:
+# 		if isinstance(room_indices, str):
+# 			room_indices = json.loads(room_indices)
+
+# 		reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+
+# 		if reservation.docstatus != 1:
+# 			frappe.throw(_("Reservation must be submitted"))
+
+# 		if reservation.sales_invoice:
+# 			frappe.throw(
+# 				_(
+# 					"You have a bulk invoice for this reservation already.\n"
+# 					"Use Check In Rooms (Bulk Invoice) to check in this reservation.\n"
+# 					"Use bulk invoice check-in for this reservation"
+# 				)
+# 			)
+
+# 		settings = frappe.get_single("Hotel Settings")
+# 		check_in_time = now_datetime().strftime("%H:%M:%S")
+# 		check_out_time = settings.default_check_out_time or "11:00:00"
+
+# 		checked_in_rooms = []
+# 		skipped_rooms = []
+
+# 		for idx in room_indices:
+# 			idx = int(idx)
+# 			room = None
+
+# 			for r in reservation.rooms:
+# 				if r.idx == idx + 1:
+# 					room = r
+# 					break
+
+# 			if not room:
+# 				skipped_rooms.append({"idx": idx, "reason": "Not found"})
+# 				continue
+
+# 			# Check existing
+# 			existing = frappe.db.get_value(
+# 				"Hotel Room Check In",
+# 				{
+# 					"front_desk_reservation": reservation_name,
+# 					"room_number": room.room_number,
+# 					"status": ["in", ["Draft", "Checked In"]],
+# 				},
+# 				"name",
+# 			)
+
+# 			if existing:
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "Already checked in"})
+# 				continue
+
+# 			if not room.guest_name or room.guest_name.startswith("Guest - Room"):
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "Guest name required"})
+# 				continue
+
+# 			# Get reservation
+# 			hrr = frappe.db.get_value(
+# 				"Hotel Room Reservation",
+# 				{"front_desk_reservation": reservation_name, "room_number": room.room_number, "docstatus": 1},
+# 				"name",
+# 			)
+
+# 			if not hrr:
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "No reservation"})
+# 				continue
+
+# 			# Create individual invoice
+# 			try:
+# 				si = frappe.new_doc("Sales Invoice")
+# 				si.customer = reservation.customer
+# 				si.posting_date = nowdate()
+# 				si.due_date = reservation.to_date
+# 				si.po_no = f"{reservation.reservation_number} - {room.room_number}"
+
+# 				# try:
+# 				#     item_name = create_or_get_item(room.room_type)
+# 				# except:
+# 				#     item_name = room.room_type
+
+# 				try:
+# 					item_code = create_or_get_item(
+# 						room_number=room.room_number, room_type=room.room_type, erpnext_item=None
+# 					)
+# 				except Exception as item_error:
+# 					frappe.log_error(f"Item creation failed: {str(item_error)}", "Invoice Item Error")
+# 					# Fallback to room type
+# 					item_code = room.room_type
+
+# 				si.append(
+# 					"items",
+# 					{
+# 						"item_code": item_code,
+# 						"item_name": f"{room.room_number} - {room.guest_name}",
+# 						"description": _("Room {0} - {1} night(s) @ {2}/night").format(
+# 							room.room_number, reservation.number_of_nights, room.rate_per_night
+# 						),
+# 						"qty": reservation.number_of_nights,
+# 						"rate": room.rate_per_night,
+# 						"amount": room.room_total,
+# 					},
+# 				)
+
+# 				if reservation.discount_amount and reservation.subtotal:
+# 					room_share = room.room_total / reservation.subtotal
+# 					room_discount = reservation.discount_amount * room_share
+# 					si.discount_amount = flt(room_discount, 2)
+# 					si.apply_discount_on = "Grand Total"
+
+# 				si.flags.ignore_permissions = True
+# 				si.insert()
+# 				si.submit()
+# 				room_invoice = si.name
+
+# 				# Add to child table
+# 				reservation.append(
+# 					"sales_invoices",
+# 					{
+# 						"room_number": room.room_number,
+# 						"guest_name": room.guest_name,
+# 						"sales_invoice": si.name,
+# 						"amount": room.room_total,
+# 						"created_at": now_datetime(),
+# 					},
+# 				)
+# 				reservation.flags.ignore_permissions = True
+# 				reservation.flags.ignore_validate_update_after_submit = True
+# 				reservation.save()
+
+# 			except Exception as e:
+# 				frappe.log_error(f"Invoice error for {room.room_number}: {str(e)}", "Check In Invoice Error")
+# 				room_invoice = None
+
+# 			check_in_datetime = get_datetime(f"{reservation.from_date} {check_in_time}")
+# 			expected_checkout = get_datetime(f"{reservation.to_date} {check_out_time}")
+
+# 			# Create check-in
+# 			checkin = frappe.get_doc(
+# 				{
+# 					"doctype": "Hotel Room Check In",
+# 					"front_desk_reservation": reservation_name,
+# 					"hotel_room_reservation": hrr,
+# 					"reservation": hrr,
+# 					"room_number": room.room_number,
+# 					"room_type": room.room_type,
+# 					"rate_type": getattr(room, "rate_type", None),
+# 					"guest": room.hotel_guest,
+# 					"guest_name": room.guest_name,
+# 					"guest_email": room.guest_email or reservation.primary_guest_email,
+# 					"guest_phone": room.guest_phone or reservation.primary_guest_phone,
+# 					"customer": room.guest_customer or reservation.customer,
+# 					"hotel_guest": room.hotel_guest,
+# 					"check_in_datetime": check_in_datetime,
+# 					"expected_check_out_datetime": expected_checkout,
+# 					"number_of_nights": reservation.number_of_nights,
+# 					"rate_per_night": room.rate_per_night,
+# 					"rate_amount": room.rate_per_night,
+# 					"total_amount": room.room_total,
+# 					"status": "Checked In",
+# 					"payment_status": "Pending",
+# 					"check_in_notes": check_in_notes,
+# 					"sales_invoice": room_invoice,
+# 					"discount": reservation.discount_amount or 0,
+# 					"discount_type": reservation.discount_type or "None",
+# 					"total_charges": room.room_total,
+# 				}
+# 			)
+
+# 			checkin.flags.ignore_permissions = True
+# 			checkin.insert()
+# 			checkin.submit()
+
+# 			frappe.db.set_value("Hotel Room Reservation", hrr, "status", "Checked In")
+
+# 			checked_in_rooms.append(
+# 				{
+# 					"room_number": room.room_number,
+# 					"guest_name": room.guest_name,
+# 					"checkin_name": checkin.name,
+# 					"invoice": room_invoice,
+# 				}
+# 			)
+
+# 		# Update status
+# 		if checked_in_rooms:
+# 			total_checkins = frappe.db.count(
+# 				"Hotel Room Check In",
+# 				{"front_desk_reservation": reservation_name, "status": ["in", ["Draft", "Checked In"]]},
+# 			)
+
+# 			if total_checkins >= len(reservation.rooms):
+# 				frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "status", "Checked In")
+# 			elif total_checkins > 0 and reservation.status == "Confirmed":
+# 				frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "status", "Checked In")
+
+# 		frappe.db.commit()
+
+# 		message = _("{0} room(s) checked in").format(len(checked_in_rooms))
+# 		if skipped_rooms:
+# 			message += _(" | {0} skipped").format(len(skipped_rooms))
+
+# 		return {
+# 			"success": True,
+# 			"message": message,
+# 			"checked_in_rooms": checked_in_rooms,
+# 			"skipped_rooms": skipped_rooms,
+# 		}
+
+# 	except Exception as e:
+# 		frappe.log_error(frappe.get_traceback(), "Check In Selected Error")
+# 		frappe.throw(_("Error: {0}").format(str(e)))
+
+
+# share by percentage
+# @frappe.whitelist()
+# def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
+# 	"""Check in selected rooms (creates individual invoices if no bulk invoice)"""
+# 	try:
+# 		if isinstance(room_indices, str):
+# 			room_indices = json.loads(room_indices)
+
+# 		reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+
+# 		if reservation.docstatus != 1:
+# 			frappe.throw(_("Reservation must be submitted"))
+
+# 		if reservation.sales_invoice:
+# 			frappe.throw(
+# 				_(
+# 					"A bulk invoice ({0}) already exists for this reservation. "
+# 					"Use 'Check In Rooms (Bulk Invoice)' instead to avoid duplicate invoicing."
+# 				).format(reservation.sales_invoice)
+# 			)
+
+# 		# ── GUARD: block if all rooms already have individual invoices ──────────
+# 		invoiced_room_numbers = {r.room_number for r in reservation.sales_invoices if r.sales_invoice}
+# 		all_room_numbers = {r.room_number for r in reservation.rooms}
+# 		if invoiced_room_numbers >= all_room_numbers:
+# 			frappe.throw(
+# 				_(
+# 					"All rooms already have individual invoices. "
+# 					"No further invoicing is needed for this reservation."
+# 				)
+# 			)
+
+# 		settings = frappe.get_single("Hotel Settings")
+# 		check_in_time = now_datetime().strftime("%H:%M:%S")
+# 		check_out_time = settings.default_check_out_time or "11:00:00"
+
+# 		checked_in_rooms = []
+# 		skipped_rooms = []
+
+# 		for idx in room_indices:
+# 			idx = int(idx)
+# 			room = None
+
+# 			for r in reservation.rooms:
+# 				if r.idx == idx + 1:
+# 					room = r
+# 					break
+
+# 			if not room:
+# 				skipped_rooms.append({"idx": idx, "reason": "Not found"})
+# 				continue
+
+# 			# Check existing check-in
+# 			existing = frappe.db.get_value(
+# 				"Hotel Room Check In",
+# 				{
+# 					"front_desk_reservation": reservation_name,
+# 					"room_number": room.room_number,
+# 					"status": ["in", ["Draft", "Checked In"]],
+# 				},
+# 				"name",
+# 			)
+
+# 			if existing:
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "Already checked in"})
+# 				continue
+
+# 			if not room.guest_name or room.guest_name.startswith("Guest - Room"):
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "Guest name required"})
+# 				continue
+
+# 			# Get Hotel Room Reservation
+# 			hrr = frappe.db.get_value(
+# 				"Hotel Room Reservation",
+# 				{"front_desk_reservation": reservation_name, "room_number": room.room_number, "docstatus": 1},
+# 				"name",
+# 			)
+
+# 			if not hrr:
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "No reservation"})
+# 				continue
+
+# 			# ── CREATE INDIVIDUAL INVOICE ────────────────────────────────────────
+# 			room_invoice = None
+# 			try:
+# 				si = frappe.new_doc("Sales Invoice")
+# 				si.customer = reservation.customer
+# 				si.posting_date = nowdate()
+# 				si.due_date = reservation.to_date
+# 				si.po_no = f"{reservation.reservation_number} - {room.room_number}"
+
+# 				try:
+# 					item_code = create_or_get_item(
+# 						room_number=room.room_number, room_type=room.room_type, erpnext_item=None
+# 					)
+# 				except Exception as item_error:
+# 					frappe.log_error(f"Item creation failed: {str(item_error)}", "Invoice Item Error")
+# 					item_code = room.room_type
+
+# 				si.append(
+# 					"items",
+# 					{
+# 						"item_code": item_code,
+# 						"item_name": f"{room.room_number} - {room.guest_name}",
+# 						"description": _("Room {0} - {1} night(s) @ {2}/night").format(
+# 							room.room_number, reservation.number_of_nights, room.rate_per_night
+# 						),
+# 						"qty": reservation.number_of_nights,
+# 						"rate": room.rate_per_night,
+# 						"amount": room.room_total,
+# 					},
+# 				)
+
+# 				# ── DISCOUNT: remaining-balance proration ────────────────────────
+# 				if reservation.discount_amount and reservation.subtotal:
+# 					total_discount = flt(reservation.discount_amount, 2)
+
+# 					# How much discount has already been applied across prior invoices
+# 					already_applied = flt(
+# 						frappe.db.sql(
+# 							"""
+# 							SELECT IFNULL(SUM(si.discount_amount), 0)
+# 							FROM `tabSales Invoice` si
+# 							INNER JOIN `tabHotel Front Desk Reservation Invoice` fdri
+# 								ON fdri.sales_invoice = si.name
+# 							WHERE fdri.parent = %s
+# 							AND si.docstatus = 1
+# 							""",
+# 							(reservation_name,),
+# 						)[0][0],
+# 						2,
+# 					)
+
+# 					remaining_discount = flt(total_discount - already_applied, 2)
+
+# 					if remaining_discount > 0:
+# 						# Prorate remaining discount over rooms not yet invoiced
+# 						# (current room is not yet in sales_invoices so it's included here)
+# 						already_invoiced_rooms = {
+# 							r.room_number for r in reservation.sales_invoices if r.sales_invoice
+# 						}
+# 						uninvoiced_rooms = [
+# 							r for r in reservation.rooms if r.room_number not in already_invoiced_rooms
+# 						]
+# 						uninvoiced_subtotal = sum(flt(r.room_total) for r in uninvoiced_rooms)
+
+# 						if uninvoiced_subtotal > 0:
+# 							room_share = flt(room.room_total) / uninvoiced_subtotal
+# 							room_discount = flt(remaining_discount * room_share, 2)
+
+# 							if room_discount > 0:
+# 								si.discount_amount = room_discount
+# 								si.apply_discount_on = "Grand Total"
+
+# 				si.flags.ignore_permissions = True
+# 				si.insert()
+# 				si.submit()
+# 				room_invoice = si.name
+
+# 				# Add invoice to child table immediately so next room in loop
+# 				# sees this room as already invoiced when calculating its share
+# 				reservation.reload()
+# 				reservation.append(
+# 					"sales_invoices",
+# 					{
+# 						# "room_number": room.room_number,
+# 						# "guest_name": room.guest_name,
+# 						# "sales_invoice": si.name,
+# 						# "amount": room.room_total,
+# 						# "created_at": now_datetime(),
+# 						"room_number": room.room_number,
+# 						"guest_name": room.guest_name,
+# 						"sales_invoice": si.name,
+# 						"room_total": flt(room.room_total, 2),  # gross before discount
+# 						"discount_amount": flt(si.discount_amount, 2),  # discount applied to this room
+# 						"amount": flt(si.grand_total, 2),  # actual amount charged
+# 						"created_at": now_datetime(),
+# 					},
+# 				)
+# 				reservation.flags.ignore_permissions = True
+# 				reservation.flags.ignore_validate_update_after_submit = True
+# 				reservation.save()
+
+# 			except Exception as e:
+# 				frappe.log_error(f"Invoice error for {room.room_number}: {str(e)}", "Check In Invoice Error")
+# 				room_invoice = None
+
+# 			# ── CREATE CHECK-IN ──────────────────────────────────────────────────
+# 			check_in_datetime = get_datetime(f"{reservation.from_date} {check_in_time}")
+# 			expected_checkout = get_datetime(f"{reservation.to_date} {check_out_time}")
+
+# 			checkin = frappe.get_doc(
+# 				{
+# 					"doctype": "Hotel Room Check In",
+# 					"front_desk_reservation": reservation_name,
+# 					"hotel_room_reservation": hrr,
+# 					"reservation": hrr,
+# 					"room_number": room.room_number,
+# 					"room_type": room.room_type,
+# 					"rate_type": getattr(room, "rate_type", None),
+# 					"guest": room.hotel_guest,
+# 					"guest_name": room.guest_name,
+# 					"guest_email": room.guest_email or reservation.primary_guest_email,
+# 					"guest_phone": room.guest_phone or reservation.primary_guest_phone,
+# 					"customer": room.guest_customer or reservation.customer,
+# 					"hotel_guest": room.hotel_guest,
+# 					"check_in_datetime": check_in_datetime,
+# 					"expected_check_out_datetime": expected_checkout,
+# 					"number_of_nights": reservation.number_of_nights,
+# 					"rate_per_night": room.rate_per_night,
+# 					"rate_amount": room.rate_per_night,
+# 					"total_amount": room.room_total,
+# 					"status": "Checked In",
+# 					"payment_status": "Pending",
+# 					"check_in_notes": check_in_notes,
+# 					"sales_invoice": room_invoice,
+# 					"discount": reservation.discount_amount or 0,
+# 					"discount_type": reservation.discount_type or "None",
+# 					"total_charges": room.room_total,
+# 				}
+# 			)
+
+# 			checkin.flags.ignore_permissions = True
+# 			checkin.insert()
+# 			checkin.submit()
+
+# 			frappe.db.set_value("Hotel Room Reservation", hrr, "status", "Checked In")
+
+# 			checked_in_rooms.append(
+# 				{
+# 					"room_number": room.room_number,
+# 					"guest_name": room.guest_name,
+# 					"checkin_name": checkin.name,
+# 					"invoice": room_invoice,
+# 				}
+# 			)
+
+# 		# ── UPDATE FDR STATUS ────────────────────────────────────────────────────
+# 		if checked_in_rooms:
+# 			total_checkins = frappe.db.count(
+# 				"Hotel Room Check In",
+# 				{"front_desk_reservation": reservation_name, "status": ["in", ["Draft", "Checked In"]]},
+# 			)
+
+# 			if total_checkins >= len(reservation.rooms):
+# 				frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "status", "Checked In")
+# 			elif total_checkins > 0 and reservation.status == "Confirmed":
+# 				frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "status", "Checked In")
+
+# 		frappe.db.commit()
+
+# 		message = _("{0} room(s) checked in").format(len(checked_in_rooms))
+# 		if skipped_rooms:
+# 			message += _(" | {0} skipped").format(len(skipped_rooms))
+
+# 		return {
+# 			"success": True,
+# 			"message": message,
+# 			"checked_in_rooms": checked_in_rooms,
+# 			"skipped_rooms": skipped_rooms,
+# 		}
+
+# 	except Exception as e:
+# 		frappe.log_error(frappe.get_traceback(), "Check In Selected Error")
+# 		frappe.throw(_("Error: {0}").format(str(e)))
+
+
+@frappe.whitelist()
+# def check_in_selected_rooms(reservation_name, room_indices, check_in_notes="", discount_type="", discount=0):
+# 	"""Check in selected rooms (creates individual invoices if no bulk invoice)"""
+# 	try:
+# 		if isinstance(room_indices, str):
+# 			room_indices = json.loads(room_indices)
+
+# 		discount = flt(discount)
+
+# 		reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
+
+# 		if reservation.docstatus != 1:
+# 			frappe.throw(_("Reservation must be submitted"))
+
+# 		if reservation.sales_invoice:
+# 			frappe.throw(
+# 				_(
+# 					"A bulk invoice ({0}) already exists for this reservation. "
+# 					"Use 'Check In Rooms (Bulk Invoice)' instead to avoid duplicate invoicing."
+# 				).format(reservation.sales_invoice)
+# 			)
+
+# 		# ── GUARD: block if all rooms already have individual invoices ────────
+# 		invoiced_room_numbers = {r.room_number for r in reservation.sales_invoices if r.sales_invoice}
+# 		all_room_numbers = {r.room_number for r in reservation.rooms}
+# 		if invoiced_room_numbers >= all_room_numbers:
+# 			frappe.throw(
+# 				_(
+# 					"All rooms already have individual invoices. "
+# 					"No further invoicing is needed for this reservation."
+# 				)
+# 			)
+
+# 		# ── CALCULATE TOTAL DISCOUNT AMOUNT FOR SELECTED ROOMS ────────────────
+# 		# We need this upfront to prorate across selected rooms
+# 		selected_rooms = []
+# 		for idx in room_indices:
+# 			idx = int(idx)
+# 			for r in reservation.rooms:
+# 				if r.idx == idx + 1:
+# 					selected_rooms.append(r)
+# 					break
+
+# 		selected_subtotal = sum(flt(r.room_total) for r in selected_rooms)
+
+# 		# Resolve discount amount from type
+# 		if discount_type == "Percentage":
+# 			total_discount_for_batch = flt((selected_subtotal * discount) / 100, 2)
+# 		elif discount_type == "Fixed Amount":
+# 			total_discount_for_batch = flt(discount, 2)
+# 		else:
+# 			total_discount_for_batch = 0
+
+# 		# Validate fixed discount doesn't exceed selected rooms subtotal
+# 		if total_discount_for_batch > selected_subtotal:
+# 			frappe.throw(
+# 				_("Discount amount ({0}) cannot exceed the total for selected rooms ({1})").format(
+# 					total_discount_for_batch, selected_subtotal
+# 				)
+# 			)
+
+# 		settings = frappe.get_single("Hotel Settings")
+# 		check_in_time = now_datetime().strftime("%H:%M:%S")
+# 		check_out_time = settings.default_check_out_time or "11:00:00"
+
+# 		checked_in_rooms = []
+# 		skipped_rooms = []
+
+# 		for idx in room_indices:
+# 			idx = int(idx)
+# 			room = None
+
+# 			for r in reservation.rooms:
+# 				if r.idx == idx + 1:
+# 					room = r
+# 					break
+
+# 			if not room:
+# 				skipped_rooms.append({"idx": idx, "reason": "Not found"})
+# 				continue
+
+# 			# Check existing check-in
+# 			existing = frappe.db.get_value(
+# 				"Hotel Room Check In",
+# 				{
+# 					"front_desk_reservation": reservation_name,
+# 					"room_number": room.room_number,
+# 					"status": ["in", ["Draft", "Checked In"]],
+# 				},
+# 				"name",
+# 			)
+
+# 			if existing:
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "Already checked in"})
+# 				continue
+
+# 			if not room.guest_name or room.guest_name.startswith("Guest - Room"):
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "Guest name required"})
+# 				continue
+
+# 			# Get Hotel Room Reservation
+# 			hrr = frappe.db.get_value(
+# 				"Hotel Room Reservation",
+# 				{"front_desk_reservation": reservation_name, "room_number": room.room_number, "docstatus": 1},
+# 				"name",
+# 			)
+
+# 			if not hrr:
+# 				skipped_rooms.append({"room_number": room.room_number, "reason": "No reservation"})
+# 				continue
+
+# 			# ── CREATE INDIVIDUAL INVOICE ─────────────────────────────────────
+# 			room_invoice = None
+# 			try:
+# 				si = frappe.new_doc("Sales Invoice")
+# 				si.customer = reservation.customer
+# 				si.posting_date = nowdate()
+# 				si.due_date = reservation.to_date
+# 				si.po_no = f"{reservation.reservation_number} - {room.room_number}"
+
+# 				try:
+# 					item_code = create_or_get_item(
+# 						room_number=room.room_number, room_type=room.room_type, erpnext_item=None
+# 					)
+# 				except Exception as item_error:
+# 					frappe.log_error(f"Item creation failed: {str(item_error)}", "Invoice Item Error")
+# 					item_code = room.room_type
+
+# 				si.append(
+# 					"items",
+# 					{
+# 						"item_code": item_code,
+# 						"item_name": f"{room.room_number} - {room.guest_name}",
+# 						"description": _("Room {0} - {1} night(s) @ {2}/night").format(
+# 							room.room_number, reservation.number_of_nights, room.rate_per_night
+# 						),
+# 						"qty": reservation.number_of_nights,
+# 						"rate": room.rate_per_night,
+# 						"amount": room.room_total,
+# 					},
+# 				)
+
+# 				# ── DISCOUNT: prorate batch discount across selected rooms ─────
+# 				if total_discount_for_batch > 0 and selected_subtotal > 0:
+# 					room_share = flt(room.room_total) / selected_subtotal
+# 					room_discount = flt(total_discount_for_batch * room_share, 2)
+# 					if room_discount > 0:
+# 						si.discount_amount = room_discount
+# 						si.apply_discount_on = "Grand Total"
+
+# 				si.flags.ignore_permissions = True
+# 				si.insert()
+# 				si.submit()
+# 				room_invoice = si.name
+
+# 				# Reload so next room sees updated sales_invoices
+# 				reservation.reload()
+# 				reservation.append(
+# 					"sales_invoices",
+# 					{
+# 						"room_number": room.room_number,
+# 						"guest_name": room.guest_name,
+# 						"sales_invoice": si.name,
+# 						"room_total": flt(room.room_total, 2),
+# 						"discount_amount": flt(si.discount_amount, 2),
+# 						"amount": flt(si.grand_total, 2),
+# 						"created_at": now_datetime(),
+# 					},
+# 				)
+# 				reservation.flags.ignore_permissions = True
+# 				reservation.flags.ignore_validate_update_after_submit = True
+# 				reservation.save()
+
+# 			except Exception as e:
+# 				frappe.log_error(f"Invoice error for {room.room_number}: {str(e)}", "Check In Invoice Error")
+# 				room_invoice = None
+
+# 			# ── CREATE CHECK-IN ───────────────────────────────────────────────
+# 			check_in_datetime = get_datetime(f"{reservation.from_date} {check_in_time}")
+# 			expected_checkout = get_datetime(f"{reservation.to_date} {check_out_time}")
+
+# 			checkin = frappe.get_doc(
+# 				{
+# 					"doctype": "Hotel Room Check In",
+# 					"front_desk_reservation": reservation_name,
+# 					"hotel_room_reservation": hrr,
+# 					"reservation": hrr,
+# 					"room_number": room.room_number,
+# 					"room_type": room.room_type,
+# 					"rate_type": getattr(room, "rate_type", None),
+# 					"guest": room.hotel_guest,
+# 					"guest_name": room.guest_name,
+# 					"guest_email": room.guest_email or reservation.primary_guest_email,
+# 					"guest_phone": room.guest_phone or reservation.primary_guest_phone,
+# 					"customer": room.guest_customer or reservation.customer,
+# 					"hotel_guest": room.hotel_guest,
+# 					"check_in_datetime": check_in_datetime,
+# 					"expected_check_out_datetime": expected_checkout,
+# 					"number_of_nights": reservation.number_of_nights,
+# 					"rate_per_night": room.rate_per_night,
+# 					"rate_amount": room.rate_per_night,
+# 					"total_amount": room.room_total,
+# 					"status": "Checked In",
+# 					"payment_status": "Pending",
+# 					"check_in_notes": check_in_notes,
+# 					"sales_invoice": room_invoice,
+# 					"discount": flt(si.discount_amount, 2) if room_invoice else 0,
+# 					"discount_type": discount_type or "None",
+# 					"total_charges": flt(si.grand_total, 2) if room_invoice else room.room_total,
+# 				}
+# 			)
+
+# 			checkin.flags.ignore_permissions = True
+# 			checkin.insert()
+# 			checkin.submit()
+
+# 			frappe.db.set_value("Hotel Room Reservation", hrr, "status", "Checked In")
+
+# 			checked_in_rooms.append(
+# 				{
+# 					"room_number": room.room_number,
+# 					"guest_name": room.guest_name,
+# 					"checkin_name": checkin.name,
+# 					"invoice": room_invoice,
+# 				}
+# 			)
+
+# 		# ── UPDATE FDR STATUS ─────────────────────────────────────────────────
+# 		if checked_in_rooms:
+# 			total_checkins = frappe.db.count(
+# 				"Hotel Room Check In",
+# 				{"front_desk_reservation": reservation_name, "status": ["in", ["Draft", "Checked In"]]},
+# 			)
+
+# 			if total_checkins >= len(reservation.rooms):
+# 				frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "status", "Checked In")
+# 			elif total_checkins > 0 and reservation.status == "Confirmed":
+# 				frappe.db.set_value("Hotel Front Desk Reservation", reservation_name, "status", "Checked In")
+
+# 		frappe.db.commit()
+
+# 		message = _("{0} room(s) checked in").format(len(checked_in_rooms))
+# 		if skipped_rooms:
+# 			message += _(" | {0} skipped").format(len(skipped_rooms))
+
+# 		return {
+# 			"success": True,
+# 			"message": message,
+# 			"checked_in_rooms": checked_in_rooms,
+# 			"skipped_rooms": skipped_rooms,
+# 		}
+
+# 	except Exception as e:
+# 		frappe.log_error(frappe.get_traceback(), "Check In Selected Error")
+# 		frappe.throw(_("Error: {0}").format(str(e)))
+
 @frappe.whitelist()
 def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 	"""Check in selected rooms (creates individual invoices if no bulk invoice)"""
 	try:
 		if isinstance(room_indices, str):
 			room_indices = json.loads(room_indices)
+
+		# room_indices is now a list of dicts:
+		# [{"room_idx": 0, "discount_type": "Percentage", "discount": 10}, ...]
 
 		reservation = frappe.get_doc("Hotel Front Desk Reservation", reservation_name)
 
@@ -876,9 +1762,19 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 		if reservation.sales_invoice:
 			frappe.throw(
 				_(
-					"You have a bulk invoice for this reservation already.\n"
-					"Use Check In Rooms (Bulk Invoice) to check in this reservation.\n"
-					"Use bulk invoice check-in for this reservation"
+					"A bulk invoice ({0}) already exists for this reservation. "
+					"Use 'Check In Rooms (Bulk Invoice)' instead to avoid duplicate invoicing."
+				).format(reservation.sales_invoice)
+			)
+
+		# ── GUARD: block if all rooms already have individual invoices ─────────
+		invoiced_room_numbers = {r.room_number for r in reservation.sales_invoices if r.sales_invoice}
+		all_room_numbers = {r.room_number for r in reservation.rooms}
+		if invoiced_room_numbers >= all_room_numbers:
+			frappe.throw(
+				_(
+					"All rooms already have individual invoices. "
+					"No further invoicing is needed for this reservation."
 				)
 			)
 
@@ -889,10 +1785,13 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 		checked_in_rooms = []
 		skipped_rooms = []
 
-		for idx in room_indices:
-			idx = int(idx)
-			room = None
+		for item in room_indices:
+			idx = int(item["room_idx"])
+			discount_type = item.get("discount_type", "") or ""
+			discount = flt(item.get("discount", 0))
 
+			# ── FIND ROOM ─────────────────────────────────────────────────────
+			room = None
 			for r in reservation.rooms:
 				if r.idx == idx + 1:
 					room = r
@@ -902,7 +1801,7 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 				skipped_rooms.append({"idx": idx, "reason": "Not found"})
 				continue
 
-			# Check existing
+			# ── CHECK EXISTING CHECK-IN ───────────────────────────────────────
 			existing = frappe.db.get_value(
 				"Hotel Room Check In",
 				{
@@ -921,7 +1820,7 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 				skipped_rooms.append({"room_number": room.room_number, "reason": "Guest name required"})
 				continue
 
-			# Get reservation
+			# ── GET HOTEL ROOM RESERVATION ────────────────────────────────────
 			hrr = frappe.db.get_value(
 				"Hotel Room Reservation",
 				{"front_desk_reservation": reservation_name, "room_number": room.room_number, "docstatus": 1},
@@ -932,7 +1831,27 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 				skipped_rooms.append({"room_number": room.room_number, "reason": "No reservation"})
 				continue
 
-			# Create individual invoice
+			# ── CALCULATE THIS ROOM'S DISCOUNT ───────────────────────────────
+			if discount_type == "Percentage":
+				room_discount_amount = flt((flt(room.room_total) * discount) / 100, 2)
+			elif discount_type == "Fixed Amount":
+				room_discount_amount = flt(discount, 2)
+			else:
+				room_discount_amount = 0
+
+			# Safety check — discount cannot exceed room total
+			if room_discount_amount > flt(room.room_total):
+				skipped_rooms.append(
+					{
+						"room_number": room.room_number,
+						"reason": f"Discount ({room_discount_amount}) exceeds room total ({room.room_total})",
+					}
+				)
+				continue
+
+			# ── CREATE INDIVIDUAL INVOICE ─────────────────────────────────────
+			room_invoice = None
+			si = None
 			try:
 				si = frappe.new_doc("Sales Invoice")
 				si.customer = reservation.customer
@@ -940,18 +1859,12 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 				si.due_date = reservation.to_date
 				si.po_no = f"{reservation.reservation_number} - {room.room_number}"
 
-				# try:
-				#     item_name = create_or_get_item(room.room_type)
-				# except:
-				#     item_name = room.room_type
-
 				try:
 					item_code = create_or_get_item(
 						room_number=room.room_number, room_type=room.room_type, erpnext_item=None
 					)
 				except Exception as item_error:
 					frappe.log_error(f"Item creation failed: {str(item_error)}", "Invoice Item Error")
-					# Fallback to room type
 					item_code = room.room_type
 
 				si.append(
@@ -968,19 +1881,29 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 					},
 				)
 
+				# ── APPLY DISCOUNT DIRECTLY — NO PRORATION ───────────────────
+				if room_discount_amount > 0:
+					si.discount_amount = room_discount_amount
+					si.apply_discount_on = "Grand Total"
+
 				si.flags.ignore_permissions = True
 				si.insert()
 				si.submit()
 				room_invoice = si.name
 
-				# Add to child table
+				# ── UPDATE SALES INVOICES CHILD TABLE ────────────────────────
+				# Reload first so next iteration sees fresh sales_invoices
+				reservation.reload()
 				reservation.append(
 					"sales_invoices",
 					{
 						"room_number": room.room_number,
 						"guest_name": room.guest_name,
 						"sales_invoice": si.name,
-						"amount": room.room_total,
+						"room_total": flt(room.room_total, 2),
+						"discount_type": discount_type or "",
+						"discount_amount": flt(si.discount_amount, 2),
+						"amount": flt(si.grand_total, 2),
 						"created_at": now_datetime(),
 					},
 				)
@@ -992,10 +1915,10 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 				frappe.log_error(f"Invoice error for {room.room_number}: {str(e)}", "Check In Invoice Error")
 				room_invoice = None
 
+			# ── CREATE CHECK-IN ───────────────────────────────────────────────
 			check_in_datetime = get_datetime(f"{reservation.from_date} {check_in_time}")
 			expected_checkout = get_datetime(f"{reservation.to_date} {check_out_time}")
 
-			# Create check-in
 			checkin = frappe.get_doc(
 				{
 					"doctype": "Hotel Room Check In",
@@ -1021,9 +1944,13 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 					"payment_status": "Pending",
 					"check_in_notes": check_in_notes,
 					"sales_invoice": room_invoice,
-					"discount": reservation.discount_amount or 0,
-					"discount_type": reservation.discount_type or "None",
-					"total_charges": room.room_total,
+					"discount": discount
+					if discount_type == "Percentage"
+					else flt(si.discount_amount, 2)
+					if si
+					else 0,
+					"discount_type": discount_type or "None",
+					"total_charges": flt(si.grand_total, 2) if si else flt(room.room_total, 2),
 				}
 			)
 
@@ -1042,7 +1969,7 @@ def check_in_selected_rooms(reservation_name, room_indices, check_in_notes=""):
 				}
 			)
 
-		# Update status
+		# ── UPDATE FDR STATUS ─────────────────────────────────────────────────
 		if checked_in_rooms:
 			total_checkins = frappe.db.count(
 				"Hotel Room Check In",
@@ -1271,6 +2198,57 @@ def get_reservation_status_info(reservation_name):
 		return {"valid": False, "message": str(e)}
 
 
+def _invoice_has_payment_activity(invoice):
+	if not invoice:
+		return False
+
+	if flt(invoice.outstanding_amount) < flt(invoice.grand_total):
+		return True
+
+	return bool(
+		frappe.db.sql(
+			"""
+			SELECT per.name
+			FROM `tabPayment Entry Reference` per
+			INNER JOIN `tabPayment Entry` pe ON pe.name = per.parent
+			WHERE per.reference_doctype = 'Sales Invoice'
+				AND per.reference_name = %s
+				AND pe.docstatus = 1
+			LIMIT 1
+			""",
+			(invoice.name,),
+		)
+	)
+
+
+def _append_adjustment_row(
+	reservation,
+	adjustment_type,
+	invoice_name,
+	amount,
+	night_diff,
+	old_checkout,
+	new_checkout,
+	old_nights,
+	new_nights,
+	reason,
+):
+	reservation.append(
+		"adjustment_invoices",
+		{
+			"adjustment_type": adjustment_type,
+			"adjustment_nvoice": invoice_name,
+			"amount": abs(amount),
+			"previous_checkout_datetime": str(old_checkout),
+			"new_checkout_datetime": str(new_checkout),
+			"previous_number_of_nights": old_nights,
+			"new_number_of_nights": new_nights,
+			"adjustment_date": now_datetime(),
+			"reason": reason,
+		},
+	)
+
+
 @frappe.whitelist()
 def adjust_front_desk_reservation(reservation_name, new_checkout_date, new_checkout_time, new_discount=0):
 	"""Adjust stay (extension or reduction)"""
@@ -1346,58 +2324,67 @@ def adjust_front_desk_reservation(reservation_name, new_checkout_date, new_check
 		amount_change = new_subtotal - old_subtotal
 		new_total = new_subtotal - new_discount
 
-		# Update reservation
-		frappe.db.set_value(
-			"Hotel Front Desk Reservation",
-			reservation_name,
-			{
-				"to_date": new_checkout_date,
-				"number_of_nights": new_nights,
-				"subtotal": new_subtotal,
-				"discount_amount": new_discount,
-				"total_amount": new_total,
-			},
-			update_modified=False,
+		original_invoice = (
+			frappe.get_doc("Sales Invoice", reservation.sales_invoice) if reservation.sales_invoice else None
 		)
-
-		# Update rooms
-		for idx, room in enumerate(reservation.rooms):
-			frappe.db.set_value(
-				"Front Desk Reservation Room",
-				{"parent": reservation_name, "room_number": room.room_number},
-				{"room_total": room_changes[idx]["new_total"], "number_of_nights": new_nights},
-				update_modified=False,
-			)
-
-		# Update HRRs
-		hrrs = frappe.get_all(
-			"Hotel Room Reservation",
-			filters={"front_desk_reservation": reservation_name, "docstatus": 1},
-			pluck="name",
-		)
-
-		for hrr in hrrs:
-			frappe.db.set_value(
-				"Hotel Room Reservation",
-				hrr,
-				{"to_date": new_checkout_date, "number_of_nights": new_nights},
-				update_modified=False,
-			)
-
-		# Update check-ins
-		new_checkout_str = f"{new_checkout_date} {new_checkout_time}"
-		for checkin in checkins:
-			ci = frappe.get_doc("Hotel Room Check In", checkin.name)
-			ci.expected_check_out_datetime = get_datetime(new_checkout_str)
-			ci.number_of_nights = new_nights
-			ci.flags.ignore_permissions = True
-			ci.save()
+		has_payment_activity = _invoice_has_payment_activity(original_invoice)
 
 		# Handle invoicing
 		invoice_name = None
 		credit_note = None
+		recreated_invoice = None
 
-		if is_extension and amount_change > 0 and reservation.customer:
+		if reservation.sales_invoice and not has_payment_activity and reservation.customer:
+			if original_invoice and original_invoice.docstatus == 1:
+				original_invoice.flags.ignore_permissions = True
+				original_invoice.cancel()
+
+			si = frappe.new_doc("Sales Invoice")
+			si.customer = reservation.customer
+			si.posting_date = nowdate()
+			si.due_date = new_checkout_date
+			si.po_no = reservation.reservation_number
+			si.remarks = _("Recreated after reservation adjustment from {0} to {1} night(s)").format(
+				old_nights, new_nights
+			)
+
+			for rc in room_changes:
+				try:
+					item_code = create_or_get_item(
+						room_number=rc["room_number"],
+						room_type=rc["room_type"],
+						erpnext_item=None,
+					)
+				except Exception as item_error:
+					frappe.log_error(
+						f"Item creation failed: {str(item_error)}", "Adjustment Invoice Item Error"
+					)
+					item_code = rc["room_number"]
+
+				si.append(
+					"items",
+					{
+						"item_code": item_code,
+						"item_name": f"{rc['room_number']} - Adjusted Stay",
+						"description": _("Room {0} ({1}) - {2} night(s) @ {3}/night").format(
+							rc["room_number"], rc["room_type"], new_nights, rc["rate_per_night"]
+						),
+						"qty": new_nights,
+						"rate": rc["rate_per_night"],
+						"amount": rc["new_total"],
+					},
+				)
+
+			if new_discount:
+				si.discount_amount = new_discount
+
+			si.flags.ignore_permissions = True
+			si.insert()
+			si.submit()
+			recreated_invoice = si.name
+			invoice_name = si.name
+
+		elif is_extension and amount_change > 0 and reservation.customer:
 			# Extension invoice
 			si = frappe.new_doc("Sales Invoice")
 			si.customer = reservation.customer
@@ -1440,26 +2427,6 @@ def adjust_front_desk_reservation(reservation_name, new_checkout_date, new_check
 				si.insert()
 				si.submit()
 				invoice_name = si.name
-
-				# Add to child table
-				reservation.append(
-					"adjustment_invoices",
-					{
-						"adjustment_type": "Extension",
-						"adjustment_nvoice": si.name,
-						"amount": abs(amount_change),
-						"nights_adjusted": abs(night_diff),
-						"old_checkout": str(old_checkout),
-						"new_checkout": str(new_checkout),
-						"previous_number_of_nights": old_nights,
-						"new_number_of_nights": new_nights,
-						"adjustment_date": now_datetime(),
-						"reason": f"Extension for {abs(night_diff)} night(s)",
-					},
-				)
-				reservation.flags.ignore_permissions = True
-				reservation.flags.ignore_validate_update_after_submit = True
-				reservation.save()
 
 		elif not is_extension and amount_change < 0 and reservation.customer:
 			# Credit note
@@ -1506,25 +2473,118 @@ def adjust_front_desk_reservation(reservation_name, new_checkout_date, new_check
 				cn.submit()
 				credit_note = cn.name
 
-				# Add to child table
+		# Update reservation
+		update_values = {
+			"to_date": new_checkout_date,
+			"number_of_nights": new_nights,
+			"subtotal": new_subtotal,
+			"discount_amount": new_discount,
+			"total_amount": new_total,
+		}
+		if recreated_invoice:
+			update_values["sales_invoice"] = recreated_invoice
+
+		frappe.db.set_value(
+			"Hotel Front Desk Reservation",
+			reservation_name,
+			update_values,
+			update_modified=False,
+		)
+
+		# Update rooms
+		for idx, room in enumerate(reservation.rooms):
+			frappe.db.set_value(
+				"Front Desk Reservation Room",
+				{"parent": reservation_name, "room_number": room.room_number},
+				{"room_total": room_changes[idx]["new_total"], "number_of_nights": new_nights},
+				update_modified=False,
+			)
+
+		# Update HRRs
+		hrrs = frappe.get_all(
+			"Hotel Room Reservation",
+			filters={"front_desk_reservation": reservation_name, "docstatus": 1},
+			pluck="name",
+		)
+
+		for hrr in hrrs:
+			hrr_values = {"to_date": new_checkout_date, "number_of_nights": new_nights}
+			if recreated_invoice:
+				hrr_values["sales_invoice"] = recreated_invoice
+			frappe.db.set_value(
+				"Hotel Room Reservation",
+				hrr,
+				hrr_values,
+				update_modified=False,
+			)
+
+		# Update check-ins
+		new_checkout_str = f"{new_checkout_date} {new_checkout_time}"
+		for checkin in checkins:
+			ci = frappe.get_doc("Hotel Room Check In", checkin.name)
+			ci.expected_check_out_datetime = get_datetime(new_checkout_str)
+			ci.number_of_nights = new_nights
+			ci.flags.ignore_permissions = True
+			ci.save()
+
+		# Persist parent doc rows after db_set updates
+		reservation.reload()
+		if recreated_invoice:
+			reservation.sales_invoice = recreated_invoice
+			reservation.set("sales_invoices", [])
+			for room in reservation.rooms:
 				reservation.append(
-					"adjustment_invoices",
+					"sales_invoices",
 					{
-						"adjustment_type": "Reduction",
-						"adjustment_nvoice": cn.name,
-						"amount": abs(amount_change),
-						"nights_adjusted": abs(night_diff),
-						"old_checkout": str(old_checkout),
-						"new_checkout": str(new_checkout),
-						"previous_number_of_nights": old_nights,
-						"new_number_of_nights": new_nights,
-						"adjustment_date": now_datetime(),
-						"reason": f"Reduction by {abs(night_diff)} night(s)",
+						"room_number": room.room_number,
+						"guest_name": room.guest_name,
+						"sales_invoice": recreated_invoice,
+						"amount": room.room_total,
+						"created_at": now_datetime(),
 					},
 				)
-				reservation.flags.ignore_permissions = True
-				reservation.flags.ignore_validate_update_after_submit = True
-				reservation.save()
+			_append_adjustment_row(
+				reservation,
+				"Extension" if is_extension else "Reduction",
+				recreated_invoice,
+				amount_change,
+				night_diff,
+				old_checkout,
+				new_checkout,
+				old_nights,
+				new_nights,
+				f"Invoice recreated after reservation adjustment from {old_nights} to {new_nights} night(s)",
+			)
+		elif invoice_name:
+			_append_adjustment_row(
+				reservation,
+				"Extension",
+				invoice_name,
+				amount_change,
+				night_diff,
+				old_checkout,
+				new_checkout,
+				old_nights,
+				new_nights,
+				f"Extension for {abs(night_diff)} night(s)",
+			)
+		elif credit_note:
+			_append_adjustment_row(
+				reservation,
+				"Reduction",
+				credit_note,
+				amount_change,
+				night_diff,
+				old_checkout,
+				new_checkout,
+				old_nights,
+				new_nights,
+				f"Reduction by {abs(night_diff)} night(s)",
+			)
+
+		reservation.flags.ignore_permissions = True
+		reservation.flags.ignore_validate_update_after_submit = True
+		reservation.save()
 
 		frappe.db.commit()
 
@@ -1541,6 +2601,7 @@ def adjust_front_desk_reservation(reservation_name, new_checkout_date, new_check
 			"new_nights": new_nights,
 			"night_difference": night_diff,
 			"amount_change": float(amount_change),
+			"recreated_invoice": recreated_invoice,
 			"additional_invoice": invoice_name,
 			"credit_note": credit_note,
 		}

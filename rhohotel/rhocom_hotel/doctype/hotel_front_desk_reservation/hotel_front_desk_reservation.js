@@ -583,6 +583,12 @@ function proceed_with_adjustment(frm, values, d, is_checked_in) {
                     </div>`;
                 }
 
+                if (result.recreated_invoice) {
+                    msg += `<div style="margin-top: 15px; padding: 10px; background-color: #d1ecf1; border-radius: 4px;">
+                        <strong>✓ Recreated Invoice:</strong> <a href="/app/sales-invoice/${result.recreated_invoice}">${result.recreated_invoice}</a>
+                    </div>`;
+                }
+
                 if (result.credit_note) {
                     msg += `<div style="margin-top: 15px; padding: 10px; background-color: #d4edda; border-radius: 4px;">
                         <strong>✓ Credit Note:</strong> <a href="/app/sales-invoice/${result.credit_note}">${result.credit_note}</a>
@@ -609,30 +615,202 @@ function proceed_with_adjustment(frm, values, d, is_checked_in) {
 // CORPORATE CHECK-IN DIALOG
 // ═════════════════════════════════════════════════════════════════════════
 
+// function show_corporate_checkin_dialog(frm) {
+//     let d = new frappe.ui.Dialog({
+//         title: __('Check In Selected Rooms'),
+//         fields: [
+//             { fieldtype: 'HTML', fieldname: 'info_html', options: `<div class="alert alert-info"><strong>Check In Rooms</strong><br>Select which rooms to check in. You can only check in rooms that don't already have check-ins.</div>` },
+//             { fieldname: 'rooms_html', fieldtype: 'HTML', options: '<p class="text-muted"><i class="fa fa-spinner fa-spin"></i> Loading rooms...</p>' },
+//             { fieldtype: 'Section Break', label: 'Check-In Notes' },
+//             { fieldname: 'check_in_notes', fieldtype: 'Small Text', label: 'Notes (Optional)' }
+//         ],
+//         size: 'large',
+//         primary_action_label: __('Check In Selected'),
+//         primary_action: function (values) {
+//             let selected = [];
+//             d.$wrapper.find('input[type="checkbox"]:checked').each(function () {
+//                 let room_idx = $(this).data('room-idx');
+//                 selected.push(parseInt(room_idx));
+//             });
+
+//             if (selected.length === 0) {
+//                 frappe.msgprint(__('Please select at least one room'));
+//                 return;
+//             }
+
+//             check_in_selected_rooms_only(frm, selected, values.check_in_notes || '');
+//             d.hide();
+//         }
+//     });
+
+//     function fetch_and_render_rooms() {
+//         frappe.call({
+//             method: 'frappe.client.get',
+//             args: { doctype: 'Hotel Front Desk Reservation', name: frm.doc.name },
+//             callback: function (r) {
+//                 if (!r.message) return;
+
+//                 let fresh_doc = r.message;
+//                 let room_numbers = fresh_doc.rooms.map(room => room.room_number);
+
+//                 frappe.call({
+//                     method: 'frappe.client.get_list',
+//                     args: {
+//                         doctype: 'Hotel Room Reservation',
+//                         filters: { 'front_desk_reservation': frm.doc.name, 'room_number': ['in', room_numbers] },
+//                         fields: ['name', 'room_number', 'status']
+//                     },
+//                     callback: function (r2) {
+//                         let reservations_in_db = {};
+//                         if (r2.message) r2.message.forEach(res => { reservations_in_db[res.room_number] = res.name; });
+
+//                         frappe.call({
+//                             method: 'frappe.client.get_list',
+//                             args: {
+//                                 doctype: 'Hotel Room Check In',
+//                                 filters: { 'front_desk_reservation': frm.doc.name, 'room_number': ['in', room_numbers], 'status': ['in', ['Draft', 'Checked In']] },
+//                                 fields: ['name', 'room_number', 'status', 'check_in_datetime']
+//                             },
+//                             callback: function (r3) {
+//                                 let checkins_in_db = {};
+//                                 if (r3.message) r3.message.forEach(checkin => { checkins_in_db[checkin.room_number] = { name: checkin.name, status: checkin.status }; });
+
+//                                 let html = `<table class="table table-bordered table-hover" style="margin: 15px 0;">
+//                                     <thead><tr>
+//                                         <th width="8%"><input type="checkbox" id="select-all-checkin"></th>
+//                                         <th width="18%">Room</th>
+//                                         <th width="30%">Guest Name</th>
+//                                         <th width="22%">Reservation</th>
+//                                         <th width="22%">Check-In Status</th>
+//                                     </tr></thead><tbody>`;
+
+//                                 fresh_doc.rooms.forEach(function (room, idx) {
+//                                     let has_reservation = reservations_in_db.hasOwnProperty(room.room_number);
+//                                     let has_checkin = checkins_in_db.hasOwnProperty(room.room_number);
+
+//                                     let reservation_badge = has_reservation ? '<span class="badge badge-success"><i class="fa fa-check"></i> Created</span>' : '<span class="badge badge-secondary">Not Created</span>';
+//                                     let checkin_badge = has_checkin ? `<span class="badge badge-info"><i class="fa fa-check"></i> ${checkins_in_db[room.room_number].status}</span>` : '<span class="badge badge-warning">Not Checked In</span>';
+//                                     let checkbox_html = has_checkin ? `<input type="checkbox" data-room-idx="${idx}" disabled title="Already checked in">` : `<input type="checkbox" data-room-idx="${idx}">`;
+
+//                                     html += `<tr ${has_checkin ? 'style="opacity: 0.6;"' : ''}>
+//                                         <td>${checkbox_html}</td>
+//                                         <td><strong>${room.room_number}</strong></td>
+//                                         <td>${room.guest_name || '<em>(No guest name)</em>'}</td>
+//                                         <td>${reservation_badge}</td>
+//                                         <td>${checkin_badge}</td>
+//                                     </tr>`;
+//                                 });
+
+//                                 html += '</tbody></table>';
+//                                 d.fields_dict.rooms_html.$wrapper.html(html);
+
+//                                 d.$wrapper.find('#select-all-checkin').on('change', function () {
+//                                     d.$wrapper.find('input[type="checkbox"]:not(:disabled)').prop('checked', this.checked);
+//                                 });
+//                             }
+//                         });
+//                     }
+//                 });
+//             }
+//         });
+//     }
+
+//     let original_show = d.show.bind(d);
+//     d.show = function () { fetch_and_render_rooms(); original_show(); };
+//     d.show();
+// }
+
 function show_corporate_checkin_dialog(frm) {
     let d = new frappe.ui.Dialog({
         title: __('Check In Selected Rooms'),
         fields: [
-            { fieldtype: 'HTML', fieldname: 'info_html', options: `<div class="alert alert-info"><strong>Check In Rooms</strong><br>Select which rooms to check in. You can only check in rooms that don't already have check-ins.</div>` },
-            { fieldname: 'rooms_html', fieldtype: 'HTML', options: '<p class="text-muted"><i class="fa fa-spinner fa-spin"></i> Loading rooms...</p>' },
+            {
+                fieldtype: 'HTML',
+                fieldname: 'info_html',
+                options: `<div class="alert alert-info"><strong>Check In Rooms</strong><br>Select rooms to check in and optionally apply a discount per room.</div>`
+            },
+            {
+                fieldname: 'rooms_html',
+                fieldtype: 'HTML',
+                options: '<p class="text-muted"><i class="fa fa-spinner fa-spin"></i> Loading rooms...</p>'
+            },
             { fieldtype: 'Section Break', label: 'Check-In Notes' },
-            { fieldname: 'check_in_notes', fieldtype: 'Small Text', label: 'Notes (Optional)' }
+            {
+                fieldname: 'check_in_notes',
+                fieldtype: 'Small Text',
+                label: 'Notes (Optional)'
+            }
         ],
-        size: 'large',
+        size: 'extra-large',
         primary_action_label: __('Check In Selected'),
         primary_action: function (values) {
             let selected = [];
-            d.$wrapper.find('input[type="checkbox"]:checked').each(function () {
-                let room_idx = $(this).data('room-idx');
-                selected.push(parseInt(room_idx));
+            let errors = [];
+
+            d.$wrapper.find('tr[data-room-idx]').each(function () {
+                let $row = $(this);
+                let $checkbox = $row.find('input[type="checkbox"]');
+
+                if (!$checkbox.is(':checked') || $checkbox.is(':disabled')) return;
+
+                let room_idx = parseInt($row.data('room-idx'));
+                let discount_type = $row.find('.discount-type-select').val();
+                let discount = parseFloat($row.find('.discount-input').val()) || 0;
+                let room_number = $row.data('room-number');
+                let room_total = parseFloat($row.data('room-total'));
+
+                // Validate
+                if (discount_type && !discount) {
+                    errors.push(`${room_number}: Discount type selected but no value entered`);
+                    return;
+                }
+
+                if (!discount_type && discount) {
+                    errors.push(`${room_number}: Discount value entered but no type selected`);
+                    return;
+                }
+
+                if (discount_type === 'Percentage' && discount > 100) {
+                    errors.push(`${room_number}: Percentage cannot exceed 100%`);
+                    return;
+                }
+
+                if (discount_type === 'Fixed Amount' && discount > room_total) {
+                    errors.push(`${room_number}: Fixed discount (₦${discount.toLocaleString()}) cannot exceed room total (₦${room_total.toLocaleString()})`);
+                    return;
+                }
+
+                if (discount < 0) {
+                    errors.push(`${room_number}: Discount cannot be negative`);
+                    return;
+                }
+
+                selected.push({
+                    room_idx: room_idx,
+                    discount_type: discount_type || '',
+                    discount: discount || 0
+                });
             });
+
+            if (errors.length > 0) {
+                frappe.msgprint({
+                    title: __('Validation Errors'),
+                    message: errors.join('<br>'),
+                    indicator: 'red'
+                });
+                return;
+            }
 
             if (selected.length === 0) {
                 frappe.msgprint(__('Please select at least one room'));
                 return;
             }
 
-            check_in_selected_rooms_only(frm, selected, values.check_in_notes || '');
+            check_in_selected_rooms_only(
+                frm,
+                selected,
+                values.check_in_notes || ''
+            );
             d.hide();
         }
     });
@@ -650,58 +828,147 @@ function show_corporate_checkin_dialog(frm) {
                 frappe.call({
                     method: 'frappe.client.get_list',
                     args: {
-                        doctype: 'Hotel Room Reservation',
-                        filters: { 'front_desk_reservation': frm.doc.name, 'room_number': ['in', room_numbers] },
+                        doctype: 'Hotel Room Check In',
+                        filters: {
+                            'front_desk_reservation': frm.doc.name,
+                            'room_number': ['in', room_numbers],
+                            'status': ['in', ['Draft', 'Checked In']]
+                        },
                         fields: ['name', 'room_number', 'status']
                     },
-                    callback: function (r2) {
-                        let reservations_in_db = {};
-                        if (r2.message) r2.message.forEach(res => { reservations_in_db[res.room_number] = res.name; });
+                    callback: function (r3) {
+                        let checkins_in_db = {};
+                        if (r3.message) {
+                            r3.message.forEach(checkin => {
+                                checkins_in_db[checkin.room_number] = {
+                                    name: checkin.name,
+                                    status: checkin.status
+                                };
+                            });
+                        }
 
-                        frappe.call({
-                            method: 'frappe.client.get_list',
-                            args: {
-                                doctype: 'Hotel Room Check In',
-                                filters: { 'front_desk_reservation': frm.doc.name, 'room_number': ['in', room_numbers], 'status': ['in', ['Draft', 'Checked In']] },
-                                fields: ['name', 'room_number', 'status', 'check_in_datetime']
-                            },
-                            callback: function (r3) {
-                                let checkins_in_db = {};
-                                if (r3.message) r3.message.forEach(checkin => { checkins_in_db[checkin.room_number] = { name: checkin.name, status: checkin.status }; });
+                        let pending_count = fresh_doc.rooms.filter(room =>
+                            !checkins_in_db.hasOwnProperty(room.room_number)
+                        ).length;
 
-                                let html = `<table class="table table-bordered table-hover" style="margin: 15px 0;">
-                                    <thead><tr>
-                                        <th width="8%"><input type="checkbox" id="select-all-checkin"></th>
-                                        <th width="18%">Room</th>
-                                        <th width="30%">Guest Name</th>
-                                        <th width="22%">Reservation</th>
-                                        <th width="22%">Check-In Status</th>
-                                    </tr></thead><tbody>`;
+                        let html = `
+                            <div class="alert alert-warning" style="margin-bottom: 10px;">
+                                <strong>${pending_count}</strong> room(s) pending check-in out of 
+                                <strong>${fresh_doc.rooms.length}</strong> total rooms.
+                            </div>
+                            <table class="table table-bordered" style="margin: 10px 0; font-size: 13px;">
+                                <thead>
+                                    <tr style="background-color: #f5f5f5;">
+                                        <th width="5%">
+                                            <input type="checkbox" id="select-all-checkin" title="Select all pending rooms">
+                                        </th>
+                                        <th width="12%">Room</th>
+                                        <th width="15%">Type</th>
+                                        <th width="20%">Guest Name</th>
+                                        <th width="13%">Rate/Night</th>
+                                        <th width="13%">Room Total</th>
+                                        <th width="12%">Discount Type</th>
+                                        <th width="10%">Discount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
 
-                                fresh_doc.rooms.forEach(function (room, idx) {
-                                    let has_reservation = reservations_in_db.hasOwnProperty(room.room_number);
-                                    let has_checkin = checkins_in_db.hasOwnProperty(room.room_number);
+                        fresh_doc.rooms.forEach(function (room, idx) {
+                            let has_checkin = checkins_in_db.hasOwnProperty(room.room_number);
+                            let row_style = has_checkin ? 'style="opacity: 0.5; background-color: #f9f9f9;"' : '';
 
-                                    let reservation_badge = has_reservation ? '<span class="badge badge-success"><i class="fa fa-check"></i> Created</span>' : '<span class="badge badge-secondary">Not Created</span>';
-                                    let checkin_badge = has_checkin ? `<span class="badge badge-info"><i class="fa fa-check"></i> ${checkins_in_db[room.room_number].status}</span>` : '<span class="badge badge-warning">Not Checked In</span>';
-                                    let checkbox_html = has_checkin ? `<input type="checkbox" data-room-idx="${idx}" disabled title="Already checked in">` : `<input type="checkbox" data-room-idx="${idx}">`;
+                            let checkbox_html = has_checkin
+                                ? `<input type="checkbox" disabled title="Already checked in">`
+                                : `<input type="checkbox" data-room-idx="${idx}">`;
 
-                                    html += `<tr ${has_checkin ? 'style="opacity: 0.6;"' : ''}>
-                                        <td>${checkbox_html}</td>
-                                        <td><strong>${room.room_number}</strong></td>
-                                        <td>${room.guest_name || '<em>(No guest name)</em>'}</td>
-                                        <td>${reservation_badge}</td>
-                                        <td>${checkin_badge}</td>
-                                    </tr>`;
-                                });
+                            let status_badge = has_checkin
+                                ? `<br><span class="badge badge-info" style="font-size:10px;">${checkins_in_db[room.room_number].status}</span>`
+                                : '';
+                            let room_invoice_info = (fresh_doc.sales_invoices || []).find(inv => inv.room_number === room.room_number);
 
-                                html += '</tbody></table>';
-                                d.fields_dict.rooms_html.$wrapper.html(html);
+                            //                         let discount_fields = has_checkin
+                            //                             ? `<td>-</td><td>-</td>`
+                            //                             : `
+                            //                                 <td>
+                            //                                     <select class="form-control form-control-sm discount-type-select" style="font-size:12px; padding: 2px 4px;">
+                            //                                         <option value="">None</option>
+                            //                                        <option value="Percentage">Percentage</option>
+                            // <option value="Fixed Amount">Fixed</option>
+                            //                                     </select>
+                            //                                 </td>
+                            //                                 <td>
+                            //                                     <input 
+                            //                                         type="number" 
+                            //                                         class="form-control form-control-sm discount-input" 
+                            //                                         placeholder="0"
+                            //                                         min="0"
+                            //                                         style="font-size:12px; padding: 2px 4px;"
+                            //                                     >
+                            //                                 </td>`;
 
-                                d.$wrapper.find('#select-all-checkin').on('change', function () {
-                                    d.$wrapper.find('input[type="checkbox"]:not(:disabled)').prop('checked', this.checked);
-                                });
-                            }
+                            let discount_fields = has_checkin
+                                ? `
+        <td>
+            ${room_invoice_info && room_invoice_info.discount_amount > 0
+                                    ? `<span class="badge badge-success">Applied</span>`
+                                    : `<span class="text-muted">None</span>`}
+        </td>
+        <td>
+            ${room_invoice_info && room_invoice_info.discount_amount > 0
+                                    ? `<strong style="color: green;">- ${frappe.format(room_invoice_info.discount_amount, { fieldtype: 'Currency' })}</strong>`
+                                    : `<span class="text-muted">-</span>`}
+        </td>`
+                                : `
+        <td>
+            <select class="form-control form-control-sm discount-type-select" style="font-size:12px; padding: 2px 4px;">
+                <option value="">None</option>
+                <option value="Percentage">Percentage</option>
+                <option value="Fixed Amount">Fixed</option>
+            </select>
+        </td>
+        <td>
+            <input 
+                type="number" 
+                class="form-control form-control-sm discount-input" 
+                placeholder="0"
+                min="0"
+                style="font-size:12px; padding: 2px 4px;"
+            >
+        </td>`;
+
+                            html += `
+                                <tr 
+                                    ${row_style} 
+                                    data-room-idx="${idx}" 
+                                    data-room-number="${room.room_number}"
+                                    data-room-total="${room.room_total || 0}"
+                                >
+                                    <td>${checkbox_html}</td>
+                                    <td>
+                                        <strong>${room.room_number}</strong>
+                                        ${status_badge}
+                                    </td>
+                                    <td>${room.room_type || '-'}</td>
+                                    <td>${room.guest_name || '<em class="text-muted">(No name)</em>'}</td>
+                                    <td>${frappe.format(room.rate_per_night, { fieldtype: 'Currency' })}</td>
+                                    <td>${frappe.format(room.room_total, { fieldtype: 'Currency' })}</td>
+                                    ${discount_fields}
+                                </tr>`;
+                        });
+
+                        html += `</tbody></table>`;
+
+                        if (pending_count === 0) {
+                            html = `<div class="alert alert-success">
+                                <i class="fa fa-check-circle"></i> All rooms have already been checked in.
+                            </div>`;
+                        }
+
+                        d.fields_dict.rooms_html.$wrapper.html(html);
+
+                        // Select all checkbox
+                        d.$wrapper.find('#select-all-checkin').on('change', function () {
+                            d.$wrapper.find('input[type="checkbox"]:not(:disabled)').prop('checked', this.checked);
                         });
                     }
                 });
@@ -710,24 +977,54 @@ function show_corporate_checkin_dialog(frm) {
     }
 
     let original_show = d.show.bind(d);
-    d.show = function () { fetch_and_render_rooms(); original_show(); };
+    d.show = function () {
+        fetch_and_render_rooms();
+        original_show();
+    };
     d.show();
 }
 
 
-function check_in_selected_rooms_only(frm, room_indices, check_in_notes) {
+function check_in_selected_rooms_only(frm, selected_rooms, check_in_notes) {
     frappe.call({
         method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.check_in_selected_rooms',
-        args: { reservation_name: frm.doc.name, room_indices: room_indices, check_in_notes: check_in_notes },
+        args: {
+            reservation_name: frm.doc.name,
+            room_indices: selected_rooms,   // now an array of {room_idx, discount_type, discount}
+            check_in_notes: check_in_notes
+        },
+        freeze: true,
+        freeze_message: __('Checking in rooms...'),
         callback: function (r) {
             if (r.message && r.message.success) {
                 frappe.show_alert({ message: r.message.message, indicator: 'green' }, 5);
-                frappe.msgprint({ title: __('Success'), message: r.message.message, indicator: 'green' });
+                frappe.msgprint({
+                    title: __('Success'),
+                    message: r.message.message,
+                    indicator: 'green'
+                });
                 frm.reload_doc();
             }
         }
     });
 }
+
+
+// function check_in_selected_rooms_only(frm, room_indices, check_in_notes) {
+//     frappe.call({
+//         method: 'rhohotel.rhocom_hotel.doctype.hotel_front_desk_reservation.hotel_front_desk_reservation.check_in_selected_rooms',
+//         args: { reservation_name: frm.doc.name, room_indices: room_indices, check_in_notes: check_in_notes },
+//         callback: function (r) {
+//             if (r.message && r.message.success) {
+//                 frappe.show_alert({ message: r.message.message, indicator: 'green' }, 5);
+//                 frappe.msgprint({ title: __('Success'), message: r.message.message, indicator: 'green' });
+//                 frm.reload_doc();
+//             }
+//         }
+//     });
+// }
+
+
 
 
 function check_in_all_rooms_corporate(frm) {
