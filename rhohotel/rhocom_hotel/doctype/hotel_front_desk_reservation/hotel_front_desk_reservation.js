@@ -160,7 +160,7 @@ function add_custom_buttons(frm) {
         // if (frm.doc.reservation_type === 'Corporate') {
         frm.add_custom_button(__('Check In All Guests'), function () {
             frappe.confirm(
-                __('Check in all {0} rooms? Reservations will be created automatically.', [frm.doc.total_rooms]),
+                __('Check in all {0} rooms?', [frm.doc.total_rooms]),
                 function () {
                     check_in_all_rooms_corporate(frm);
                 }

@@ -1128,6 +1128,10 @@ function open_checkin_payment_dialog(frm) {
                             margin-top: 8px;
                             padding-left: 28px;
                         }
+                        .manual-allocation-input[readonly] {
+                            background: #fff;
+                            cursor: default;
+                        }
                         .total-section {
                             margin-top: 20px;
                             padding: 15px;
@@ -1183,7 +1187,8 @@ function open_checkin_payment_dialog(frm) {
                                    id="manual_amt_${index}"
                                    data-invoice="${invoice.name}"
                                    value="${format_amount_input(invoice.outstanding_amount)}"
-                                   inputmode="decimal">
+                                   inputmode="decimal"
+                                   readonly>
                         </div>
                     </div>
                 `;
@@ -1360,35 +1365,40 @@ function open_checkin_payment_dialog(frm) {
                     }
                 };
 
-                const sync_total_field_from_allocations = () => {
-                    if (is_syncing_totals) return;
+                const get_selected_outstanding_total = () => {
+                    let selected_total = 0;
 
-                    let distributed_total = 0;
-                    document.querySelectorAll('.manual-allocation-input').forEach(input => {
-                        const invoice_name = input.getAttribute('data-invoice');
-                        const checkbox = document.querySelector(`input.manual-payment-checkbox[data-invoice="${invoice_name}"]`);
-
+                    invoices.forEach((invoice, index) => {
+                        const checkbox = document.getElementById(`manual_chk_${index}`);
                         if (checkbox && checkbox.checked) {
-                            distributed_total += parse_amount(input.value);
+                            selected_total += parse_amount(invoice.outstanding_amount);
                         }
                     });
 
-                    const current_total = parse_amount(dialog.get_value('amount_to_collect'));
-                    if (distributed_total <= current_total) {
-                        update_summary();
-                        return;
-                    }
-
-                    is_syncing_totals = true;
-                    dialog.set_value('amount_to_collect', distributed_total);
-                    is_syncing_totals = false;
-                    update_summary();
+                    return selected_total;
                 };
 
-                const distribute_total = () => {
+                const sync_checkbox_visual_state = (checkbox, amount_input) => {
+                    if (!checkbox || !amount_input) return;
+
+                    amount_input.disabled = !checkbox.checked;
+                    amount_input.style.opacity = checkbox.checked ? '1' : '0.55';
+                    amount_input.style.backgroundColor = checkbox.checked ? '' : '#f1f3f5';
+                };
+
+                const distribute_total = ({ sync_total_to_selection = false } = {}) => {
                     if (is_syncing_totals) return;
 
-                    const total_to_collect = parse_amount(dialog.get_value('amount_to_collect'));
+                    const selected_outstanding_total = get_selected_outstanding_total();
+                    let total_to_collect = parse_amount(dialog.get_value('amount_to_collect'));
+
+                    if (sync_total_to_selection) {
+                        total_to_collect = selected_outstanding_total;
+                        is_syncing_totals = true;
+                        dialog.set_value('amount_to_collect', total_to_collect);
+                        is_syncing_totals = false;
+                    }
+
                     let remaining = Math.max(total_to_collect, 0);
 
                     is_syncing_totals = true;
@@ -1396,6 +1406,8 @@ function open_checkin_payment_dialog(frm) {
                         const checkbox = document.getElementById(`manual_chk_${index}`);
                         const amount_input = document.getElementById(`manual_amt_${index}`);
                         if (!checkbox || !amount_input) return;
+
+                        sync_checkbox_visual_state(checkbox, amount_input);
 
                         if (!checkbox.checked) {
                             amount_input.value = format_amount_input(0);
@@ -1418,46 +1430,8 @@ function open_checkin_payment_dialog(frm) {
 
                         if (!amount_input) return;
 
-                        if (!this.checked) {
-                            amount_input.value = format_amount_input(0);
-                        } else {
-                            amount_input.value = format_amount_input(invoice_map[invoice_name].outstanding_amount);
-                        }
-
-                        distribute_total();
-                    });
-                });
-
-                document.querySelectorAll('.manual-allocation-input').forEach(input => {
-                    input.addEventListener('input', function () {
-                        const invoice_name = this.getAttribute('data-invoice');
-                        const checkbox = document.querySelector(`input.manual-payment-checkbox[data-invoice="${invoice_name}"]`);
-                        const outstanding = parse_amount(invoice_map[invoice_name].outstanding_amount);
-                        let value = parse_amount(this.value);
-
-                        if (value < 0) {
-                            value = 0;
-                        }
-
-                        if (value > outstanding) {
-                            value = outstanding;
-                        }
-
-                        this.value = value ? String(value) : '';
-
-                        if (checkbox) {
-                            checkbox.checked = value > 0;
-                        }
-
-                        sync_total_field_from_allocations();
-                    });
-
-                    input.addEventListener('blur', function () {
-                        const invoice_name = this.getAttribute('data-invoice');
-                        const outstanding = parse_amount(invoice_map[invoice_name].outstanding_amount);
-                        const formatted_value = Math.min(Math.max(parse_amount(this.value), 0), outstanding);
-                        this.value = format_amount_input(formatted_value);
-                        sync_total_field_from_allocations();
+                        sync_checkbox_visual_state(this, amount_input);
+                        distribute_total({ sync_total_to_selection: true });
                     });
                 });
 
@@ -1469,7 +1443,7 @@ function open_checkin_payment_dialog(frm) {
                     });
                 }
 
-                distribute_total();
+                distribute_total({ sync_total_to_selection: true });
             }, 100);
         }
     });
