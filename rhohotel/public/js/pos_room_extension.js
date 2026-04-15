@@ -156,20 +156,10 @@ setupRoomExtension();
 // This is where the invoice is created, BEFORE it's submitted
 // ===================================================================
 
-function setupPaymentSubmitHook() {
-    if (!window.erpnext || !window.erpnext.PointOfSale || !window.erpnext.PointOfSale.Payment) {
-        setTimeout(setupPaymentSubmitHook, 100);
-        return;
-    }
-
-    const paymentPrototype = erpnext.PointOfSale.Payment.prototype;
-    if (!paymentPrototype || !paymentPrototype.submit_invoice || paymentPrototype.__rhohotel_submit_hooked) {
-        return;
-    }
-
-    const originalSubmitInvoice = paymentPrototype.submit_invoice;
-
-    paymentPrototype.submit_invoice = function() {
+// Hook into the submit_invoice event
+const originalSubmitInvoice = erpnext.PointOfSale.Payment.prototype.submit_invoice;
+if (erpnext.PointOfSale.Payment && originalSubmitInvoice) {
+    erpnext.PointOfSale.Payment.prototype.submit_invoice = function() {
         console.log('='.repeat(80));
         console.log('CUSTOM: submit_invoice - BEFORE original submission');
         
@@ -186,12 +176,8 @@ function setupPaymentSubmitHook() {
         // Call original function
         return originalSubmitInvoice.call(this);
     };
-
-    paymentPrototype.__rhohotel_submit_hooked = true;
     console.log('✓ Hooked into Payment.submit_invoice');
 }
-
-setupPaymentSubmitHook();
 
 // ===================================================================
 // Hook into POS Invoice form when opened from POS
