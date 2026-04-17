@@ -4,26 +4,26 @@ function setupRoomExtension() {
         setTimeout(setupRoomExtension, 100);
         return;
     }
-    
+
     // Hook into the actual ItemCart initialization
     const originalItemCartInit = erpnext.PointOfSale.ItemCart.prototype.init_component;
 
-    erpnext.PointOfSale.ItemCart.prototype.init_component = function() {
+    erpnext.PointOfSale.ItemCart.prototype.init_component = function () {
         // Call original init
         originalItemCartInit.call(this);
-        
+
         // Override make_customer_selector
         const originalMakeCustomerSelector = this.make_customer_selector;
-        
-        this.make_customer_selector = function() {
+
+        this.make_customer_selector = function () {
             // Add room field BEFORE customer field
             this.$customer_section.html(`
                 <div class="room-field-wrapper" style="margin-bottom: 10px;"></div>
                 <div class="customer-field"></div>
             `);
-            
+
             this.make_room_selector.call(this);
-            
+
             // Then initialize customer field normally
             const me = this;
             const allowed_customer_group = this.allowed_customer_groups || [];
@@ -33,7 +33,7 @@ function setupRoomExtension() {
                     customer_group: ["in", allowed_customer_group],
                 };
             }
-            
+
             this.customer_field = frappe.ui.form.make_control({
                 df: {
                     label: __("Customer"),
@@ -67,10 +67,10 @@ function setupRoomExtension() {
             });
             this.customer_field.toggle_label(false);
         };
-        
-        this.make_room_selector = function() {
+
+        this.make_room_selector = function () {
             const me = this;
-            
+
             this.room_field = frappe.ui.form.make_control({
                 df: {
                     label: __("Room"),
@@ -93,38 +93,38 @@ function setupRoomExtension() {
                 parent: this.$customer_section.find(".room-field-wrapper"),
                 render_input: true,
             });
-            
+
             this.room_field.toggle_label(false);
         };
-        
-        this.set_customer_from_room = function(room_name) {
+
+        this.set_customer_from_room = function (room_name) {
             const me = this;
-            
+
             frappe.call({
                 method: 'frappe.client.get',
                 args: {
                     doctype: 'Hotel Room',
                     name: room_name,
                 },
-                callback: function(r) {
+                callback: function (r) {
                     if (!r.message) return;
-                    
+
                     const room = r.message;
-                    
+
                     if (!room.current_guest) {
                         frappe.msgprint(__('No guest in this room'));
                         return;
                     }
-                    
+
                     frappe.call({
                         method: 'frappe.client.get',
                         args: {
                             doctype: 'Hotel Guest',
                             name: room.current_guest,
                         },
-                        callback: function(r2) {
+                        callback: function (r2) {
                             if (!r2.message) return;
-                            
+
                             const guest = r2.message;
                             me.customer_field.set_value(guest.hotel_guest_name);
                         }
@@ -133,7 +133,7 @@ function setupRoomExtension() {
             });
         };
     };
-    
+
     console.log('✓ POS Room Extension loaded successfully');
 }
 

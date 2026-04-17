@@ -36,8 +36,12 @@ class POSInvoice(SalesInvoice):
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
 		from erpnext.accounts.doctype.sales_invoice_advance.sales_invoice_advance import SalesInvoiceAdvance
 		from erpnext.accounts.doctype.sales_invoice_payment.sales_invoice_payment import SalesInvoicePayment
-		from erpnext.accounts.doctype.sales_invoice_timesheet.sales_invoice_timesheet import SalesInvoiceTimesheet
-		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
+		from erpnext.accounts.doctype.sales_invoice_timesheet.sales_invoice_timesheet import (
+			SalesInvoiceTimesheet,
+		)
+		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
+			SalesTaxesandCharges,
+		)
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
 		from frappe.types import DF
@@ -141,7 +145,20 @@ class POSInvoice(SalesInvoice):
 		shipping_address_name: DF.Link | None
 		shipping_rule: DF.Link | None
 		source: DF.Link | None
-		status: DF.Literal["", "Draft", "Return", "Credit Note Issued", "Consolidated", "Submitted", "Paid", "Unpaid", "Unpaid and Discounted", "Overdue and Discounted", "Overdue", "Cancelled"]
+		status: DF.Literal[
+			"",
+			"Draft",
+			"Return",
+			"Credit Note Issued",
+			"Consolidated",
+			"Submitted",
+			"Paid",
+			"Unpaid",
+			"Unpaid and Discounted",
+			"Overdue and Discounted",
+			"Overdue",
+			"Cancelled",
+		]
 		tax_category: DF.Link | None
 		tax_id: DF.Data | None
 		taxes: DF.Table[SalesTaxesandCharges]
@@ -267,39 +284,106 @@ class POSInvoice(SalesInvoice):
 
 		self.delink_serial_and_batch_bundle()
 
+	# def auto_link_hotel_check_in(self):
+	# 	"""Auto-link check-in if customer has active check-in"""
+	# 	if self.custom_hotel_room_check_in:
+	# 		return
+
+	# 	if not self.customer:
+	# 		return
+
+	# 	try:
+	# 		# Remove 'limit' parameter - not supported in Frappe 15
+	# 		check_in = frappe.db.get_value(
+	# 			"Hotel Room Check In",
+	# 			filters={
+	# 				"guest": self.customer,
+	# 				"status": "Checked In",
+	# 				"docstatus": 1,
+	# 			},
+	# 			fieldname="name",
+	# 			order_by="check_in_datetime desc",
+	# 			# No 'limit' here - get_value already returns only 1
+	# 		)
+
+	# 		if check_in:
+	# 			self.custom_hotel_room_check_in = check_in
+	# 			# frappe.log_error() only takes 'message' and 'title'
+	# 			frappe.log_error(
+	# 				message=f"Auto-linked check-in {check_in} for customer {self.customer} on POS Invoice {self.name}",
+	# 				title="✅ POS Check-in Auto-Link Success",
+	# 			)
+	# 	except Exception as e:
+	# 		frappe.log_error(
+	# 			message=f"Could not auto-link check-in for POS Invoice {self.name}: {str(e)}",
+	# 			title="⚠️ POS Check-in Auto-Link Failed",
+	# 		)
+
 	def auto_link_hotel_check_in(self):
-		"""Auto-link check-in if customer has active check-in"""
+		frappe.log_error(
+			message=f"auto_link_hotel_check_in called. Customer: {self.customer}, Check-in: {self.custom_hotel_room_check_in}, Is new: {self.is_new()}, Name: {self.name}",
+			title="🔍 AUTO LINK DEBUG",
+		)
+
 		if self.custom_hotel_room_check_in:
-			return
+			check_in_guest = frappe.db.get_value(
+				"Hotel Room Check In", self.custom_hotel_room_check_in, "guest"
+			)
+			check_in_customer = frappe.db.get_value("Hotel Guest", check_in_guest, "hotel_guest_name")
+			if check_in_customer == self.customer:
+				return
+			else:
+				self.custom_hotel_room_check_in = None
 
 		if not self.customer:
 			return
 
+		# Check if doc already exists in DB (i.e. not truly new)
+		# In POS context, is_new() returns None so we check DB directly
+		doc_exists_in_db = frappe.db.exists("POS Invoice", self.name)
+		if doc_exists_in_db:
+			return
+
 		try:
-			# Remove 'limit' parameter - not supported in Frappe 15
-			check_in = frappe.db.get_value(
+			hotel_guest = frappe.db.get_value(
+				"Hotel Guest", filters={"hotel_guest_name": self.customer}, fieldname="name"
+			)
+
+			if not hotel_guest:
+				return
+
+			check_ins = frappe.get_all(
 				"Hotel Room Check In",
 				filters={
-					"guest": self.customer,
+					"guest": hotel_guest,
 					"status": "Checked In",
 					"docstatus": 1,
 				},
-				fieldname="name",
-				order_by="check_in_datetime desc"
-				# No 'limit' here - get_value already returns only 1
+				fields=["name", "room_number"],
+				order_by="check_in_datetime desc",
 			)
 
-			if check_in:
-				self.custom_hotel_room_check_in = check_in
-				# frappe.log_error() only takes 'message' and 'title'
+			if not check_ins:
+				return
+
+			if len(check_ins) == 1:
+				self.custom_hotel_room_check_in = check_ins[0].name
 				frappe.log_error(
-					message=f"Auto-linked check-in {check_in} for customer {self.customer} on POS Invoice {self.name}",
-					title="✅ POS Check-in Auto-Link Success"
+					message=f"Auto-linked check-in {check_ins[0].name} for customer {self.customer}",
+					title="✅ POS Check-in Auto-Link Success",
 				)
+			else:
+				frappe.log_error(
+					message=f"Multiple active check-ins found for customer {self.customer}. "
+					f"Rooms: {[c.room_number for c in check_ins]}. "
+					f"Frontend must set custom_hotel_room_check_in.",
+					title="⚠️ Multiple Check-ins Found - Auto-link Skipped",
+				)
+
 		except Exception as e:
 			frappe.log_error(
 				message=f"Could not auto-link check-in for POS Invoice {self.name}: {str(e)}",
-				title="⚠️ POS Check-in Auto-Link Failed"
+				title="⚠️ POS Check-in Auto-Link Failed",
 			)
 
 	def delink_serial_and_batch_bundle(self):

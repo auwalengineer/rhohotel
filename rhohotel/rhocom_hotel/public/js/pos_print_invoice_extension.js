@@ -2,7 +2,7 @@
 // POS Extension - Print Invoice Button
 // Compatible with Frappe v13+
 
-(function() {
+(function () {
     'use strict';
 
     // Method: Wait for window load and then extend
