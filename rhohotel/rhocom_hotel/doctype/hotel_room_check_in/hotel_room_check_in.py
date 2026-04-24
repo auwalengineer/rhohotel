@@ -4,12 +4,11 @@
 import frappe
 from frappe import _, msgprint, utils
 from frappe.model.document import Document
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from frappe.utils import get_datetime, now_datetime
 from frappe.utils import nowdate, getdate, date_diff, fmt_money
 from rhohotel.api import get_room_rate
 from frappe.utils import flt
-from datetime import datetime, time
 
 
 class HotelRoomCheckIn(Document):
@@ -139,6 +138,19 @@ class HotelRoomCheckIn(Document):
 		if not check_out:
 			frappe.throw("Check-out date is required for reservation validation.")
 
+		# Calculate effective check-out date for overlap validation
+		hotel_settings = frappe.get_single("Hotel Settings")
+		default_time_str = hotel_settings.default_check_out_time
+		if default_time_str:
+			default_time = datetime.strptime(default_time_str, "%H:%M:%S").time()
+			check_out_time = get_datetime(check_out).time()
+			if check_out_time == default_time:
+				effective_check_out_date = getdate(check_out) - timedelta(days=1)
+			else:
+				effective_check_out_date = getdate(check_out)
+		else:
+			effective_check_out_date = getdate(check_out)
+
 		# 🔥 Correct overlap logic
 		reservations = frappe.get_all(
 			"Hotel Room Reservation",
@@ -148,8 +160,8 @@ class HotelRoomCheckIn(Document):
 				"guest_name": ["!=", self.name],
 				"docstatus": ["!=", 2],
 				"status": ["in", ["Booked", "Confirmed", "Pending Payment", "Checked-In", "Draft"]],
-				"from_date": ["<=", check_out],
-				"to_date": [">=", check_in],
+				"from_date": ["<=", effective_check_out_date],
+				"to_date": [">=", getdate(check_in)],
 			},
 			fields=["name", "from_date", "to_date", "guest_name"],
 		)
@@ -158,8 +170,8 @@ class HotelRoomCheckIn(Document):
 			# ✅ Allow if SAME guest and SAME dates
 			if (
 				res.guest_name == self.guest and
-				str(res.from_date) == str(check_in) and
-				str(res.to_date) == str(check_out)
+				res.from_date == getdate(check_in) and
+				res.to_date == getdate(check_out)
 			):
 				continue  # ✅ valid reservation → allow
 
