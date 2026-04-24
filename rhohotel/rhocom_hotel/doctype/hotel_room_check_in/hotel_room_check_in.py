@@ -12,6 +12,45 @@ from frappe.utils import flt
 
 
 class HotelRoomCheckIn(Document):
+	def get_default_check_out_time(self):
+		"""Get default check-out time from Hotel Settings doctype."""
+		return frappe.db.get_single_value("Hotel Settings", "default_check_out_time")
+
+	def get_default_check_out_time_obj(self):
+		"""Normalize Hotel Settings default check-out time to a Python time object."""
+		default_check_out_time = self.get_default_check_out_time()
+
+		if not default_check_out_time:
+			return None
+
+		if isinstance(default_check_out_time, time):
+			return default_check_out_time
+
+		if isinstance(default_check_out_time, timedelta):
+			total_seconds = int(default_check_out_time.total_seconds()) % (24 * 60 * 60)
+			hours, remainder = divmod(total_seconds, 3600)
+			minutes, seconds = divmod(remainder, 60)
+			return time(hours, minutes, seconds)
+
+		if isinstance(default_check_out_time, datetime):
+			return default_check_out_time.time()
+
+		if isinstance(default_check_out_time, str):
+			for fmt in ("%H:%M:%S", "%H:%M"):
+				try:
+					return datetime.strptime(default_check_out_time, fmt).time()
+				except ValueError:
+					continue
+
+		frappe.throw(_("Invalid Default Check-Out Time in Hotel Settings: {0}").format(default_check_out_time))
+
+	def get_naive_datetime(self, value):
+		"""Convert input to a naive local datetime for safe comparisons."""
+		dt_value = get_datetime(value)
+		if getattr(dt_value, "tzinfo", None) and dt_value.utcoffset() is not None:
+			return dt_value.astimezone().replace(tzinfo=None)
+		return dt_value
+
 	def validate(self):
 		self.validate_reservation()
 		self.validate_rate_amount()
@@ -25,11 +64,11 @@ class HotelRoomCheckIn(Document):
 	def set_checkout_time(self):
 		"""Set the time part of expected_check_out_datetime from Hotel Settings."""
 		if self.expected_check_out_datetime and not self.late_checkout:
-			hotel_settings = frappe.get_single("Hotel Settings")
-			if hotel_settings.default_check_out_time:
-				expected_checkout_date = get_datetime(self.expected_check_out_datetime).date()
+			default_check_out_time = self.get_default_check_out_time_obj()
+			if default_check_out_time:
+				expected_checkout_date = self.get_naive_datetime(self.expected_check_out_datetime).date()
 				self.expected_check_out_datetime = get_datetime(
-					f"{expected_checkout_date} {hotel_settings.default_check_out_time}"
+					f"{expected_checkout_date} {default_check_out_time.strftime('%H:%M:%S')}"
 				)
 
 	def calculate_total_charges(self):
@@ -138,12 +177,13 @@ class HotelRoomCheckIn(Document):
 		if not check_out:
 			frappe.throw("Check-out date is required for reservation validation.")
 
+		check_in_dt = self.get_naive_datetime(check_in)
+		check_out_dt = self.get_naive_datetime(check_out)
+
 		# Calculate effective check-out date for overlap validation
-		hotel_settings = frappe.get_single("Hotel Settings")
-		default_time_str = hotel_settings.default_check_out_time
-		if default_time_str:
-			default_time = datetime.strptime(default_time_str, "%H:%M:%S").time()
-			check_out_time = get_datetime(check_out).time()
+		default_time = self.get_default_check_out_time_obj()
+		if default_time:
+			check_out_time = check_out_dt.time()
 			if check_out_time == default_time:
 				effective_check_out_date = getdate(check_out) - timedelta(days=1)
 			else:
@@ -151,27 +191,47 @@ class HotelRoomCheckIn(Document):
 		else:
 			effective_check_out_date = getdate(check_out)
 
-		# 🔥 Correct overlap logic
+		# Fetch potential overlaps by date first, then resolve with time-aware checks.
 		reservations = frappe.get_all(
 			"Hotel Room Reservation",
 			filters={
 				"name": ["!=", self.reservation],
 				"room_number": self.room_number,
-				"guest_name": ["!=", self.name],
 				"docstatus": ["!=", 2],
 				"status": ["in", ["Booked", "Confirmed", "Pending Payment", "Checked-In", "Draft"]],
 				"from_date": ["<=", effective_check_out_date],
 				"to_date": [">=", getdate(check_in)],
 			},
-			fields=["name", "from_date", "to_date", "guest_name"],
+			fields=["name", "from_date", "to_date", "guest_name", "check_in_time", "check_out_time"],
 		)
 
+		default_check_in_time = time(12, 0)
+		default_check_out_time = time(12, 0)
+		if default_time:
+			default_check_out_time = default_time
+
 		for res in reservations:
+			res_start = (
+				self.get_naive_datetime(res.check_in_time)
+				if res.check_in_time
+				else datetime.combine(getdate(res.from_date), default_check_in_time)
+			)
+			res_end = (
+				self.get_naive_datetime(res.check_out_time)
+				if res.check_out_time
+				else datetime.combine(getdate(res.to_date), default_check_out_time)
+			)
+
+			# Half-open interval overlap check: [start, end)
+			has_time_overlap = check_in_dt < res_end and check_out_dt > res_start
+			if not has_time_overlap:
+				continue
+
 			# ✅ Allow if SAME guest and SAME dates
 			if (
 				res.guest_name == self.guest and
-				res.from_date == getdate(check_in) and
-				res.to_date == getdate(check_out)
+				res.from_date == getdate(check_in_dt) and
+				res.to_date == getdate(check_out_dt)
 			):
 				continue  # ✅ valid reservation → allow
 
@@ -188,16 +248,18 @@ class HotelRoomCheckIn(Document):
 			)
 
 			frappe.throw(
-				_("Room {0} is already reserved from {1} to {2} by {3}").format(
+				_("{0} is already reserved from {1} to {2} by {3}").format(
 					self.room_number,
-					res.from_date,
-					res.to_date,
+					res_start,
+					res_end,
 					res.guest_name
 				)
 			)
 
 	def validate_dates(self):
-		if get_datetime(self.check_in_datetime) > get_datetime(self.expected_check_out_datetime):
+		if self.get_naive_datetime(self.check_in_datetime) > self.get_naive_datetime(
+			self.expected_check_out_datetime
+		):
 			frappe.throw(_("Check-in time cannot be after expected check-out time"))
 
 	def on_submit(self):
