@@ -98,7 +98,7 @@ def get_checkin_invoice_list(check_in):
 
 	invoices = frappe.get_all(
 		"Sales Invoice",
-		filters={"custom_hotel_room_check_in": check_in},
+		filters={"custom_hotel_room_check_in": check_in, "status": ["!=", "Cancelled"]},
 		fields=["name", "posting_date", "grand_total", "outstanding_amount", "docstatus", "customer"],
 		order_by="posting_date desc",
 	)
